@@ -1,4 +1,4 @@
-# MayInstitute2017
+# May Institute 2017
 
 The May Institute focuses on computational and statistical aspects of quantitative mass spectrometry-based proteomics. The course combines keynote presentations, introductory lectures, practical training, and informal personal discussions.
 
