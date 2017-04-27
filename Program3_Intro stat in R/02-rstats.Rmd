@@ -8,3 +8,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Objectives
+
+- Data distributions
+- More plotting
+- Hypothesis testing: t-test 

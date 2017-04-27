@@ -8,3 +8,17 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Objectives
+
+- Familiarise yourselves with [R](https://www.r-project.org/) and
+  [RStudio](https://www.rstudio.com/), and how to work with them
+- Find help about R
+- Install new R packages
+- R variables, functions, vectors, data.frames
+- Read spreadsheets into R
+- Simple arithmetics and data manipulation
+- Introduction to plotting
+- Learn about R markdown
+
+
+

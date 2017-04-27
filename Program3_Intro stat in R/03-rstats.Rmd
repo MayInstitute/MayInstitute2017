@@ -8,3 +8,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Objectives
+
+- Categorical data
+- Correlation
+- Hypothesis testing: Chi-sequare
+- Power calculation
