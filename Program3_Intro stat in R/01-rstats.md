@@ -1,0 +1,22 @@
+---
+title: 'Day 1: Beginner''s statistics in R'
+author: "Laurent Gatto"
+output: html_document
+---
+
+
+
+# Objectives
+
+- Familiarise yourselves with [R](https://www.r-project.org/) and
+  [RStudio](https://www.rstudio.com/), and how to work with them
+- Find help about R
+- Install new R packages
+- R variables, functions, vectors, data.frames
+- Read spreadsheets into R
+- Simple arithmetics and data manipulation
+- Introduction to plotting
+- Learn about R markdown
+
+
+
