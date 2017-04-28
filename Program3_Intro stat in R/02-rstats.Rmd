@@ -1,7 +1,10 @@
 ---
 title: 'Day 2: Beginner''s statistics in R'
-author: "Laurent Gatto"
-output: html_document
+author: "Laurent Gatto and Meena Choi"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
