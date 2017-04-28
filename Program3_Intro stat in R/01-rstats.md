@@ -471,7 +471,21 @@ sessionInfo()
 
 ## Installing packages
 
+To install a new package, using the `install.packages` function:
 
+
+```r
+install.package("ggplot2")
+```
+
+Bioconductor (and CRAN) packages can be installed with:
+
+
+```r
+## try http:// if https:// URLs are not supported
+source("https://bioconductor.org/biocLite.R")
+biocLite("MSnbase")
+```
 
 # Part 2: Introduction to R
 

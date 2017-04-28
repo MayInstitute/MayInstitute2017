@@ -432,6 +432,12 @@ dput(head(iris)) </code></pre>
 </div>
 <div id="installing-packages" class="section level2">
 <h2>Installing packages</h2>
+<p>To install a new package, using the <code>install.packages</code> function:</p>
+<pre class="r"><code>install.package(&quot;ggplot2&quot;)</code></pre>
+<p>Bioconductor (and CRAN) packages can be installed with:</p>
+<pre class="r"><code>## try http:// if https:// URLs are not supported
+source(&quot;https://bioconductor.org/biocLite.R&quot;)
+biocLite(&quot;MSnbase&quot;)</code></pre>
 </div>
 </div>
 <div id="part-2-introduction-to-r" class="section level1">
