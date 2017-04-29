@@ -172,6 +172,11 @@ Your working directory should now look like this:
 
 ![How it should look like at the beginning of this lesson](img/r-starting-how-it-should-look-like.png)
 
+> ### Challenge
+>
+> Add the provided data files, namely `ABRF2015_skyline_report.csv.gz`
+> and `abrf.rda` to your `data` directory/
+
 ### Organizing your working directory
 
 Using a consistent folder structure across your projects will help keep things
@@ -364,25 +369,30 @@ dput(head(iris))
 ## 6L), class = "data.frame")
 ```
 
-If the object is larger, provide either the raw file (i.e., your CSV file) with
-your script up to the point of the error (and after removing everything that is
-not relevant to your issue). Alternatively, in particular if your question is
-not related to a data frame, you can save any R object to a file:
+If the object is larger, provide either the raw file (i.e., your CSV
+file) with your script up to the point of the error (and after
+removing everything that is not relevant to your
+issue). Alternatively, in particular if your question is not related
+to a data frame, you can save any R object to a file using an
+R-specific binary format:
 
 
 ```r
-saveRDS(iris, file="/tmp/iris.rds")
+save(iris, file="iris.rda")
 ```
 
-The content of this file is however not human readable and cannot be posted
-directly on Stack Overflow. Instead, it can be sent to someone by email who can
-read it with the `readRDS()` command (here it is assumed that the downloaded
-file is in a `Downloads` folder in the user's home directory):
+The content of this file is however not human readable, but can easily
+and efficiently be loaded back into R on any other platform with: 
 
 
 ```r
-some_data <- readRDS(file="~/Downloads/iris.rds")
+load(file="iris.rds")
 ```
+
+> ### Challenge
+>
+> Load the `abrf.rda` data into your R session.
+
 
 Last, but certainly not least, **always include the output of `sessionInfo()`**
 as it provides critical information about your platform, the versions of R and
@@ -1187,6 +1197,7 @@ We are going to walk through the creation of such a document.
 
 # Part 4: Starting with data and plotting
 
+TODO, based on DC `data.frame` material, using the ABRF data.
 
 ---
 
