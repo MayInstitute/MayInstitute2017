@@ -16,3 +16,7 @@ output:
 - Correlation
 - Hypothesis testing: Chi-sequare
 - Power calculation
+
+---
+
+Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)

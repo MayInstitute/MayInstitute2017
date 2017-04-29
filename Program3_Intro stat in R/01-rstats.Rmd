@@ -1,6 +1,6 @@
 ---
 title: 'Day 1: Beginner''s statistics in R'
-author: "Laurent Gatto"
+author: "Laurent Gatto and Data Carpentry"
 output: 
   html_document:
     toc: true
@@ -935,10 +935,7 @@ Now that we have learned how to write scripts, and the basics of R's
 data structures, we are ready to start working with the Portal dataset
 we have been using in the other lessons, and learn about data frames.
 
-# Part 3: Starting with data and plotting
-
-
-# Part 4: R markdown
+# Part 3: R markdown
 
 Markdown (extension `.md`) is a very simple markup language in plain
 text, that can be converted to many different outputs, such as pdf and
@@ -961,6 +958,9 @@ whole process is made relatively easy with RStudio and available
 [documentation](http://rmarkdown.rstudio.com/lesson-1.html).
 
 We are going to walk through the creation of such a document.
+
+# Part 4: Starting with data and plotting
+
 
 ---
 
