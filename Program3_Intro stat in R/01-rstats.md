@@ -1187,3 +1187,7 @@ whole process is made relatively easy with RStudio and available
 [documentation](http://rmarkdown.rstudio.com/lesson-1.html).
 
 We are going to walk through the creation of such a document.
+
+---
+
+Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)
