@@ -483,54 +483,189 @@ summary(iprg$Log2Intensity)
 
 ## Boxplot or box-and-whisker plot
 
-Boxplots are extremely useful becasue they allow us to quickly visualize the data distribution, without making assumptions of the distribution type (non-parametric). We can read up on what statistics the different elements of a box-and-whisker represent in the R help files.
+Boxplots are extremely useful because they allow us to quickly
+visualise the data distribution, without making assumptions of the
+distribution type (non-parametric). We can read up on what statistics
+the different elements of a box-and-whisker represent in the R help
+files.
 
-Let's make the boxplot with `ggplot2`, one of the most popular and powerful R packages for making graphics. The syntax of ggplot2 might seem a bit intimidating at first, but besides the advantage of having full control over all graphical elements of your plot, two other advantages are that 1) it's very straightforward to automatically assign distinguishing graphical elements to subsets of your data and 2) switching between plot types requires little changes to your code. Let's start with a bare bones boxplot.
-
-```{r,eval=T, warning=F}
-library(ggplot2)
-ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
-    			geom_boxplot(aes_string(fill='Condition'))
-
+```{r}
+boxplot(iprg$Log2Intensity)
 ```
 
-Now let's rename all axis labels and title, and rotate the x-axis labels 90 degrees. We can add those specifications using the `labs` and `theme` functions of the `ggplot2` package.
+The boxplot, however, shows us the intensities for all conditions and
+replicates. If we want to display the data for, we have multile
+possibilities.
 
-```{r,eval=T, warning=F}
-ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
-      		geom_boxplot(aes_string(fill='Condition'))+
-          labs(title='Log2 transformed intensity distribution per MS run',
-               y='Log2(Intensity)',
-               x='MS run')+
-          theme(axis.text.x=element_text(angle=90))
-    
+* We can first split the data, using the `by` function
+
+```{r}
+int_by_run <- by(iprg$Log2Intensity, iprg$Run, c)
+boxplot(int_by_run)
+```
+
+* We can use the formula syntax
+
+```{r}
+boxplot(Log2Intensity ~ Run, data = iprg)
+```
+
+* We can use the `ggplot2` package that is very flexible to visualise
+  data under different angles.
+  
+  
+# The `ggplot2`  package
+
+**`ggplot2`** is a plotting package that makes it simple to create
+complex plots from data in a data frame. It provides a more
+programmatic interface for specifying what variables to plot, how they
+are displayed, and general visual properties, so we only need minimal
+changes if the underlying data change or if we decide to change from a
+bar plot to a scatterplot. This helps in creating publication quality
+plots with minimal amounts of adjustments and tweaking.
+
+Fist of all, we need to load the `ggplot2` package
+
+```{r}
+library("ggplot2")
+```
+
+ggplot graphics are built step by step by adding new elements.
+
+To build a ggplot we need to:
+
+* bind the plot to a specific data frame using the `data` argument
+
+```{r, eval=FALSE}
+ggplot(data = iprg)
+```
+
+* define aesthetics (`aes`), by selecting the variables to be plotted
+  and the variables to define the presentation such as plotting size,
+  shape color, etc.
+
+```{r, eval=FALSE}
+ggplot(data = iprg, aes(x = Run, y = Log2Intensity))
+```
+
+* add `geoms` -- graphical representation of the data in the plot
+     (points, lines, bars). To add a geom to the plot use `+` operator
+
+```{r}
+ggplot(data = iprg, aes(x = Run, y = Log2Intensity)) +
+  geom_boxplot()
+```
+
+The `+` in the `ggplot2` package is particularly useful because it
+allows you to modify existing `ggplot` objects. This means you can
+easily set up plot "templates" and conveniently explore different
+types of plots, so the above plot can also be generated with code like
+this:
+
+```{r, first-ggplot-with-plus, eval=FALSE}
+# Assign plot to a variable
+ints_plot <- ggplot(data = iprg, aes(x = Run, y = Log2Intensity))
+
+# Draw the plot
+ints_plot + geom_boxplot()
 ```
 
 
-And easily switch from a boxplot to a violin plot representation by changing the `geom` type.
+Notes:
 
-```{r,eval=T, warning=F}
-ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
-        	geom_violin(aes_string(fill='Condition'))+
-          labs(title='Log2 transformed intensity distribution per Subject',
-               y='Log2(Intensity)',
-               x='MS run')+
-          theme(axis.text.x=element_text(angle=90))
+ Anything you put in the `ggplot()` function can be seen by any geom layers
+  that you add (i.e., these are universal plot settings). This includes the x and
+  y axis you set up in `aes()`.
+* You can also specify aesthetics for a given geom independently of the
+  aesthetics defined globally in the `ggplot()` function.
+
+* The `+` sign used to add layers must be placed at the end of each
+  line containing a layer. If, instead, the `+` sign is added in the
+  line before the other layer, `ggplot2` will not add the new layer
+  and will return an error message.
+
+
+> ### Challenge
+> 
+> * Repeat the plot above but displaying the raw intensities. 
+> * Log-10 transform the raw intensities on the flight when plotting.
+
+## Customising plots 
+
+First, let's colour the boxplot based on the condition:
+
+```{r}
+ggplot(data = iprg,
+       aes(x = Run, y = Log2Intensity,
+           fill = Condition)) +
+  geom_boxplot()
 ```
 
 
-# 5. Randomization
+
+Now let's rename all axis labels and title, and rotate the x-axis
+labels 90 degrees. We can add those specifications using the `labs`
+and `theme` functions of the `ggplot2` package.
+
+```{r}
+ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
+       data = iprg) +
+    geom_boxplot() +
+    labs(title = 'Log2 transformed intensity distribution per MS run',
+         y = 'Log2(Intensity)',
+         x = 'MS run') +
+    theme(axis.text.x = element_text(angle = 90))    
+```
+
+
+And easily switch from a boxplot to a violin plot representation by
+changing the `geom` type.
+
+```{r}
+ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
+       data = iprg) +
+    geom_violin() +
+    labs(title = 'Log2 transformed intensity distribution per Subject',
+         y = 'Log2(Intensity)',
+         x = 'MS run') +
+    theme(axis.text.x = element_text(angle = 90))
+```
+
+Finally, we can also overlay multiple geoms by simply *adding* them
+one after the other.
+
+```{r}
+p <- ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
+            data = iprg)
+p + geom_boxplot()
+p + geom_boxplot() + geom_jitter() ## not very usefull
+p + geom_jitter() + geom_boxplot()
+p + geom_jitter(alpha = 0.1) + geom_boxplot()
+```
+
+> ### Challenge
+> 
+> * Overlay a boxplot goem on top of a jitter geom for the raw or
+>   log-10 transfored intensities.
+> * Customise the plot as suggested above.
+
+# Randomization
 
 ## Random selection of samples from a larger set
 
-This particular dataset contains a total of 10 subjects across conditions. Suppose we label them from 1 to 14 and randomly would like to select 3 subjects we can do this using the `sample` function. When we run `sample` another time, different subjects will be selected. Try this a couple times.
+This particular dataset contains a total of 10 subjects across
+conditions. Suppose we label them from 1 to 14 and randomly would like
+to select 3 subjects we can do this using the `sample` function. When
+we run `sample` another time, different subjects will be selected. Try
+this a couple times.
 
 ```{r}
 sample(10, 3)
 sample(10, 3)
 ```
 
-Now suppose we would like to select the same randomly selected samples every time, then we can use a random seed number.
+Now suppose we would like to select the same randomly selected samples
+every time, then we can use a random seed number.
 
 ```{r}
 set.seed(3728)
@@ -542,7 +677,10 @@ sample(10, 3)
 
 ## Completely randomized order of MS runs
 
-We can also create a random order using all elements of iPRG dataset. Again, we can achieve this using `sample`, asking for exactly the amount of samples in the subset. This time, each repetition gives us a different order of the complete set.
+We can also create a random order using all elements of iPRG
+dataset. Again, we can achieve this using `sample`, asking for exactly
+the amount of samples in the subset. This time, each repetition gives
+us a different order of the complete set.
 
 ```{r}
 msrun <- unique(iprg$Run)
@@ -557,13 +695,18 @@ sample(msrun, length(msrun))
 
 ## Randomized block design
 
-- Allow to remove known sources of variability that you are not interested in.
+- Allow to remove known sources of variability that you are not
+  interested in.
 
-- Group conditions into blocks such that the conditions in a block are as similar as possible.
+- Group conditions into blocks such that the conditions in a block are
+  as similar as possible.
 
 - Randomly assign samples with a block.
 
-This particular dataset contains a total of 12 MS runs across 4 conditions, 3 technical replicates per condition. Using the `block.random` function in the `psych` package, we can achieve randomized block designs!
+This particular dataset contains a total of 12 MS runs across 4
+conditions, 3 technical replicates per condition. Using the
+`block.random` function in the `psych` package, we can achieve
+randomized block designs!
 
 ```{r}
 # use 'psych' package
@@ -584,29 +727,30 @@ and scales up well but jpegs, pngs and a number of other file formats
 are also supported. Let's redo the last barplot but save it to the
 file system this time.
 
-Let's save the boxplot as pdf file.
+Let's save the boxplot as pdf file. 
 
 ```{r, eval=FALSE}
 pdf()
-## plot(...)
+p + geom_jitter(alpha = 0.1) + geom_boxplot()
 dev.off()
 ```
 
-Finally, we can save this whole session you worked so hard on!
+The default file name is `Rplots.pdf`. We can customise that file name
+specifying it by passing the file name, as a character, to the `pdf()`
+function.
+
+Finally, we can save this whole session you worked so hard on! We can
+save individual variables using the `save` function, or save the
+complete environment with `save.image`. Be careful though, as this can
+save a lot of unnecessary (temporary) data.
 
 ```{r,eval=FALSE}
-## save
-## save.image(file='Section1.RData')
+save.image(file = '02-rstats-all.rda')
 ```
 
-Ok let's give it a rest now. Saving an .RData is the easiest way to
-pick up your work right where you left it!
-
-```{r, eval=FALSE}
-rm(list=ls())
-load(file = 'Section1.RData')
-```
-
+The best way to save your work is to save the script that contains the
+exact command that lead to the results! Or better, we can save and
+document our full analysis in an R markdown file!
 
 ---
 Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md) 
