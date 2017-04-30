@@ -13,8 +13,7 @@ output:
 
 - Reading data in R
 - Data manipulation and exploration
-- Data distributions
-- Select random sample and randomize MS run orders
+- Randomisation
 - Visualisation
 - Hypothesis testing: t-test 
 
