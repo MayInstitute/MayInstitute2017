@@ -621,7 +621,7 @@ boxplot(Log2Intensity ~ Run, data = iprg)
   
 # The `ggplot2`  package
 
-**`ggplot2`** is a plotting package that makes it simple to create
+`ggplot2` is a plotting package that makes it simple to create
 complex plots from data in a data frame. It provides a more
 programmatic interface for specifying what variables to plot, how they
 are displayed, and general visual properties, so we only need minimal
@@ -675,13 +675,12 @@ this:
 
 
 ```r
-# Assign plot to a variable
+## Assign plot to a variable
 ints_plot <- ggplot(data = iprg, aes(x = Run, y = Log2Intensity))
 
-# Draw the plot
+## Draw the plot
 ints_plot + geom_boxplot()
 ```
-
 
 Notes:
 
@@ -714,9 +713,7 @@ ggplot(data = iprg,
   geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
-
-
+![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
 
 Now let's rename all axis labels and title, and rotate the x-axis
 labels 90 degrees. We can add those specifications using the `labs`
@@ -733,7 +730,7 @@ ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
     theme(axis.text.x = element_text(angle = 90))    
 ```
 
-![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
 
 
 And easily switch from a boxplot to a violin plot representation by
@@ -750,7 +747,7 @@ ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
     theme(axis.text.x = element_text(angle = 90))
 ```
 
-![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
+![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
 
 Finally, we can also overlay multiple geoms by simply *adding* them
 one after the other.
@@ -762,25 +759,25 @@ p <- ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
 p + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
 
 ```r
 p + geom_boxplot() + geom_jitter() ## not very usefull
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-2.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-2.png)
 
 ```r
 p + geom_jitter() + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-3.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-3.png)
 
 ```r
 p + geom_jitter(alpha = 0.1) + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-4.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-4.png)
 
 > ### Challenge
 > 
@@ -788,7 +785,7 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 >   log-10 transfored intensities.
 > * Customise the plot as suggested above.
 
-# Randomization
+# Randomisation
 
 ## Random selection of samples from a larger set
 
@@ -861,7 +858,7 @@ msrun
 ```
 
 ```r
-# randomize order among all 12 MS runs
+## randomize order among all 12 MS runs
 sample(msrun, length(msrun))
 ```
 
@@ -876,7 +873,7 @@ sample(msrun, length(msrun))
 ```
 
 ```r
-# different order will be shown.
+## different order will be shown.
 sample(msrun, length(msrun))
 ```
 
@@ -907,8 +904,7 @@ randomized block designs!
 
 
 ```r
-# use 'psych' package
-library(psych)
+library("psych") ## load the psych package
 ```
 
 ```
@@ -944,8 +940,8 @@ msrun
 ```
 
 ```r
-# 4 Conditions of 12 MS runs randomly ordered
-block.random(n=12, c(Condition=4))
+## 4 Conditions of 12 MS runs randomly ordered
+block.random(n = 12, c(Condition = 4))
 ```
 
 ```
@@ -1001,3 +997,323 @@ document our full analysis in an R markdown file!
 
 ---
 Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md) 
+
+
+# Basic statistical summaries
+
+## Calculate simple statistics
+
+Let's start data with one protein as an example and calculate the
+mean, standard deviation, standard error of the mean across all
+replicates per condition. We then store all the computed statistics
+into a single summary data frame for easy access.
+
+We can use the **aggregate** function to compute summary statistics
+
+
+```r
+# check what proteins are in dataset, show all protein names
+head(unique(iprg$Protein))
+```
+
+```
+## [1] sp|D6VTK4|STE2_YEAST  sp|O13297|CET1_YEAST  sp|O13329|FOB1_YEAST 
+## [4] sp|O13539|THP2_YEAST  sp|O13547|CCW14_YEAST sp|O13563|RPN13_YEAST
+## 3027 Levels: sp|D6VTK4|STE2_YEAST ... sp|Q9URQ5|HTL1_YEAST
+```
+
+
+```r
+# Let's start with one protein, named "sp|P44015|VAC2_YEAST"
+oneproteindata <- iprg[iprg$Protein == "sp|P44015|VAC2_YEAST", ]
+
+# there are 12 rows in oneproteindata
+oneproteindata
+```
+
+```
+##                    Protein Log2Intensity                       Run
+## 21096 sp|P44015|VAC2_YEAST      26.30163 JD_06232014_sample1_B.raw
+## 21097 sp|P44015|VAC2_YEAST      26.11643 JD_06232014_sample1_C.raw
+## 21098 sp|P44015|VAC2_YEAST      26.29089 JD_06232014_sample1-A.raw
+## 21099 sp|P44015|VAC2_YEAST      25.81957 JD_06232014_sample2_A.raw
+## 21100 sp|P44015|VAC2_YEAST      26.11527 JD_06232014_sample2_B.raw
+## 21101 sp|P44015|VAC2_YEAST      26.08498 JD_06232014_sample2_C.raw
+## 21102 sp|P44015|VAC2_YEAST      23.14806 JD_06232014_sample3_A.raw
+## 21103 sp|P44015|VAC2_YEAST      23.32465 JD_06232014_sample3_B.raw
+## 21104 sp|P44015|VAC2_YEAST      23.29555 JD_06232014_sample3_C.raw
+## 21105 sp|P44015|VAC2_YEAST      20.94536 JD_06232014_sample4_B.raw
+## 21106 sp|P44015|VAC2_YEAST      21.71424 JD_06232014_sample4_C.raw
+## 21107 sp|P44015|VAC2_YEAST      20.25209 JD_06232014_sample4-A.raw
+##        Condition BioReplicate Intensity
+## 21096 Condition1            1  82714388
+## 21097 Condition1            1  72749239
+## 21098 Condition1            1  82100518
+## 21099 Condition2            2  59219741
+## 21100 Condition2            2  72690802
+## 21101 Condition2            2  71180513
+## 21102 Condition3            3   9295260
+## 21103 Condition3            3  10505591
+## 21104 Condition3            3  10295788
+## 21105 Condition4            4   2019205
+## 21106 Condition4            4   3440629
+## 21107 Condition4            4   1248781
+```
+
+
+
+```r
+# If you want to see more details, 
+?aggregate
+```
+
+### Calculate mean per groups
+
+
+```r
+## splits 'oneproteindata' into subsets by 'Condition', 
+## then, compute 'FUN=mean' of 'log2Int'
+sub.mean <- aggregate(Log2Intensity ~ Condition,
+                      data = oneproteindata,
+                      FUN = mean)
+sub.mean
+```
+
+```
+##    Condition Log2Intensity
+## 1 Condition1      26.23632
+## 2 Condition2      26.00661
+## 3 Condition3      23.25609
+## 4 Condition4      20.97056
+```
+
+### Calculate SD (standard deviation) per groups
+
+```r
+## The same as mean calculation above. 'FUN' is changed to 'sd'.
+sub.sd <- aggregate(Log2Intensity ~ Condition,
+                    data = oneproteindata, FUN = sd)
+sub.sd
+```
+
+```
+##    Condition Log2Intensity
+## 1 Condition1    0.10396539
+## 2 Condition2    0.16268179
+## 3 Condition3    0.09467798
+## 4 Condition4    0.73140174
+```
+
+### Count the number of observation per groups
+
+```r
+## The same as mean calculation. 'FUN' is changed 'length'.
+sub.len <- aggregate(Log2Intensity ~ Condition,
+                     data = oneproteindata,
+                     FUN = length)
+sub.len
+```
+
+```
+##    Condition Log2Intensity
+## 1 Condition1             3
+## 2 Condition2             3
+## 3 Condition3             3
+## 4 Condition4             3
+```
+
+### Calculate SE (standard error of mean) per groups
+
+$$ SE = \sqrt{\frac{s^2}{n}} $$
+
+
+```r
+sub.se <- sqrt(sub.sd$Log2Intensity^2 / sub.len$Log2Intensity)
+sub.se
+```
+
+```
+## [1] 0.06002444 0.09392438 0.05466236 0.42227499
+```
+
+
+```r
+## make the summary table including the results above (mean, sd, se
+## and length).
+(grp <- paste0("Condition", 1:4))
+```
+
+```
+## [1] "Condition1" "Condition2" "Condition3" "Condition4"
+```
+
+```r
+summaryresult <- data.frame(Group = grp,
+                            mean = sub.mean$Log2Intensity,
+                            sd = sub.sd$Log2Intensity, 
+                            se = sub.se, 
+                            length = sub.len$Log2Intensity)
+summaryresult
+```
+
+```
+##        Group     mean         sd         se length
+## 1 Condition1 26.23632 0.10396539 0.06002444      3
+## 2 Condition2 26.00661 0.16268179 0.09392438      3
+## 3 Condition3 23.25609 0.09467798 0.05466236      3
+## 4 Condition4 20.97056 0.73140174 0.42227499      3
+```
+
+## Visualization with error bars for descriptive purpose
+
+*error bars* can have a variety of meanings or conclusions if what
+they represent is not precisely specified. Below we provide some
+examples of which types of error bars are common. We're using the
+summary of protein `sp|P44015|VAC2_YEAST` from the previous section
+and the `ggplot2` package as it provides a convenient way to make
+easily adaptable plots.
+
+
+```r
+# means without any errorbar
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult)+
+    geom_point(size = 3)
+```
+
+![plot of chunk unnamed-chunk-46](figure/unnamed-chunk-46-1.png)
+
+Let's change a number of visual properties to make the plot more attractive
+ 
+* Let's change the labels of x-axis and y-axis and title: `labs(title="Mean", x="Condition", y='Log2(Intensity)')`
+* Let's change background color for white: `theme_bw()`
+* Let's change size or color of labels of axes and title, text of
+  x-axis by using a *theme*
+* Let's change the position of legend (use `'none'` to remove it)
+* Let's make the box for legend
+* Let's remove the box for legend key.
+
+
+
+```r
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult) +
+    geom_point() +
+    labs(title = "Mean", x = "Group", y = 'Log2(Intensity)') +
+    theme_bw() + 
+    theme(plot.title = element_text(size = 25, colour = "darkblue"),
+          axis.title.x = element_text(size = 15),
+          axis.title.y = element_text(size = 15),
+          axis.text.x = element_text(size = 13),
+          legend.position = 'bottom',
+          legend.background = element_rect(colour = 'black'),
+          legend.key = element_rect(colour = 'white'))
+```
+
+![plot of chunk unnamed-chunk-47](figure/unnamed-chunk-47-1.png)
+
+Let's now add the **standard deviation**:
+
+
+```r
+# mean with SD
+ggplot(aes(x=Group, y=mean, colour=Group), data=summaryresult)+
+      geom_point(size=3)+
+      geom_errorbar(aes(ymax = mean + sd, ymin=mean - sd), width=0.1)+
+      scale_x_discrete('Group')+
+      labs(title="Mean with SD", x="Group", y='Log2(Intensity)')+
+      theme_bw()+
+      theme(plot.title = element_text(size=25, colour="darkblue"),
+            axis.title.x = element_text(size=15),
+            axis.title.y = element_text(size=15),
+            axis.text.x = element_text(size=13),
+            legend.position = 'bottom',
+            legend.background = element_rect(colour='black'),
+            legend.key = element_rect(colour='white'))
+```
+
+![plot of chunk unnamed-chunk-48](figure/unnamed-chunk-48-1.png)
+
+> ### Challenge:
+> 
+> Add the **standard error of the mean**. Which one is smaller?
+
+
+
+
+## Calculate the confidence interval
+
+Now that we've covered the standard error of the mean and the standard
+deviation, let's investigate how we can add custom confidence
+intervals (CI) for our measurement of the mean. We'll add these CI's
+to the summary results we previously stored for protein
+`sp|P44015|VAC2_YEAST`
+
+Confidence interval: 
+
+$$\mbox{mean} \pm (SE \times \alpha /2 \mbox{quantile of t distribution})$$
+
+
+To calculate the 95% confident interval, we need to be careful and set
+the quantile for two-sided. We need to divide by two for error.  For
+example, 95% confidence interval, right tail is 2.5% and left tail is
+2.5%.
+
+
+
+```r
+summaryresult$ciw.lower.95 <- summaryresult$mean - qt(0.975,summaryresult$len-1) * summaryresult$se
+summaryresult$ciw.upper.95 <- summaryresult$mean + qt(0.975,summaryresult$len-1) * summaryresult$se
+summaryresult
+```
+
+```
+##        Group     mean         sd         se length ciw.lower.95
+## 1 Condition1 26.23632 0.10396539 0.06002444      3     25.97805
+## 2 Condition2 26.00661 0.16268179 0.09392438      3     25.60248
+## 3 Condition3 23.25609 0.09467798 0.05466236      3     23.02090
+## 4 Condition4 20.97056 0.73140174 0.42227499      3     19.15366
+##   ciw.upper.95
+## 1     26.49458
+## 2     26.41073
+## 3     23.49128
+## 4     22.78746
+```
+
+
+```r
+# mean with 95% two-sided confidence interval
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult) +
+    geom_point() +
+    geom_errorbar(aes(ymax = ciw.upper.95, ymin=ciw.lower.95), width = 0.1) +
+    labs(title="Mean with 95% confidence interval", x="Condition", y='Log2(Intensity)') +
+    theme_bw() +
+    theme(plot.title = element_text(size=25, colour="darkblue"),
+          axis.title.x = element_text(size=15),
+          axis.title.y = element_text(size=15),
+          axis.text.x = element_text(size=13),
+          legend.position = 'bottom',
+          legend.background = element_rect(colour = 'black'),
+          legend.key = element_rect(colour='white'))
+```
+
+![plot of chunk unnamed-chunk-51](figure/unnamed-chunk-51-1.png)
+
+> ### Challenges
+> 
+> Replicate the above for the 99% two-sided confidence interval. 
+
+
+
+### Comment
+
+Let's compare all three versions of the means with different error
+bars. Every gap between error bars is different. Furthermore, error
+bars with SD and CI are overlapping between groups! Error bars for SD
+show the spread of the population while error bars based on SE reflect
+the uncertainty in the mean and depend on the sample size. Confidence
+intervals of `n` on the other hand mean that the interval captures the
+population mean `n %` of the time. When the sample size increases, CI
+and SE are getting closer to each other.
+

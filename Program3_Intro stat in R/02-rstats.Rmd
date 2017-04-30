@@ -516,7 +516,7 @@ boxplot(Log2Intensity ~ Run, data = iprg)
   
 # The `ggplot2`  package
 
-**`ggplot2`** is a plotting package that makes it simple to create
+`ggplot2` is a plotting package that makes it simple to create
 complex plots from data in a data frame. It provides a more
 programmatic interface for specifying what variables to plot, how they
 are displayed, and general visual properties, so we only need minimal
@@ -562,14 +562,13 @@ easily set up plot "templates" and conveniently explore different
 types of plots, so the above plot can also be generated with code like
 this:
 
-```{r, first-ggplot-with-plus, eval=FALSE}
-# Assign plot to a variable
+```{r, eval=FALSE}
+## Assign plot to a variable
 ints_plot <- ggplot(data = iprg, aes(x = Run, y = Log2Intensity))
 
-# Draw the plot
+## Draw the plot
 ints_plot + geom_boxplot()
 ```
-
 
 Notes:
 
@@ -600,8 +599,6 @@ ggplot(data = iprg,
            fill = Condition)) +
   geom_boxplot()
 ```
-
-
 
 Now let's rename all axis labels and title, and rotate the x-axis
 labels 90 degrees. We can add those specifications using the `labs`
@@ -649,7 +646,7 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 >   log-10 transfored intensities.
 > * Customise the plot as suggested above.
 
-# Randomization
+# Randomisation
 
 ## Random selection of samples from a larger set
 
@@ -686,10 +683,10 @@ us a different order of the complete set.
 msrun <- unique(iprg$Run)
 msrun
 
-# randomize order among all 12 MS runs
+## randomize order among all 12 MS runs
 sample(msrun, length(msrun))
 
-# different order will be shown.
+## different order will be shown.
 sample(msrun, length(msrun))
 ```
 
@@ -709,14 +706,13 @@ conditions, 3 technical replicates per condition. Using the
 randomized block designs!
 
 ```{r}
-# use 'psych' package
-library(psych)
+library("psych") ## load the psych package
 
 msrun <- unique(iprg[, c('Condition','Run')])
 msrun
 
-# 4 Conditions of 12 MS runs randomly ordered
-block.random(n=12, c(Condition=4))
+## 4 Conditions of 12 MS runs randomly ordered
+block.random(n = 12, c(Condition = 4))
 ```
 
 # Saving your work
@@ -754,3 +750,245 @@ document our full analysis in an R markdown file!
 
 ---
 Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md) 
+
+
+# Basic statistical summaries
+
+## Calculate simple statistics
+
+Let's start data with one protein as an example and calculate the
+mean, standard deviation, standard error of the mean across all
+replicates per condition. We then store all the computed statistics
+into a single summary data frame for easy access.
+
+We can use the **aggregate** function to compute summary statistics
+
+```{r}
+# check what proteins are in dataset, show all protein names
+head(unique(iprg$Protein))
+```
+
+```{r}
+# Let's start with one protein, named "sp|P44015|VAC2_YEAST"
+oneproteindata <- iprg[iprg$Protein == "sp|P44015|VAC2_YEAST", ]
+
+# there are 12 rows in oneproteindata
+oneproteindata
+```
+
+
+```{r, eval = FALSE}
+# If you want to see more details, 
+?aggregate
+```
+
+### Calculate mean per groups
+
+```{r}
+## splits 'oneproteindata' into subsets by 'Condition', 
+## then, compute 'FUN=mean' of 'log2Int'
+sub.mean <- aggregate(Log2Intensity ~ Condition,
+                      data = oneproteindata,
+                      FUN = mean)
+sub.mean
+```
+
+### Calculate SD (standard deviation) per groups
+```{r}
+## The same as mean calculation above. 'FUN' is changed to 'sd'.
+sub.sd <- aggregate(Log2Intensity ~ Condition,
+                    data = oneproteindata, FUN = sd)
+sub.sd
+```
+
+### Count the number of observation per groups
+```{r}
+## The same as mean calculation. 'FUN' is changed 'length'.
+sub.len <- aggregate(Log2Intensity ~ Condition,
+                     data = oneproteindata,
+                     FUN = length)
+sub.len
+```
+
+### Calculate SE (standard error of mean) per groups
+
+$$ SE = \sqrt{\frac{s^2}{n}} $$
+
+```{r}
+sub.se <- sqrt(sub.sd$Log2Intensity^2 / sub.len$Log2Intensity)
+sub.se
+```
+
+```{r}
+## make the summary table including the results above (mean, sd, se
+## and length).
+(grp <- paste0("Condition", 1:4))
+summaryresult <- data.frame(Group = grp,
+                            mean = sub.mean$Log2Intensity,
+                            sd = sub.sd$Log2Intensity, 
+                            se = sub.se, 
+                            length = sub.len$Log2Intensity)
+summaryresult
+```
+
+## Visualization with error bars for descriptive purpose
+
+*error bars* can have a variety of meanings or conclusions if what
+they represent is not precisely specified. Below we provide some
+examples of which types of error bars are common. We're using the
+summary of protein `sp|P44015|VAC2_YEAST` from the previous section
+and the `ggplot2` package as it provides a convenient way to make
+easily adaptable plots.
+
+```{r}
+# means without any errorbar
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult)+
+    geom_point(size = 3)
+```
+
+Let's change a number of visual properties to make the plot more attractive
+ 
+* Let's change the labels of x-axis and y-axis and title: `labs(title="Mean", x="Condition", y='Log2(Intensity)')`
+* Let's change background color for white: `theme_bw()`
+* Let's change size or color of labels of axes and title, text of
+  x-axis by using a *theme*
+* Let's change the position of legend (use `'none'` to remove it)
+* Let's make the box for legend
+* Let's remove the box for legend key.
+
+
+```{r}
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult) +
+    geom_point() +
+    labs(title = "Mean", x = "Group", y = 'Log2(Intensity)') +
+    theme_bw() + 
+    theme(plot.title = element_text(size = 25, colour = "darkblue"),
+          axis.title.x = element_text(size = 15),
+          axis.title.y = element_text(size = 15),
+          axis.text.x = element_text(size = 13),
+          legend.position = 'bottom',
+          legend.background = element_rect(colour = 'black'),
+          legend.key = element_rect(colour = 'white'))
+```
+
+Let's now add the **standard deviation**:
+
+```{r}
+# mean with SD
+ggplot(aes(x=Group, y=mean, colour=Group), data=summaryresult)+
+      geom_point(size=3)+
+      geom_errorbar(aes(ymax = mean + sd, ymin=mean - sd), width=0.1)+
+      scale_x_discrete('Group')+
+      labs(title="Mean with SD", x="Group", y='Log2(Intensity)')+
+      theme_bw()+
+      theme(plot.title = element_text(size=25, colour="darkblue"),
+            axis.title.x = element_text(size=15),
+            axis.title.y = element_text(size=15),
+            axis.text.x = element_text(size=13),
+            legend.position = 'bottom',
+            legend.background = element_rect(colour='black'),
+            legend.key = element_rect(colour='white'))
+```
+
+> ### Challenge:
+> 
+> Add the **standard error of the mean**. Which one is smaller?
+
+
+```{r, eval=FALSE, echo=FALSE}
+# mean with SE
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult) +
+      geom_errorbar(aes(ymax = mean + se, ymin=mean - se), width = 0.1) +
+      labs(title="Mean with SE", x="Condition", y='Log2(Intensity)') +
+      theme_bw() +
+      theme(plot.title = element_text(size = 25, colour = "darkblue"),
+            axis.title.x = element_text(size = 15),
+            axis.title.y = element_text(size = 15),
+            axis.text.x = element_text(size = 13),
+            legend.position = 'bottom',
+            legend.background = element_rect(colour = 'black'),
+            legend.key = element_rect(colour = 'white'))
+## The SE is narrow than the SD!
+```
+
+## Calculate the confidence interval
+
+Now that we've covered the standard error of the mean and the standard
+deviation, let's investigate how we can add custom confidence
+intervals (CI) for our measurement of the mean. We'll add these CI's
+to the summary results we previously stored for protein
+`sp|P44015|VAC2_YEAST`
+
+Confidence interval: 
+
+$$\mbox{mean} \pm (SE \times \alpha /2 \mbox{quantile of t distribution})$$
+
+
+To calculate the 95% confident interval, we need to be careful and set
+the quantile for two-sided. We need to divide by two for error.  For
+example, 95% confidence interval, right tail is 2.5% and left tail is
+2.5%.
+
+
+```{r}
+summaryresult$ciw.lower.95 <- summaryresult$mean - qt(0.975,summaryresult$len-1) * summaryresult$se
+summaryresult$ciw.upper.95 <- summaryresult$mean + qt(0.975,summaryresult$len-1) * summaryresult$se
+summaryresult
+```
+
+```{r}
+# mean with 95% two-sided confidence interval
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult) +
+    geom_point() +
+    geom_errorbar(aes(ymax = ciw.upper.95, ymin=ciw.lower.95), width = 0.1) +
+    labs(title="Mean with 95% confidence interval", x="Condition", y='Log2(Intensity)') +
+    theme_bw() +
+    theme(plot.title = element_text(size=25, colour="darkblue"),
+          axis.title.x = element_text(size=15),
+          axis.title.y = element_text(size=15),
+          axis.text.x = element_text(size=13),
+          legend.position = 'bottom',
+          legend.background = element_rect(colour = 'black'),
+          legend.key = element_rect(colour='white'))
+```
+
+> ### Challenges
+> 
+> Replicate the above for the 99% two-sided confidence interval. 
+
+```{r, eval=FALSE, echo=FALSE}
+# mean with 99% two-sided confidence interval
+summaryresult$ciw.lower.99 <- summaryresult$mean - qt(0.995,summaryresult$len-1) * summaryresult$se
+summaryresult$ciw.upper.99 <- summaryresult$mean + qt(0.995,summaryresult$len-1) * summaryresult$se
+summaryresult
+
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult) +
+    geom_point() +
+    geom_errorbar(aes(ymax = ciw.upper.99, ymin=ciw.lower.99), width=0.1) +
+    labs(title="Mean with 99% confidence interval", x="Condition", y='Log2(Intensity)') +
+    theme_bw()+
+    theme(plot.title = element_text(size=25, colour="darkblue"),
+          axis.title.x = element_text(size=15),
+          axis.title.y = element_text(size=15),
+          axis.text.x = element_text(size=13),
+          legend.position = 'bottom',
+          legend.background = element_rect(colour='black'),
+          legend.key = element_rect(colour='white'))
+```
+
+### Comment
+
+Let's compare all three versions of the means with different error
+bars. Every gap between error bars is different. Furthermore, error
+bars with SD and CI are overlapping between groups! Error bars for SD
+show the spread of the population while error bars based on SE reflect
+the uncertainty in the mean and depend on the sample size. Confidence
+intervals of `n` on the other hand mean that the interval captures the
+population mean `n %` of the time. When the sample size increases, CI
+and SE are getting closer to each other.
+
