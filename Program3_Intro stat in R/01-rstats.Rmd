@@ -1,6 +1,6 @@
 ---
 title: 'Day 1: Beginner''s statistics in R'
-author: "Laurent Gatto and Data Carpentry"
+author: "Laurent Gatto, Meena Choi and Data Carpentry"
 output: 
   html_document:
     toc: true
@@ -18,11 +18,10 @@ knitr::opts_chunk$set(echo = TRUE)
 - Find help about R
 - Install new R packages
 - R variables, functions, vectors, data.frames
-- Read spreadsheets into R
 - Simple arithmetics and data manipulation
-- Introduction to plotting
 - Learn about R markdown
 
+---
 
 Part 1 and 2 are adapted from the Data Carpentry
 [R for data analysis and visualization](http://www.datacarpentry.org/R-ecology-lesson/index.html)
@@ -969,11 +968,9 @@ whole process is made relatively easy with RStudio and available
 
 We are going to walk through the creation of such a document.
 
-# Part 4: Starting with data and plotting
 
-TODO, based on DC `data.frame` material, using the ABRF data.
+
 
 
 ---
-
 Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)

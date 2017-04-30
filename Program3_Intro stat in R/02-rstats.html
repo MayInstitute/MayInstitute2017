@@ -9,7 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="Laurent Gatto and Meena Choi" />
+<meta name="author" content="Laurent Gatto, Meena Choi and Data Carpentry" />
 
 
 <title>Day 2: Beginner’s statistics in R</title>
@@ -215,7 +215,7 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Day 2: Beginner’s statistics in R</h1>
-<h4 class="author"><em>Laurent Gatto and Meena Choi</em></h4>
+<h4 class="author"><em>Laurent Gatto, Meena Choi and Data Carpentry</em></h4>
 
 </div>
 
@@ -223,10 +223,277 @@ div.tocify {
 <div id="objectives" class="section level1">
 <h1>Objectives</h1>
 <ul>
+<li>Reading data in R</li>
+<li>Data manipulation and exploration</li>
 <li>Data distributions</li>
-<li>More plotting</li>
+<li>Select random sample and randomize MS run orders</li>
+<li>Visualisation</li>
 <li>Hypothesis testing: t-test</li>
 </ul>
+<hr />
+<p>Parts of the <code>data.frame</code> material is based on the <a href="http://www.datacarpentry.org/R-ecology-lesson/index.html">R for data analysis and visualization</a> Data Carpentry course.</p>
+</div>
+<div id="reading-in-data" class="section level1">
+<h1>Reading in data</h1>
+<p>The file we’ll be reading in is a dataset that has been 1) processed in Skyline and 2) summarized by each run and protein with <code>MSstats</code>. We will practice with it.</p>
+<p><strong>Tip</strong> Often you’ll get data delivered as a Microsoft Excel file. You can export any spreadsheet to a <code>.csv</code> (comma separated values) file in Excel through the <code>Save As.. &gt; Format: Comma Separated Values (.csv)</code> menu item.</p>
+<p>In Rstudio, go to the <code>environnment</code> pane, click on <code>Import Dataset</code> dropdown and choose <code>From Text File...</code> from the dropdown menu. Import the <code>iPRG_example_runsummary.csv</code> file from your data directory, and inspect that Rstudio correctly parsed the text file into an R <code>data.frame</code>.</p>
+<p>Now inspect the <code>Console</code> <code>Environment</code> pane again. Notice that a new variable for the <code>iPRG_example</code> data frame was created in the environment by executing the <code>read.csv</code> function. Let’s have a look at the documentation for this function by pulling up the help pages with the <code>?</code>.</p>
+<pre class="r"><code>iprg &lt;- read.csv(&quot;./data/iPRG_example_runsummary.csv&quot;)</code></pre>
+</div>
+<div id="data-frames" class="section level1">
+<h1>Data frames</h1>
+<div id="tidy-data" class="section level2">
+<h2>Tidy data</h2>
+<p>The <code>iprg</code> object that we created is a <code>data.frame</code></p>
+<pre class="r"><code>class(iprg)</code></pre>
+<pre><code>## [1] &quot;data.frame&quot;</code></pre>
+<p>These object are the equivalent of a sheet in a spreadsheet file. They are composed on a set of columns, which are different vectors (or characters, numerics, factors, …) as seen prevously.</p>
+<p>There are actually some additional contstrains compared to a spreadsheet. Rather than being limitations, these constrains are an important feature that allow some standardisation and hence automatic computations.</p>
+<ul>
+<li><p>All the data in a <code>data.frame</code> must be included in a column, as a vector. This means that it’s not possible to add <em>random</em> notes or values, as is sometimes seen in spreadsheets.</p></li>
+<li><p>All columns/vectors must have the same length, as opposed to spreadsheets, where sometimes some values or summary statistics are added at the bottom.</p></li>
+<li><p>No colours or font decorations.</p></li>
+</ul>
+<p>This leads us to a very important concept in data formatting and data manipuation, which is that data should be <em>tidy</em>, where</p>
+<ul>
+<li>Columns describe different variables</li>
+<li>Rows describe different observations</li>
+<li>A cell contains a measurement or piece of information for a single observation.</li>
+</ul>
+<p>There are two important reasons that we want tidy data</p>
+<ol style="list-style-type: decimal">
+<li>No need to tidy it up, which is a task many of us waste way to much time with.</li>
+<li>The data is well structured, easy to read in, whatever the software or programming languages, and is easy to reason about.</li>
+</ol>
+<p>Note that data is alwasy tidy, and for good reasons so. For example, omics data is often presented as shown below</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">rep1_0hr</th>
+<th align="right">rep1_16hr</th>
+<th align="right">rep1_24hr</th>
+<th align="right">rep1_48hr</th>
+<th align="right">rep1_72hr</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">P48432</td>
+<td align="right">0.486</td>
+<td align="right">0.248</td>
+<td align="right">0.177</td>
+<td align="right">0.037</td>
+<td align="right">0.026</td>
+</tr>
+<tr class="even">
+<td align="left">Q62315-2</td>
+<td align="right">0.388</td>
+<td align="right">0.196</td>
+<td align="right">0.157</td>
+<td align="right">0.105</td>
+<td align="right">0.082</td>
+</tr>
+<tr class="odd">
+<td align="left">P55821</td>
+<td align="right">0.349</td>
+<td align="right">0.258</td>
+<td align="right">0.198</td>
+<td align="right">0.089</td>
+<td align="right">0.051</td>
+</tr>
+<tr class="even">
+<td align="left">P17809</td>
+<td align="right">0.321</td>
+<td align="right">0.169</td>
+<td align="right">0.170</td>
+<td align="right">0.109</td>
+<td align="right">0.121</td>
+</tr>
+<tr class="odd">
+<td align="left">Q8K3F7</td>
+<td align="right">0.363</td>
+<td align="right">0.237</td>
+<td align="right">0.223</td>
+<td align="right">0.091</td>
+<td align="right">0.061</td>
+</tr>
+</tbody>
+</table>
+<p>which is not stictly tidy, as the protein intensity is presented along muliple columns.</p>
+<blockquote>
+<h3 id="challenge">Challenge</h3>
+<p>Compare the structure of the data presented above and the <code>iprg</code> data.</p>
+</blockquote>
+</div>
+<div id="what-are-data-frames" class="section level2">
+<h2>What are data frames?</h2>
+<p>Data frames are the <em>de facto</em> data structure for most tabular data, and what we use for statistics and plotting.</p>
+<p>A data frame can be created by hand, but most commonly they are generated by the functions <code>read.csv()</code> or <code>read.table()</code>; in other words, when importing spreadsheets from your hard drive (or the web).</p>
+<p>A data frame is the representation of data in the format of a table where the columns are vectors that all have the same length. Because the column are vectors, they all contain the same type of data (e.g., characters, integers, factors). We can see this when inspecting the <b>str</b>ucture of a data frame with the function <code>str()</code>:</p>
+<pre class="r"><code>str(iprg)</code></pre>
+<pre><code>## 'data.frame':    36321 obs. of  6 variables:
+##  $ Protein      : Factor w/ 3027 levels &quot;sp|D6VTK4|STE2_YEAST&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Log2Intensity: num  26.8 26.6 26.6 26.8 26.8 ...
+##  $ Run          : Factor w/ 12 levels &quot;JD_06232014_sample1-A.raw&quot;,..: 2 3 1 4 5 6 7 8 9 11 ...
+##  $ Condition    : Factor w/ 4 levels &quot;Condition1&quot;,&quot;Condition2&quot;,..: 1 1 1 2 2 2 3 3 3 4 ...
+##  $ BioReplicate : int  1 1 1 2 2 2 3 3 3 4 ...
+##  $ Intensity    : num  1.18e+08 1.02e+08 1.01e+08 1.20e+08 1.16e+08 ...</code></pre>
+</div>
+<div id="inspecting-data.frame-objects" class="section level2">
+<h2>Inspecting <code>data.frame</code> Objects</h2>
+<p>We already saw how the functions <code>head()</code> and <code>str()</code> can be useful to check the content and the structure of a data frame. Here is a non-exhaustive list of functions to get a sense of the content/structure of the data. Let’s try them out!</p>
+<ul>
+<li>Size:
+<ul>
+<li><code>dim(iprg)</code> - returns a vector with the number of rows in the first element, and the number of columns as the second element (the <strong>dim</strong>ensions of the object)</li>
+<li><code>nrow(iprg)</code> - returns the number of rows</li>
+<li><code>ncol(iprg)</code> - returns the number of columns</li>
+</ul></li>
+<li>Content:
+<ul>
+<li><code>head(iprg)</code> - shows the first 6 rows</li>
+<li><code>tail(iprg)</code> - shows the last 6 rows</li>
+</ul></li>
+<li>Names:
+<ul>
+<li><code>names(iprg)</code> - returns the column names (synonym of <code>colnames()</code> for <code>data.frame</code> objects)</li>
+<li><code>rownames(iprg)</code> - returns the row names</li>
+</ul></li>
+<li>Summary:
+<ul>
+<li><code>str(iprg)</code> - structure of the object and information about the class, length and content of each column</li>
+<li><code>summary(iprg)</code> - summary statistics for each column</li>
+</ul></li>
+</ul>
+<p>Note: most of these functions are “generic”, they can be used on other types of objects besides <code>data.frame</code>.</p>
+<blockquote>
+<h3 id="challenge-1">Challenge</h3>
+<p>Based on the output of <code>str(iprg)</code>, can you answer the following questions?</p>
+<ul>
+<li>What is the class of the object <code>iprg</code>?</li>
+<li>How many rows and how many columns are in this object?</li>
+<li>How many proteins have been assayed?</li>
+</ul>
+</blockquote>
+</div>
+<div id="indexing-and-subsetting-data-frames" class="section level2">
+<h2>Indexing and subsetting data frames</h2>
+<p>Our data frame has rows and columns (it has 2 dimensions), if we want to extract some specific data from it, we need to specify the <em>coordinates</em> we want from it. Row numbers come first, followed by column numbers. However, note that different ways of specifying these coordinates lead to results with different classes.</p>
+<pre class="r"><code>iprg[1]      # first column in the data frame (as a data.frame)
+iprg[, 1]    # first column in the data frame (as a vector)
+iprg[1, 1]   # first element in the first column of the data frame (as a vector)
+iprg[1, 6]   # first element in the 6th column (as a vector)
+iprg[1:3, 3] # first three elements in the 3rd column (as a vector)
+iprg[3, ]    # the 3rd element for all columns (as a data.frame)
+head_iprg &lt;- iprg[1:6, ] # equivalent to head(iprg)</code></pre>
+<p><code>:</code> is a special function that creates numeric vectors of integers in increasing or decreasing order, test <code>1:10</code> and <code>10:1</code> for instance.</p>
+<p>You can also exclude certain parts of a data frame using the <code>-</code> sign:</p>
+<pre class="r"><code>iprg[, -1]          # The whole data frame, except the first column
+iprg[-c(7:36321), ] # Equivalent to head(iprg)</code></pre>
+<p>As well as using numeric values to subset a <code>data.frame</code> columns can be called by name, using one of the four following notations:</p>
+<pre class="r"><code>iprg[&quot;Protein&quot;]       # Result is a data.frame
+iprg[, &quot;Protein&quot;]     # Result is a vector
+iprg[[&quot;Protein&quot;]]     # Result is a vector
+iprg$Protein          # Result is a vector</code></pre>
+<p>For our purposes, the last three notations are equivalent. RStudio knows about the columns in your data frame, so you can take advantage of the autocompletion feature to get the full and correct column name.</p>
+<blockquote>
+<h3 id="challenge-2">Challenge</h3>
+<ol style="list-style-type: decimal">
+<li><p>Create a <code>data.frame</code> (<code>oprg_200</code>) containing only the observations from row 200 of the <code>iprg</code> dataset.</p></li>
+<li><p>Notice how <code>nrow()</code> gave you the number of rows in a <code>data.frame</code>?</p>
+<ul>
+<li>Use that number to pull out just that last row in the data frame.</li>
+<li>Compare that with what you see as the last row using <code>tail()</code> to make sure it’s meeting expectations.</li>
+<li>Pull out that last row using <code>nrow()</code> instead of the row number.</li>
+<li>Create a new data frame object (<code>iprg_last</code>) from that last row.</li>
+</ul></li>
+<li><p>Use <code>nrow()</code> to extract the row that is in the middle of the data frame. Store the content of this row in an object named <code>iprg_middle</code>.</p></li>
+<li><p>Combine <code>nrow()</code> with the <code>-</code> notation above to reproduce the behavior of <code>head(iprg)</code> keeping just the first through 6th rows of the iprg dataset.</p></li>
+</ol>
+</blockquote>
+</div>
+</div>
+<div id="factors" class="section level1">
+<h1>Factors</h1>
+<p>When we did <code>str(iprg)</code> we saw that several of the columns consist of numerics, however, the columns <code>Protein</code>, <code>Run</code>, and <code>Condition</code>, are of a special class called a <code>factor</code>. Factors are very useful and are actually something that make R particularly well suited to working with data, so we’re going to spend a little time introducing them.</p>
+<p>Factors are used to represent categorical data. Factors can be ordered or unordered, and understanding them is necessary for statistical analysis and for plotting.</p>
+<p>Factors are stored as integers, and have labels (text) associated with these unique integers. While factors look (and often behave) like character vectors, they are actually integers under the hood, and you need to be careful when treating them like strings.</p>
+<p>Once created, factors can only contain a pre-defined set of values, known as <em>levels</em>. By default, R always sorts <em>levels</em> in alphabetical order. For instance, if you have a factor with 2 levels:</p>
+<pre class="r"><code>sex &lt;- factor(c(&quot;male&quot;, &quot;female&quot;, &quot;female&quot;, &quot;male&quot;))</code></pre>
+<p>R will assign <code>1</code> to the level <code>&quot;female&quot;</code> and <code>2</code> to the level <code>&quot;male&quot;</code> (because <code>f</code> comes before <code>m</code>, even though the first element in this vector is <code>&quot;male&quot;</code>). You can check this by using the function <code>levels()</code>, and check the number of levels using <code>nlevels()</code>:</p>
+<pre class="r"><code>levels(sex)</code></pre>
+<pre><code>## [1] &quot;female&quot; &quot;male&quot;</code></pre>
+<pre class="r"><code>nlevels(sex)</code></pre>
+<pre><code>## [1] 2</code></pre>
+<p>Sometimes, the order of the factors does not matter, other times you might want to specify the order because it is meaningful (e.g., “low”, “medium”, “high”), it improves your visualization, or it is required by a particular type of analysis. Here, one way to reorder our levels in the <code>sex</code> vector would be:</p>
+<pre class="r"><code>sex # current order</code></pre>
+<pre><code>## [1] male   female female male  
+## Levels: female male</code></pre>
+<pre class="r"><code>sex &lt;- factor(sex, levels = c(&quot;male&quot;, &quot;female&quot;))
+sex # after re-ordering</code></pre>
+<pre><code>## [1] male   female female male  
+## Levels: male female</code></pre>
+<p>In R’s memory, these factors are represented by integers (1, 2, 3), but are more informative than integers because factors are self describing: <code>&quot;female&quot;</code>, <code>&quot;male&quot;</code> is more descriptive than <code>1</code>, <code>2</code>. Which one is “male”? You wouldn’t be able to tell just from the integer data. Factors, on the other hand, have this information built in. It is particularly helpful when there are many levels (like the species names in our example dataset).</p>
+<div id="converting-factors" class="section level3">
+<h3>Converting factors</h3>
+<p>If you need to convert a factor to a character vector, you use <code>as.character(x)</code>.</p>
+<pre class="r"><code>as.character(sex)</code></pre>
+<pre><code>## [1] &quot;male&quot;   &quot;female&quot; &quot;female&quot; &quot;male&quot;</code></pre>
+</div>
+<div id="using-stringsasfactorsfalse" class="section level3">
+<h3>Using <code>stringsAsFactors=FALSE</code></h3>
+<p>By default, when building or importing a data frame, the columns that contain characters (i.e., text) are coerced (=converted) into the <code>factor</code> data type. Depending on what you want to do with the data, you may want to keep these columns as <code>character</code>. To do so, <code>read.csv()</code> and <code>read.table()</code> have an argument called <code>stringsAsFactors</code> which can be set to <code>FALSE</code>.</p>
+<p>In most cases, it’s preferable to set <code>stringsAsFactors = FALSE</code> when importing your data, and converting as a factor only the columns that require this data type.</p>
+<blockquote>
+<p>Challenge</p>
+<p>Compare the output of <code>str(surveys)</code> when setting <code>stringsAsFactors = TRUE</code> (default) and <code>stringsAsFactors = FALSE</code>:</p>
+</blockquote>
+<pre class="r"><code>iprg &lt;- read.csv(&quot;data/iPRG_example_runsummary.csv&quot;, stringsAsFactors = TRUE)
+str(iprg)
+iprg &lt;- read.csv(&quot;data/iPRG_example_runsummary.csv&quot;, stringsAsFactors = FALSE)
+str(iprg)</code></pre>
+</div>
+</div>
+<div id="other-data-structures" class="section level1">
+<h1>Other data structures</h1>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th>dimensions</th>
+<th>number of types</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">vectors</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td align="left">matrix</td>
+<td>2</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td align="left">array</td>
+<td>any</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td align="left">data.frame</td>
+<td>2</td>
+<td>1 per colums</td>
+</tr>
+<tr class="odd">
+<td align="left">list</td>
+<td>1 (length)</td>
+<td>any</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <p>Back to course <a href="https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md">home page</a></p>
 </div>
