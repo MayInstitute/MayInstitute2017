@@ -15,7 +15,7 @@ output:
 - Data manipulation and exploration
 - Randomisation
 - Visualisation
-- Hypothesis testing: t-test 
+- Basic statistics
 
 ---
 
@@ -23,7 +23,9 @@ Parts of the `data.frame` material is based on the
 [R for data analysis and visualization](http://www.datacarpentry.org/R-ecology-lesson/index.html)
 Data Carpentry course.
 
-# Reading in data
+
+# Part 1: Data exploration and visualisation
+## Reading in data
 
 The file we'll be reading in is a dataset that has been 1) processed
 in Skyline and 2) summarized by each run and protein with
@@ -52,9 +54,9 @@ the `?`.
 iprg <- read.csv("./data/iPRG_example_runsummary.csv")
 ```
 
-# Data frames
+## Data frames
 
-## Tidy data
+### Tidy data
 
 The `iprg` object that we created is a `data.frame`
 
@@ -122,7 +124,7 @@ muliple columns.
 > Compare the structure of the data presented above and the `iprg`
 > data.
 
-## What are data frames?
+### What are data frames?
 
 Data frames are the _de facto_ data structure for most tabular data, and what we
 use for statistics and plotting.
@@ -152,7 +154,7 @@ str(iprg)
 ##  $ Intensity    : num  1.18e+08 1.02e+08 1.01e+08 1.20e+08 1.16e+08 ...
 ```
 
-## Inspecting `data.frame` Objects
+### Inspecting `data.frame` objects
 
 We already saw how the functions `head()` and `str()` can be useful to check the
 content and the structure of a data frame. Here is a non-exhaustive list of
@@ -191,7 +193,7 @@ objects besides `data.frame`.
 > * How many rows and how many columns are in this object?
 > * How many proteins have been assayed?
 
-## Indexing and subsetting data frames
+### Indexing and subsetting data frames
 
 Our data frame has rows and columns (it has 2 dimensions), if we want
 to extract some specific data from it, we need to specify the
@@ -256,8 +258,7 @@ of the autocompletion feature to get the full and correct column name.
 >    `head(iprg)` keeping just the first through 6th rows of the iprg
 >    dataset.
 
-
-# Factors
+## Factors
 
 
 
@@ -380,7 +381,7 @@ iprg <- read.csv("data/iPRG_example_runsummary.csv", stringsAsFactors = FALSE)
 str(iprg)
 ```
 
-# Other data structures
+## Other data structures
 
 |          | dimensions | number of types | 
 |:---------|------------|-----------------|
@@ -392,7 +393,7 @@ str(iprg)
 
 
 
-# Data exploration
+## Data exploration
 
 Let's explore some basic properties of our dataset. Go to the RStudio
 Environment pane and double click the `iPRG_example` entry. This data
@@ -511,9 +512,9 @@ more detailed data exploration using a smalle subset of the data.
 <!-- ``` -->
 <!-- </details> -->
 
-# Summarizing and visualizing data
+## Summarizing and visualizing data
 
-## Histogram
+### Histogram
 
 Make a histogram of all the MS1 intensities, quantified by Skyline,
 for `iPRG_example`.
@@ -576,7 +577,7 @@ summary(iprg$Log2Intensity)
 > 10 scale, using the `log10` function. See also the more general
 > `log` function.
 
-## Boxplot or box-and-whisker plot
+### Boxplot or box-and-whisker plot
 
 Boxplots are extremely useful because they allow us to quickly
 visualise the data distribution, without making assumptions of the
@@ -618,7 +619,7 @@ boxplot(Log2Intensity ~ Run, data = iprg)
   data under different angles.
   
   
-# The `ggplot2`  package
+## The `ggplot2`  package
 
 `ggplot2` is a plotting package that makes it simple to create
 complex plots from data in a data frame. It provides a more
@@ -700,7 +701,8 @@ Notes:
 > * Repeat the plot above but displaying the raw intensities. 
 > * Log-10 transform the raw intensities on the flight when plotting.
 
-## Customising plots 
+
+### Customising plots 
 
 First, let's colour the boxplot based on the condition:
 
@@ -784,9 +786,53 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 >   log-10 transfored intensities.
 > * Customise the plot as suggested above.
 
-# Randomisation
+## Saving your work
 
-## Random selection of samples from a larger set
+You can save plots to a number of different file formats. PDF is by
+far the most common format because it's lightweight, cross-platform
+and scales up well but jpegs, pngs and a number of other file formats
+are also supported. Let's redo the last barplot but save it to the
+file system this time.
+
+Let's save the boxplot as pdf file. 
+
+
+```r
+pdf()
+p + geom_jitter(alpha = 0.1) + geom_boxplot()
+dev.off()
+```
+
+The default file name is `Rplots.pdf`. We can customise that file name
+specifying it by passing the file name, as a character, to the `pdf()`
+function.
+
+> ### Challenge
+> 
+> Save a figure of your choice to a pdf file. Read the manual for the
+> `png` function and save that same image to a png file.
+>
+> **Tip**: save your figures in a dedicated directory.
+
+Finally, we can save this whole session you worked so hard on! We can
+save individual variables using the `save` function, or save the
+complete environment with `save.image`. Be careful though, as this can
+save a lot of unnecessary (temporary) data.
+
+
+```r
+save.image(file = '02-rstats-all.rda')
+```
+
+**Tip**: The best way to save your work is to save the script that
+contains the exact command that lead to the results! Or better, we can
+save and document our full analysis in an R markdown file!
+
+# Part 2: Basic statistics
+
+## Randomisation
+
+### Random selection of samples from a larger set
 
 This particular dataset contains a total of 10 subjects across
 conditions. Suppose we label them from 1 to 14 and randomly would like
@@ -833,7 +879,7 @@ sample(10, 3)
 ## [1] 5 8 7
 ```
 
-## Completely randomized order of MS runs
+### Completely randomized order of MS runs
 
 We can also create a random order using all elements of iPRG
 dataset. Again, we can achieve this using `sample`, asking for exactly
@@ -886,7 +932,7 @@ sample(msrun, length(msrun))
 ## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
 ```
 
-## Randomized block design
+### Randomized block design
 
 - Allow to remove known sources of variability that you are not
   interested in.
@@ -959,48 +1005,10 @@ block.random(n = 12, c(Condition = 4))
 ## S12      3         1
 ```
 
-# Saving your work
 
-You can save plots to a number of different file formats. PDF is by
-far the most common format because it's lightweight, cross-platform
-and scales up well but jpegs, pngs and a number of other file formats
-are also supported. Let's redo the last barplot but save it to the
-file system this time.
+## Basic statistical summaries
 
-Let's save the boxplot as pdf file. 
-
-
-```r
-pdf()
-p + geom_jitter(alpha = 0.1) + geom_boxplot()
-dev.off()
-```
-
-The default file name is `Rplots.pdf`. We can customise that file name
-specifying it by passing the file name, as a character, to the `pdf()`
-function.
-
-Finally, we can save this whole session you worked so hard on! We can
-save individual variables using the `save` function, or save the
-complete environment with `save.image`. Be careful though, as this can
-save a lot of unnecessary (temporary) data.
-
-
-```r
-save.image(file = '02-rstats-all.rda')
-```
-
-The best way to save your work is to save the script that contains the
-exact command that lead to the results! Or better, we can save and
-document our full analysis in an R markdown file!
-
----
-Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md) 
-
-
-# Basic statistical summaries
-
-## Calculate simple statistics
+### Calculate simple statistics
 
 Let's start data with one protein as an example and calculate the
 mean, standard deviation, standard error of the mean across all
@@ -1088,6 +1096,7 @@ sub.mean
 
 ### Calculate SD (standard deviation) per groups
 
+
 ```r
 ## The same as mean calculation above. 'FUN' is changed to 'sd'.
 sub.sd <- aggregate(Log2Intensity ~ Condition,
@@ -1104,6 +1113,7 @@ sub.sd
 ```
 
 ### Count the number of observation per groups
+
 
 ```r
 ## The same as mean calculation. 'FUN' is changed 'length'.
@@ -1316,3 +1326,24 @@ intervals of `n` on the other hand mean that the interval captures the
 population mean `n %` of the time. When the sample size increases, CI
 and SE are getting closer to each other.
 
+## Saving our results
+
+We have two objects that contain all the information that we have
+generated so far:
+
+* The `summaryresults` object, that contains all the summary
+  statistics.
+* The `iprg` data frame, that was read from the `csv` file. This
+  object can be easily regenerated using `read.csv`, and hence doesn't
+  necessarily to be saved explicity.
+  
+
+
+```r
+save(summaryresult, file = "./data/summaryresults.rda")
+save(iprg, file = "./data/iprg.rda")
+```
+
+---
+
+Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md) 

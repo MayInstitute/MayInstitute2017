@@ -971,7 +971,11 @@ whole process is made relatively easy with RStudio and available
 We are going to walk through the creation of such a document.
 
 
+--- 
 
+In the next sections, we are going to learn how to read data sets into
+R, how to explore and visualise the data, and how to perform basic
+statistical analyses.
 
 
 ---
