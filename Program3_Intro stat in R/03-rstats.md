@@ -12,10 +12,8 @@ output:
 
 # Objectives
 
-- Hypothesis testing
+- Hypothesis testing: t-test
 - Categorical data
-- Correlation
-- Hypothesis testing: Chi-sequare
 - Power calculation
 
 ---
@@ -32,36 +30,55 @@ load("./data/iprg.rda")
 
 ## Two sample t-test for one protein with one feature
 
-Now, we'll perform a t-test whether protein `sp|P44015|VAC2_YEAST` has a change in abundance between Condition 1 and Condition 2.
+Now, we'll perform a t-test whether protein `sp|P44015|VAC2_YEAST` has
+a change in abundance between Condition 1 and Condition 2.
 
-**Hypothesis** : 
+### Hypothesis
 
-$H_0$ : no change in abundance, mean(Condition1) - mean(Condition2) = 0
+* $H_0$: no change in abundance, mean(Condition1) - mean(Condition2) = 0
+* $H_a$: change in abundance, mean(Condition1) - mean(Condition 2) $\neq$ 0
 
-$H_a$ : change in abundance, mean(Condition1) - mean(Condition 2) $\neq$ 0
+### Statistics
 
+* Observed $t = \frac{\mbox{difference of group means}}{\mbox{estimate of variation}} = \frac{(mean_{1} - mean_{2})}{SE} \sim t_{\alpha/2, df}$
+* Standard error, $SE=\sqrt{\frac{s_{1}^2}{n_{1}} + \frac{s_{2}^2}{n_{2}}}$
 
-**observed $t = \frac{\mbox{difference of group means}}{\mbox{estimate of variation}} = \frac{(mean_{1} - mean_{2})}{SE} \sim t_{\alpha/2, df}$**
+with 
+* $n_{1}$ : Number of replicates
+* $s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$ : Sample variance
 
-
-Standard error, $SE=\sqrt{\frac{s_{1}^2}{n_{1}} + \frac{s_{2}^2}{n_{2}}}$
-
-$n_{1}$ : Number of replicates
-
-$s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$ : Sample variance
-
-### R code
+### Data preparation
 
 
 ```r
-#load data from Section 2
-
-# Let's start with one protein, named "sp|P44015|VAC2_YEAST"
+## Let's start with one protein, named "sp|P44015|VAC2_YEAST"
 oneproteindata <- iprg[iprg$Protein == "sp|P44015|VAC2_YEAST", ]
 
-# Then, get two conditions only, because t.test only works for two groups (conditions).
+## Then, get two conditions only, because t.test only works for two
+## groups (conditions).
 oneproteindata.condition12 <- oneproteindata[oneproteindata$Condition %in% 
-                                                     c('Condition1', 'Condition2'), ]
+                                             c('Condition1', 'Condition2'), ]
+oneproteindata.condition12
+```
+
+```
+##                    Protein Log2Intensity                       Run
+## 21096 sp|P44015|VAC2_YEAST      26.30163 JD_06232014_sample1_B.raw
+## 21097 sp|P44015|VAC2_YEAST      26.11643 JD_06232014_sample1_C.raw
+## 21098 sp|P44015|VAC2_YEAST      26.29089 JD_06232014_sample1-A.raw
+## 21099 sp|P44015|VAC2_YEAST      25.81957 JD_06232014_sample2_A.raw
+## 21100 sp|P44015|VAC2_YEAST      26.11527 JD_06232014_sample2_B.raw
+## 21101 sp|P44015|VAC2_YEAST      26.08498 JD_06232014_sample2_C.raw
+##        Condition BioReplicate Intensity
+## 21096 Condition1            1  82714388
+## 21097 Condition1            1  72749239
+## 21098 Condition1            1  82100518
+## 21099 Condition2            2  59219741
+## 21100 Condition2            2  72690802
+## 21101 Condition2            2  71180513
+```
+
+```r
 unique(oneproteindata.condition12$Condition)
 ```
 
@@ -79,12 +96,23 @@ unique(oneproteindata$Condition)
 ## Levels: Condition1 Condition2 Condition3 Condition4
 ```
 
+To perform the t-test, we use the `t.test` function. Let's first
+familiarise ourselves with it by looking that the manual 
+
+
+```r
+?t.test
+```
+
+And now apply to to our data
+
 
 ```r
 # t test for different abundance (log2Int) between Groups (Condition)
-result <- t.test(oneproteindata.condition12$Log2Intensity ~ oneproteindata.condition12$Condition,
-                 var.equal=FALSE)
-# show the summary of t-test including confidence level with 0.95
+result <- t.test(Log2Intensity ~ Condition,
+                 data = oneproteindata.condition12,
+                 var.equal = FALSE)
+
 result
 ```
 
@@ -92,7 +120,7 @@ result
 ## 
 ## 	Welch Two Sample t-test
 ## 
-## data:  oneproteindata.condition12$Log2Intensity by oneproteindata.condition12$Condition
+## data:  Log2Intensity by Condition
 ## t = 2.0608, df = 3.4001, p-value = 0.1206
 ## alternative hypothesis: true difference in means is not equal to 0
 ## 95 percent confidence interval:
@@ -106,8 +134,9 @@ We can redo the t-test and change the confidence level for the log2 fold change.
 
 
 ```r
-result.ci90 <- t.test(oneproteindata.condition12$Log2Intensity ~ oneproteindata.condition12$Condition, 
+result.ci90 <- t.test(Log2Intensity ~ Condition, 
                       var.equal = FALSE,
+                      data = oneproteindata.condition12,
                       conf.level = 0.9)
 result.ci90
 ```
@@ -116,7 +145,7 @@ result.ci90
 ## 
 ## 	Welch Two Sample t-test
 ## 
-## data:  oneproteindata.condition12$Log2Intensity by oneproteindata.condition12$Condition
+## data:  Log2Intensity by Condition
 ## t = 2.0608, df = 3.4001, p-value = 0.1206
 ## alternative hypothesis: true difference in means is not equal to 0
 ## 90 percent confidence interval:
@@ -126,11 +155,27 @@ result.ci90
 ##                 26.23632                 26.00661
 ```
 
-Let's have a more detailed look at what information we can learn from the results our t-test. 
+### The `htest` class
+
+The `t.test` function, like other hypothesis testing function, return
+a result of a type we haven't encountered yet, the `htest` class:
 
 
 ```r
-# name of output
+class(result)
+```
+
+```
+## [1] "htest"
+```
+
+which stores typical results from such tests. Let's have a more
+detailed look at what information we can learn from the results our
+t-test. When we type the name of our `result` object, we get a short
+textual summary, but the object contains more details:
+
+
+```r
 names(result)
 ```
 
@@ -139,9 +184,14 @@ names(result)
 ## [6] "null.value"  "alternative" "method"      "data.name"
 ```
 
+and we can access each of these by using the `$` operator, like we
+used to access a single column from a `data.frame`, but the `htest`
+class is not a `data.frame` (it's actually a `list`). For example, to
+access the group means, we would use
+
+
 ```r
-# mean for each group
-result$estimate 
+result$estimate
 ```
 
 ```
@@ -149,19 +199,22 @@ result$estimate
 ##                 26.23632                 26.00661
 ```
 
-```r
-# log2 transformed fold change between groups : Disease-Healthy
-result$estimate[1]-result$estimate[2]
-```
+> ### Challenge
+> 
+> * Calculate the (log2-transformed) fold change between groups
+> * Extract the value of the t-statistics
+> * Calculate the standard error (fold-change/t-statistics)
+> * Extract the degrees of freedom (parameter)
+> * Extract the p values
+> * Extract the 95% confidence intervals
+> * Manually calculate the one- and two-side tests p-values using the
+>   t-statistics and the test parameter (using the `pt` function).
+
+
 
 ```
 ## mean in group Condition1 
 ##                0.2297095
-```
-
-```r
-# test statistic value, T value
-result$statistic 
 ```
 
 ```
@@ -169,19 +222,9 @@ result$statistic
 ## 2.060799
 ```
 
-```r
-# standard error
-(result$estimate[1]-result$estimate[2])/result$statistic
-```
-
 ```
 ## mean in group Condition1 
 ##                0.1114662
-```
-
-```r
-# degree of freedom
-result$parameter 
 ```
 
 ```
@@ -189,18 +232,8 @@ result$parameter
 ## 3.400112
 ```
 
-```r
-# p value for two-sides testing
-result$p.value 
-```
-
 ```
 ## [1] 0.1206139
-```
-
-```r
-# 95% confidence interval for log2 fold change
-result$conf.int 
 ```
 
 ```
@@ -209,19 +242,9 @@ result$conf.int
 ## [1] 0.95
 ```
 
-```r
-# p value calculation for one side
-1-pt(result$statistic, result$parameter)
-```
-
 ```
 ##          t 
 ## 0.06030697
-```
-
-```r
-# p value for two sides, which is the same as pvalue from t test (result$p.value)
-2*(1-pt(result$statistic, result$parameter))
 ```
 
 ```
@@ -229,7 +252,8 @@ result$conf.int
 ## 0.1206139
 ```
 
-We can also manually compute our t-test statistic using the formulas we descibed above and compare it with the `summaryresult`. 
+We can also manually compute our t-test statistic using the formulas
+we descibed above and compare it with the `summaryresult`.
 
 Recall the `summaryresult` we generated last section
 
@@ -254,8 +278,8 @@ summaryresult
 ```r
 summaryresult12 <- summaryresult[1:2, ]
 
-# test statistic, It is the same as 'result$statistic' above.
-diff(summaryresult12$mean) # same as result$estimate[1]-result$estimate[2]
+## test statistic, It is the same as 'result$statistic' above.
+diff(summaryresult12$mean) ## same as result$estimate[1]-result$estimate[2]
 ```
 
 ```
@@ -263,7 +287,7 @@ diff(summaryresult12$mean) # same as result$estimate[1]-result$estimate[2]
 ```
 
 ```r
-sqrt(sum(summaryresult12$sd^2/summaryresult12$length)) # same as stand error
+sqrt(sum(summaryresult12$sd^2/summaryresult12$length)) ## same as stand error
 ```
 
 ```
@@ -271,6 +295,7 @@ sqrt(sum(summaryresult12$sd^2/summaryresult12$length)) # same as stand error
 ```
 
 ```r
+## the t-statistic
 diff(summaryresult12$mean)/sqrt(sum(summaryresult12$sd^2/summaryresult12$length))
 ```
 
@@ -280,16 +305,18 @@ diff(summaryresult12$mean)/sqrt(sum(summaryresult12$sd^2/summaryresult12$length)
 
 # Sample size calculation
 
-To calculate the required sample size, you’ll need to know four things:
+To calculate the required sample size, you’ll need to know four
+things:
 
 * $\alpha$: confidence level
 * $power$: 1 - $\beta$, where $\beta$ is probability of a true positive discovery
 * $\Delta$: anticipated fold change
 * $\sigma$: anticipated variance
 
-### R code
+## R code
 
-Assuming equal varaince and number of samples across groups, the following formula is used for sample size estimation:
+Assuming equal varaince and number of samples across groups, the
+following formula is used for sample size estimation:
 
 $$\frac{2{\sigma}^2}{n}\leq(\frac{\Delta}{z_{1-\beta}+z_{1-\alpha/2}})^2$$
 
@@ -375,7 +402,7 @@ ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
         axis.text.x = element_text(size=13)) 
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png)
 
 
 # Comparison of two proportions in R
@@ -455,7 +482,7 @@ ov
 dotchart(t(ov), xlab="Observed counts")
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png)
 
 
 ## Z-test
@@ -614,6 +641,7 @@ ft$estimate
 ## odds ratio 
 ##  0.3567853
 ```
+
 
 --- 
 
