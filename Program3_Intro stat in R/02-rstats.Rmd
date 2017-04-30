@@ -348,9 +348,6 @@ Environment pane and double click the `iPRG_example` entry. This data
 is in tidy,*long* format, which is an easier data format for data
 manipulation operations such as selecting, grouping, summarizing, etc.
 
-
-![Example data for this section](iprgexample.png)
-
 Data exported out of many omics processing or quantification tools are
 often formatted in *wide* format, which is easier to read when we
 would like to compare values (i.e intensity values) for specific
@@ -373,79 +370,122 @@ iPRG dataset.
 >   imported correctly.
 > * Display a summary of the whole data.
 
+Let's now inspect the possible values for the `Conditions` and the
+`BioReplicate` columns. To aswer the questions, below, we will need to
+use the `unique` function. From the manual page, we learn that 
 
+> 'unique' returns a vector, data frame or array like 'x' but with
+> duplicate elements/rows removed.
 
-Inspect the possible values for the `Conditions` and the `BioReplicate` (8th) column using the named and numbered column selection syntax for data frames.
+For example
 
-```{r,echo=T,eval=T}
-unique(iprg[, 'Condition'])
-unique(iprg[, 4])
-
-unique(iprg[, c('Condition', 'BioReplicate', 'Run')])
+```{r}
+unique(c(1, 2, 4, 1, 1, 2, 3, 3, 4, 1))
+unique(c("a", "b", "a"))
 ```
 
-Select subsets of rows from iPRG dataset: i.e we might be interested in working from here on only with Condition1 or all measurements on one particular MS run.
-
-```{r, eval=T}
-# subset of data for condition1
-iprg.condition1 <- iprg[iprg$Condition == 'Condition1', ]
-iprg.condition1.bio1 <- iprg[iprg$Condition == 'Condition1' 
-                               & iprg$BioReplicate == '1', ]
-nrow(iprg.condition1.bio1)
+```{r}
+dfr <- data.frame(x = c(1, 1, 2),
+                  y = c("a", "a", "b"))
+dfr
+unique(dfr)
 ```
 
-```{r, eval=T}
-# subset of data for condition1 or condition2
-iprg.condition1.2 <- iprg[iprg$Condition == 'Condition1' 
-                          | iprg$Condition == 'Condition2', ]
-nrow(iprg.condition1.2)
-unique(iprg.condition1.2$Condition)
-```
-```{r, eval=T}
-# subset of data for condition1 or condition2
-iprg.condition1.2 <- iprg[which(iprg$Condition %in% c('Condition1', 'Condition2')), ]
-nrow(iprg.condition1.2)
-unique(iprg.condition1.2$Condition)
-```
+> ### Challenge
+
+> * How many conditions are there?
+> * How many biological replicates are there?
+> * How many condition/biological replicates combinations are there?
 
 
-***
-# 4. Summarizing and Visualizing data
+It is often useful to start a preliminary analysis, or proceed with a
+more detailed data exploration using a smalle subset of the data.
 
-## 4.1 Histogram
+> ### Challenge
+> 
+> Select subsets of rows from iPRG dataset. Let's focus on 
+> 
+> * Condition 1 only 
+> * Condition 1 and BioReplicate 1
+> * all measurements on one particular MS run.
+> * Conditions 1 and 2
 
-Make a histogram of all the MS1 intensities, quantified by Skyline, for `iPRG_example`.
+> For each subset, how many measurements are there?
 
-```{r,eval=T,echo=T, fig.width=5, fig.height=4}
+<!-- <details> -->
+<!-- ```{r} -->
+<!-- iprg.condition1 <- iprg[iprg$Condition == 'Condition1', ] -->
+<!-- iprg.condition1.bio1 <- iprg[iprg$Condition == 'Condition1' & -->
+<!--                              iprg$BioReplicate == 1, ] -->
+<!-- nrow(iprg.condition1.bio1) -->
+
+<!-- ## subset of data for condition1 or condition2 -->
+<!-- iprg.condition1.2 <- iprg[iprg$Condition == 'Condition1' | -->
+<!--                           iprg$Condition == 'Condition2', ] -->
+<!-- nrow(iprg.condition1.2) -->
+
+<!-- ## subset of data for condition1 or condition2 -->
+<!-- iprg.condition1.2 <- iprg[which(iprg$Condition %in% c('Condition1', 'Condition2')), ] -->
+<!-- nrow(iprg.condition1.2) -->
+<!-- unique(iprg.condition1.2$Condition) -->
+<!-- ``` -->
+<!-- </details> -->
+
+# Summarizing and visualizing data
+
+## Histogram
+
+Make a histogram of all the MS1 intensities, quantified by Skyline,
+for `iPRG_example`.
+
+```{r}
 hist(iprg$Intensity)
 ```
 
-Our histogram looks quite skewed. How does this look on log-scale? Do you recognize this distribution? The distribution for log2-transformed intensities looks very similar to the normal distribution. The advantage of working with normally distributed data is that we can apply a variety of statistical tests to analyzeand interpret our data. Let's add a log2-scaled intensity column to our data so we don't have to transform the original intensities every time we need them.  
+Our histogram looks quite skewed. How does this look on log-scale? Do
+you recognize this distribution? The distribution for log2-transformed
+intensities looks very similar to the normal distribution. The
+advantage of working with normally distributed data is that we can
+apply a variety of statistical tests to analyzeand interpret our
+data. Let's add a log2-scaled intensity column to our data so we don't
+have to transform the original intensities every time we need them.
 
-```{r,eval=T,echo=T, fig.width=5, fig.height=4}
-hist(iprg$Log2Intensity, 
-     xlab="log2 transformed intensities", main="Histogram of iPRG data")
+```{r}
+hist(iprg$Log2Intensity,
+     xlab = "log2 transformed intensities",
+     main = "Histogram of iPRG data")
 ```
 
-```{r,eeval=T,echo=T, fig.width=5, fig.height=4}
-# or directly transform the intensities.
-hist(log2(iprg$Intensity), 
-     xlab="log2 transformed intensities", main="Histogram of iPRG data")
+In this case, we have duplicated information in our data, we have the
+raw and log-transformed data. This is not necessary (and not advised),
+as it is straightforward to transform the data on the flight.
+
+
+```{r}
+hist(log2(iprg$Intensity),
+     xlab = "log2 transformed intensities",
+     main = "Histogram of iPRG data")
 ```
 
-We look at the summary for the log2-transformed values including the value for the mean. Let's fix that first. 
+We look at the summary for the log2-transformed values including the
+value for the mean. Let's fix that first.
 
 ```{r,eval=T}
 summary(iprg$Log2Intensity)
 ```
 
 
-***
-## 4.2 Boxplot or box-and-whisker plot
+> ### Challenge
+> 
+> Reproduce the histogram above but plotting the data on the log base
+> 10 scale, using the `log10` function. See also the more general
+> `log` function.
 
-Boxplots are extremely useful becasue they allow us to quickly visualize the data distribution, without making assumptions of the distribution type (non-parametric). We can read up on what statistics the different elements of a box-and-whisker represent in the R help files.   
+## Boxplot or box-and-whisker plot
 
-Let's make the boxplot with `ggplot2`, one of the most popular and powerful R packages for making graphics. The syntax of ggplot2 might seem a bit intimidating at first, but besides the advantage of having full control over all graphical elements of your plot, two other advantages are that 1) it's very straightforward to automatically assign distinguishing graphical elements to subsets of your data and 2) switching between plot types requires little changes to your code. Let's start with a bare bones boxplot.  
+Boxplots are extremely useful becasue they allow us to quickly visualize the data distribution, without making assumptions of the distribution type (non-parametric). We can read up on what statistics the different elements of a box-and-whisker represent in the R help files.
+
+Let's make the boxplot with `ggplot2`, one of the most popular and powerful R packages for making graphics. The syntax of ggplot2 might seem a bit intimidating at first, but besides the advantage of having full control over all graphical elements of your plot, two other advantages are that 1) it's very straightforward to automatically assign distinguishing graphical elements to subsets of your data and 2) switching between plot types requires little changes to your code. Let's start with a bare bones boxplot.
 
 ```{r,eval=T, warning=F}
 library(ggplot2)
@@ -459,7 +499,7 @@ Now let's rename all axis labels and title, and rotate the x-axis labels 90 degr
 ```{r,eval=T, warning=F}
 ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
       		geom_boxplot(aes_string(fill='Condition'))+
-          labs(title='Log2 transformed intensity distribution per MS run', 
+          labs(title='Log2 transformed intensity distribution per MS run',
                y='Log2(Intensity)',
                x='MS run')+
           theme(axis.text.x=element_text(angle=90))
@@ -467,22 +507,21 @@ ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
 ```
 
 
-And easily switch from a boxplot to a violin plot representation by changing the `geom` type. 
+And easily switch from a boxplot to a violin plot representation by changing the `geom` type.
 
 ```{r,eval=T, warning=F}
 ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
         	geom_violin(aes_string(fill='Condition'))+
-          labs(title='Log2 transformed intensity distribution per Subject', 
+          labs(title='Log2 transformed intensity distribution per Subject',
                y='Log2(Intensity)',
                x='MS run')+
           theme(axis.text.x=element_text(angle=90))
 ```
 
 
-***
 # 5. Randomization
 
-## 5.1 Random selection of samples from a larger set
+## Random selection of samples from a larger set
 
 This particular dataset contains a total of 10 subjects across conditions. Suppose we label them from 1 to 14 and randomly would like to select 3 subjects we can do this using the `sample` function. When we run `sample` another time, different subjects will be selected. Try this a couple times.
 
@@ -501,7 +540,7 @@ set.seed(3728)
 sample(10, 3)
 ```
 
-## 5.2 Completely randomized order of MS runs 
+## Completely randomized order of MS runs
 
 We can also create a random order using all elements of iPRG dataset. Again, we can achieve this using `sample`, asking for exactly the amount of samples in the subset. This time, each repetition gives us a different order of the complete set.
 
@@ -516,7 +555,7 @@ sample(msrun, length(msrun))
 sample(msrun, length(msrun))
 ```
 
-## 5.3 Randomized block design
+## Randomized block design
 
 - Allow to remove known sources of variability that you are not interested in.
 
@@ -537,36 +576,37 @@ msrun
 block.random(n=12, c(Condition=4))
 ```
 
-# 6. Saving your work 
+# Saving your work
 
-You can save plots to a number of different file formats. PDF is by far the most common format because it's lightweight, cross-platform and scales up well but jpegs, pngs and a number of other file formats are also supported. Let's redo the last barplot but save it to the file system this time. 
+You can save plots to a number of different file formats. PDF is by
+far the most common format because it's lightweight, cross-platform
+and scales up well but jpegs, pngs and a number of other file formats
+are also supported. Let's redo the last barplot but save it to the
+file system this time.
 
 Let's save the boxplot as pdf file.
-```{r,eval=T, warning=F}
-pdf('boxplot_log2intensity_distribution_byMSrun.pdf', width=10, height=8)
-ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
-      		geom_boxplot(aes_string(fill='Condition'))+
-          labs(title='Log2 transformed intensity distribution per MS run', 
-               y='Log2(Intensity)',
-               x='MS run')+
-          theme(axis.text.x=element_text(angle=90))
-dev.off() 
+
+```{r, eval=FALSE}
+pdf()
+## plot(...)
+dev.off()
 ```
 
-Finally, we can save this whole session you worked so hard on! 
+Finally, we can save this whole session you worked so hard on!
 
-```{r,eval=T}
-save.image(file='Section1.RData')
+```{r,eval=FALSE}
+## save
+## save.image(file='Section1.RData')
 ```
 
-Ok let's give it a rest now. Saving an .RData is the easiest way to pick up your work right where you left it!
+Ok let's give it a rest now. Saving an .RData is the easiest way to
+pick up your work right where you left it!
 
-```{r, eval=F}
+```{r, eval=FALSE}
 rm(list=ls())
 load(file = 'Section1.RData')
 ```
 
 
-
 ---
-Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)
+Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md) 

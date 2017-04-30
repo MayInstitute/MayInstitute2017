@@ -391,5 +391,434 @@ str(iprg)
 |data.frame|       2    | 1 per colums    | 
 | list     | 1 (length) | any             |
 
+
+
+# Data exploration
+
+Let's explore some basic properties of our dataset. Go to the RStudio
+Environment pane and double click the `iPRG_example` entry. This data
+is in tidy,*long* format, which is an easier data format for data
+manipulation operations such as selecting, grouping, summarizing, etc.
+
+Data exported out of many omics processing or quantification tools are
+often formatted in *wide* format, which is easier to read when we
+would like to compare values (i.e intensity values) for specific
+subjects (i.e peptides) across different values for a variable of
+interest such as (i.e conditions). We'll format a summary of this
+dataset as a 'wide' data frame later in this tutorial.
+
+Let's do some more data exploration by examining how R read in the
+iPRG dataset.
+
+
+> ### Challenge: 
+> 
+> Explore the data as described below
+>
+> * What is the *class* of the variable?
+> * What dimension is it? How many rows and columns does it have?
+> * What variables (column names) do we have?
+> * Look at the few first and last lines to make sure the data was
+>   imported correctly.
+> * Display a summary of the whole data.
+
+Let's now inspect the possible values for the `Conditions` and the
+`BioReplicate` columns. To aswer the questions, below, we will need to
+use the `unique` function. From the manual page, we learn that 
+
+> 'unique' returns a vector, data frame or array like 'x' but with
+> duplicate elements/rows removed.
+
+For example
+
+
+```r
+unique(c(1, 2, 4, 1, 1, 2, 3, 3, 4, 1))
+```
+
+```
+## [1] 1 2 4 3
+```
+
+```r
+unique(c("a", "b", "a"))
+```
+
+```
+## [1] "a" "b"
+```
+
+
+```r
+dfr <- data.frame(x = c(1, 1, 2),
+                  y = c("a", "a", "b"))
+dfr
+```
+
+```
+##   x y
+## 1 1 a
+## 2 1 a
+## 3 2 b
+```
+
+```r
+unique(dfr)
+```
+
+```
+##   x y
+## 1 1 a
+## 3 2 b
+```
+
+> ### Challenge
+
+> * How many conditions are there?
+> * How many biological replicates are there?
+> * How many condition/biological replicates combinations are there?
+
+
+It is often useful to start a preliminary analysis, or proceed with a
+more detailed data exploration using a smalle subset of the data.
+
+> ### Challenge
+> 
+> Select subsets of rows from iPRG dataset. Let's focus on 
+> 
+> * Condition 1 only 
+> * Condition 1 and BioReplicate 1
+> * all measurements on one particular MS run.
+> * Conditions 1 and 2
+
+> For each subset, how many measurements are there?
+
+<!-- <details> -->
+<!-- ```{r} -->
+<!-- iprg.condition1 <- iprg[iprg$Condition == 'Condition1', ] -->
+<!-- iprg.condition1.bio1 <- iprg[iprg$Condition == 'Condition1' & -->
+<!--                              iprg$BioReplicate == 1, ] -->
+<!-- nrow(iprg.condition1.bio1) -->
+
+<!-- ## subset of data for condition1 or condition2 -->
+<!-- iprg.condition1.2 <- iprg[iprg$Condition == 'Condition1' | -->
+<!--                           iprg$Condition == 'Condition2', ] -->
+<!-- nrow(iprg.condition1.2) -->
+
+<!-- ## subset of data for condition1 or condition2 -->
+<!-- iprg.condition1.2 <- iprg[which(iprg$Condition %in% c('Condition1', 'Condition2')), ] -->
+<!-- nrow(iprg.condition1.2) -->
+<!-- unique(iprg.condition1.2$Condition) -->
+<!-- ``` -->
+<!-- </details> -->
+
+# Summarizing and visualizing data
+
+## Histogram
+
+Make a histogram of all the MS1 intensities, quantified by Skyline,
+for `iPRG_example`.
+
+
+```r
+hist(iprg$Intensity)
+```
+
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
+
+Our histogram looks quite skewed. How does this look on log-scale? Do
+you recognize this distribution? The distribution for log2-transformed
+intensities looks very similar to the normal distribution. The
+advantage of working with normally distributed data is that we can
+apply a variety of statistical tests to analyzeand interpret our
+data. Let's add a log2-scaled intensity column to our data so we don't
+have to transform the original intensities every time we need them.
+
+
+```r
+hist(iprg$Log2Intensity,
+     xlab = "log2 transformed intensities",
+     main = "Histogram of iPRG data")
+```
+
+![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
+
+In this case, we have duplicated information in our data, we have the
+raw and log-transformed data. This is not necessary (and not advised),
+as it is straightforward to transform the data on the flight.
+
+
+
+```r
+hist(log2(iprg$Intensity),
+     xlab = "log2 transformed intensities",
+     main = "Histogram of iPRG data")
+```
+
+![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
+
+We look at the summary for the log2-transformed values including the
+value for the mean. Let's fix that first.
+
+
+```r
+summary(iprg$Log2Intensity)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   16.37   23.78   24.68   24.82   25.78   31.42
+```
+
+
+> ### Challenge
+> 
+> Reproduce the histogram above but plotting the data on the log base
+> 10 scale, using the `log10` function. See also the more general
+> `log` function.
+
+## Boxplot or box-and-whisker plot
+
+Boxplots are extremely useful becasue they allow us to quickly visualize the data distribution, without making assumptions of the distribution type (non-parametric). We can read up on what statistics the different elements of a box-and-whisker represent in the R help files.
+
+Let's make the boxplot with `ggplot2`, one of the most popular and powerful R packages for making graphics. The syntax of ggplot2 might seem a bit intimidating at first, but besides the advantage of having full control over all graphical elements of your plot, two other advantages are that 1) it's very straightforward to automatically assign distinguishing graphical elements to subsets of your data and 2) switching between plot types requires little changes to your code. Let's start with a bare bones boxplot.
+
+
+```r
+library(ggplot2)
+ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
+    			geom_boxplot(aes_string(fill='Condition'))
+```
+
+![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
+
+Now let's rename all axis labels and title, and rotate the x-axis labels 90 degrees. We can add those specifications using the `labs` and `theme` functions of the `ggplot2` package.
+
+
+```r
+ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
+      		geom_boxplot(aes_string(fill='Condition'))+
+          labs(title='Log2 transformed intensity distribution per MS run',
+               y='Log2(Intensity)',
+               x='MS run')+
+          theme(axis.text.x=element_text(angle=90))
+```
+
+![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
+
+
+And easily switch from a boxplot to a violin plot representation by changing the `geom` type.
+
+
+```r
+ggplot(aes_string(x='Run', y='Log2Intensity'), data=iprg)+
+        	geom_violin(aes_string(fill='Condition'))+
+          labs(title='Log2 transformed intensity distribution per Subject',
+               y='Log2(Intensity)',
+               x='MS run')+
+          theme(axis.text.x=element_text(angle=90))
+```
+
+![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
+
+
+# 5. Randomization
+
+## Random selection of samples from a larger set
+
+This particular dataset contains a total of 10 subjects across conditions. Suppose we label them from 1 to 14 and randomly would like to select 3 subjects we can do this using the `sample` function. When we run `sample` another time, different subjects will be selected. Try this a couple times.
+
+
+```r
+sample(10, 3)
+```
+
+```
+## [1] 10  3  9
+```
+
+```r
+sample(10, 3)
+```
+
+```
+## [1] 5 6 1
+```
+
+Now suppose we would like to select the same randomly selected samples every time, then we can use a random seed number.
+
+
+```r
+set.seed(3728)
+sample(10, 3)
+```
+
+```
+## [1] 5 8 7
+```
+
+```r
+set.seed(3728)
+sample(10, 3)
+```
+
+```
+## [1] 5 8 7
+```
+
+## Completely randomized order of MS runs
+
+We can also create a random order using all elements of iPRG dataset. Again, we can achieve this using `sample`, asking for exactly the amount of samples in the subset. This time, each repetition gives us a different order of the complete set.
+
+
+```r
+msrun <- unique(iprg$Run)
+msrun
+```
+
+```
+##  [1] JD_06232014_sample1_B.raw JD_06232014_sample1_C.raw
+##  [3] JD_06232014_sample1-A.raw JD_06232014_sample2_A.raw
+##  [5] JD_06232014_sample2_B.raw JD_06232014_sample2_C.raw
+##  [7] JD_06232014_sample3_A.raw JD_06232014_sample3_B.raw
+##  [9] JD_06232014_sample3_C.raw JD_06232014_sample4_B.raw
+## [11] JD_06232014_sample4_C.raw JD_06232014_sample4-A.raw
+## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
+```
+
+```r
+# randomize order among all 12 MS runs
+sample(msrun, length(msrun))
+```
+
+```
+##  [1] JD_06232014_sample3_A.raw JD_06232014_sample3_C.raw
+##  [3] JD_06232014_sample1_B.raw JD_06232014_sample4-A.raw
+##  [5] JD_06232014_sample3_B.raw JD_06232014_sample4_B.raw
+##  [7] JD_06232014_sample2_C.raw JD_06232014_sample4_C.raw
+##  [9] JD_06232014_sample2_B.raw JD_06232014_sample1-A.raw
+## [11] JD_06232014_sample1_C.raw JD_06232014_sample2_A.raw
+## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
+```
+
+```r
+# different order will be shown.
+sample(msrun, length(msrun))
+```
+
+```
+##  [1] JD_06232014_sample1_B.raw JD_06232014_sample3_B.raw
+##  [3] JD_06232014_sample2_C.raw JD_06232014_sample1-A.raw
+##  [5] JD_06232014_sample4_B.raw JD_06232014_sample2_A.raw
+##  [7] JD_06232014_sample2_B.raw JD_06232014_sample3_A.raw
+##  [9] JD_06232014_sample4_C.raw JD_06232014_sample1_C.raw
+## [11] JD_06232014_sample3_C.raw JD_06232014_sample4-A.raw
+## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
+```
+
+## Randomized block design
+
+- Allow to remove known sources of variability that you are not interested in.
+
+- Group conditions into blocks such that the conditions in a block are as similar as possible.
+
+- Randomly assign samples with a block.
+
+This particular dataset contains a total of 12 MS runs across 4 conditions, 3 technical replicates per condition. Using the `block.random` function in the `psych` package, we can achieve randomized block designs!
+
+
+```r
+# use 'psych' package
+library(psych)
+```
+
+```
+## 
+## Attaching package: 'psych'
+```
+
+```
+## The following objects are masked from 'package:ggplot2':
+## 
+##     %+%, alpha
+```
+
+```r
+msrun <- unique(iprg[, c('Condition','Run')])
+msrun
+```
+
+```
+##     Condition                       Run
+## 1  Condition1 JD_06232014_sample1_B.raw
+## 2  Condition1 JD_06232014_sample1_C.raw
+## 3  Condition1 JD_06232014_sample1-A.raw
+## 4  Condition2 JD_06232014_sample2_A.raw
+## 5  Condition2 JD_06232014_sample2_B.raw
+## 6  Condition2 JD_06232014_sample2_C.raw
+## 7  Condition3 JD_06232014_sample3_A.raw
+## 8  Condition3 JD_06232014_sample3_B.raw
+## 9  Condition3 JD_06232014_sample3_C.raw
+## 10 Condition4 JD_06232014_sample4_B.raw
+## 11 Condition4 JD_06232014_sample4_C.raw
+## 12 Condition4 JD_06232014_sample4-A.raw
+```
+
+```r
+# 4 Conditions of 12 MS runs randomly ordered
+block.random(n=12, c(Condition=4))
+```
+
+```
+##     blocks Condition
+## S1       1         2
+## S2       1         1
+## S3       1         3
+## S4       1         4
+## S5       2         1
+## S6       2         4
+## S7       2         2
+## S8       2         3
+## S9       3         4
+## S10      3         2
+## S11      3         3
+## S12      3         1
+```
+
+# Saving your work
+
+You can save plots to a number of different file formats. PDF is by
+far the most common format because it's lightweight, cross-platform
+and scales up well but jpegs, pngs and a number of other file formats
+are also supported. Let's redo the last barplot but save it to the
+file system this time.
+
+Let's save the boxplot as pdf file.
+
+
+```r
+pdf()
+## plot(...)
+dev.off()
+```
+
+Finally, we can save this whole session you worked so hard on!
+
+
+```r
+## save
+## save.image(file='Section1.RData')
+```
+
+Ok let's give it a rest now. Saving an .RData is the easiest way to
+pick up your work right where you left it!
+
+
+```r
+rm(list=ls())
+load(file = 'Section1.RData')
+```
+
+
 ---
-Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)
+Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md) 

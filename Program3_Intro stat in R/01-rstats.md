@@ -934,6 +934,7 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 
 
 
+
 ## Subsetting vectors
 
 If we want to extract one or several values from a vector, we must
@@ -1169,6 +1170,7 @@ heights[complete.cases(heights)]
 Now that we have learned how to write scripts, and the basics of R's
 data structures, we are ready to start working with the Portal dataset
 we have been using in the other lessons, and learn about data frames.
+
 
 # Part 3: R markdown
 
