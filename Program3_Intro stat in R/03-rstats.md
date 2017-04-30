@@ -3,6 +3,7 @@ title: 'Day 3: Beginner''s statistics in R'
 author: "Laurent Gatto and Meena Choi"
 output: 
   html_document:
+    self_contained: true
     toc: true
     toc_float: true
 ---
