@@ -923,6 +923,7 @@ sub.mean</code></pre>
 </div>
 <div id="calculate-sd-standard-deviation-per-groups" class="section level3">
 <h3>Calculate SD (standard deviation) per groups</h3>
+<p><span class="math display">\[ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} \]</span></p>
 <pre class="r"><code>## The same as mean calculation above. 'FUN' is changed to 'sd'.
 sub.sd &lt;- aggregate(Log2Intensity ~ Condition,
                     data = oneproteindata, FUN = sd)

@@ -46,7 +46,6 @@ a change in abundance between Condition 1 and Condition 2.
 * Standard error, $SE=\sqrt{\frac{s_{1}^2}{n_{1}} + \frac{s_{2}^2}{n_{2}}}$
 
 with 
-
 * $n_{1}$ : Number of replicates
 * $s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$ : Sample variance
 
@@ -128,8 +127,6 @@ result$estimate
 > * Extract the degrees of freedom (parameter)
 > * Extract the p values
 > * Extract the 95% confidence intervals
-> * Manually calculate the one- and two-side tests p-values using the
->   t-statistics and the test parameter (using the `pt` function).
 
 
 ```{r, echo=FALSE}
@@ -145,11 +142,6 @@ result$parameter
 result$p.value 
 ## 95% confidence interval for log2 fold change
 result$conf.int 
-## p value calculation for one side
-1-pt(result$statistic, result$parameter)
-## p value for two sides, which is the same as pvalue from t test
-## (result$p.value)
-2*(1-pt(result$statistic, result$parameter))
 ```
 
 We can also manually compute our t-test statistic using the formulas
@@ -168,6 +160,96 @@ sqrt(sum(summaryresult12$sd^2/summaryresult12$length)) ## same as stand error
 ## the t-statistic
 diff(summaryresult12$mean)/sqrt(sum(summaryresult12$sd^2/summaryresult12$length))
 ```
+
+## Working with distributions
+
+For each statistical distribution, we have function to compute
+
+* density
+* distribution function
+* quantile function 
+* random generation
+
+For the normale distribution `norm`, these are respectively
+
+* `dnorm`
+* `pnorm`
+* `qnorm`
+* `rnorm`
+
+Let's start by sampling 10000 values from a normal distribution $N(0, 1)$:
+
+```{r}
+xn <- rnorm(1e6)
+hist(xn, freq = FALSE)
+rug(xn)
+lines(density(xn), lwd = 2)
+```
+
+By definition, the area under the density curve is 1. The area at the
+left of 0, 1, and 2 are respectively:
+
+```{r}
+pnorm(0)
+pnorm(1)
+pnorm(2)
+```
+
+To ask the inverse question, we use the quantile function. The obtain
+0.5, `r pnorm(1)` and `r pnorm(2)` of our distribution, we need means
+of:
+
+```{r}
+qnorm(0.5)
+qnorm(pnorm(1))
+qnorm(pnorm(2))
+```
+
+Finally, the density function gives us the *height* at which we are
+for a given mean:
+
+```{r}
+hist(xn, freq = FALSE)
+lines(density(xn), lwd = 2)
+points(0, dnorm(0), pch = 19, col = "red")
+points(1, dnorm(1), pch = 19, col = "red")
+points(2, dnorm(2), pch = 19, col = "red")
+```
+
+
+Referring back to our t-test results above, we can manually calculate
+the one- and two-side tests p-values using the t-statistics and the
+test parameter (using the `pt` function).
+
+
+Our result t statistic was `r as.vector(result$statistic)` (accessible
+with `result$statistic`). Let's start by visualising it along a t
+distribution. Let's create data from such a distribution, making sure
+we set to appropriate parameter.
+
+```{r}
+xt <- rt(1e5, result$parameter)
+plot(density(xt), xlim = c(-10, 10))
+abline(v = result$statistic, col = "red")
+```
+
+The area on the left of that point is given by `pt(result$statistic,
+result$parameter)`, which is `r pt(result$statistic,
+result$parameter)`. The p-value for a one-sided test is this given by
+
+```{r}
+1 - pt(result$statistic, result$parameter)
+```
+
+And the p-value for a two-sided test is 
+
+```{r}
+2 * (1 - pt(result$statistic, result$parameter))
+```
+
+which is the same as the one calculated by the t-test.
+
+
 
 # Sample size calculation
 

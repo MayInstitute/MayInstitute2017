@@ -803,6 +803,8 @@ sub.mean
 
 ### Calculate SD (standard deviation) per groups
 
+$$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
+
 ```{r}
 ## The same as mean calculation above. 'FUN' is changed to 'sd'.
 sub.sd <- aggregate(Log2Intensity ~ Condition,
