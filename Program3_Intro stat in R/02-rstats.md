@@ -241,7 +241,7 @@ of the autocompletion feature to get the full and correct column name.
 
 > ### Challenge
 >
-> 1. Create a `data.frame` (`oprg_200`) containing only the observations from
+> 1. Create a `data.frame` (`iprg_200`) containing only the observations from
 >    row 200 of the `iprg` dataset.
 >
 > 2. Notice how `nrow()` gave you the number of rows in a `data.frame`?
@@ -386,13 +386,11 @@ str(iprg)
 
 |          | dimensions | number of types | 
 |:---------|------------|-----------------|
-| vectors  |       1    |       1         | 
-| matrix   |       2    |       1         | 
-| array    |     any    |       1         | 
-|data.frame|       2    | 1 per colums    | 
-| list     | 1 (length) | any             |
-
-
+| `vector` |       1    |       1         | 
+| `matrix` |       2    |       1         | 
+| `array`  |     any    |       1         | 
+|`data.frame`|       2    | 1 per colums    | 
+| `list`   | 1 (length) | any             |
 
 ## Data exploration
 
@@ -685,9 +683,10 @@ ints_plot + geom_boxplot()
 
 Notes:
 
- Anything you put in the `ggplot()` function can be seen by any geom layers
+* Anything you put in the `ggplot()` function can be seen by any geom layers
   that you add (i.e., these are universal plot settings). This includes the x and
   y axis you set up in `aes()`.
+  
 * You can also specify aesthetics for a given geom independently of the
   aesthetics defined globally in the `ggplot()` function.
 
@@ -784,7 +783,7 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 > ### Challenge
 > 
 > * Overlay a boxplot goem on top of a jitter geom for the raw or
->   log-10 transfored intensities.
+>   log-10 transformed intensities.
 > * Customise the plot as suggested above.
 
 ## Saving your work
@@ -951,20 +950,7 @@ randomized block designs!
 
 ```r
 library("psych") ## load the psych package
-```
 
-```
-## 
-## Attaching package: 'psych'
-```
-
-```
-## The following objects are masked from 'package:ggplot2':
-## 
-##     %+%, alpha
-```
-
-```r
 msrun <- unique(iprg[, c('Condition','Run')])
 msrun
 ```
@@ -1188,9 +1174,10 @@ easily adaptable plots.
 
 ```r
 # means without any errorbar
-ggplot(aes(x = Group, y = mean, colour = Group),
-       data = summaryresult)+
+p <- ggplot(aes(x = Group, y = mean, colour = Group),
+            data = summaryresult)+
     geom_point(size = 3)
+p
 ```
 
 ![plot of chunk unnamed-chunk-46](figure/unnamed-chunk-46-1.png)
@@ -1208,10 +1195,7 @@ Let's change a number of visual properties to make the plot more attractive
 
 
 ```r
-ggplot(aes(x = Group, y = mean, colour = Group),
-       data = summaryresult) +
-    geom_point() +
-    labs(title = "Mean", x = "Group", y = 'Log2(Intensity)') +
+p2 <- p + labs(title = "Mean", x = "Group", y = 'Log2(Intensity)') +
     theme_bw() + 
     theme(plot.title = element_text(size = 25, colour = "darkblue"),
           axis.title.x = element_text(size = 15),
@@ -1220,6 +1204,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
           legend.position = 'bottom',
           legend.background = element_rect(colour = 'black'),
           legend.key = element_rect(colour = 'white'))
+p2
 ```
 
 ![plot of chunk unnamed-chunk-47](figure/unnamed-chunk-47-1.png)
@@ -1229,19 +1214,8 @@ Let's now add the **standard deviation**:
 
 ```r
 # mean with SD
-ggplot(aes(x=Group, y=mean, colour=Group), data=summaryresult)+
-      geom_point(size=3)+
-      geom_errorbar(aes(ymax = mean + sd, ymin=mean - sd), width=0.1)+
-      scale_x_discrete('Group')+
-      labs(title="Mean with SD", x="Group", y='Log2(Intensity)')+
-      theme_bw()+
-      theme(plot.title = element_text(size=25, colour="darkblue"),
-            axis.title.x = element_text(size=15),
-            axis.title.y = element_text(size=15),
-            axis.text.x = element_text(size=13),
-            legend.position = 'bottom',
-            legend.background = element_rect(colour='black'),
-            legend.key = element_rect(colour='white'))
+p2 + geom_errorbar(aes(ymax = mean + sd, ymin = mean - sd), width = 0.1) + 
+      labs(title="Mean with SD")
 ```
 
 ![plot of chunk unnamed-chunk-48](figure/unnamed-chunk-48-1.png)
@@ -1253,6 +1227,105 @@ ggplot(aes(x=Group, y=mean, colour=Group), data=summaryresult)+
 
 
 
+## Working with statistical distributions
+
+For each statistical distribution, we have function to compute
+
+* density
+* distribution function
+* quantile function 
+* random generation
+
+For the normale distribution `norm`, these are respectively
+
+* `dnorm`
+* `pnorm`
+* `qnorm`
+* `rnorm`
+
+Let's start by sampling 10000 values from a normal distribution $N(0, 1)$:
+
+
+```r
+xn <- rnorm(1e6)
+hist(xn, freq = FALSE)
+rug(xn)
+lines(density(xn), lwd = 2)
+```
+
+![plot of chunk unnamed-chunk-50](figure/unnamed-chunk-50-1.png)
+
+By definition, the area under the density curve is 1. The area at the
+left of 0, 1, and 2 are respectively:
+
+
+```r
+pnorm(0)
+```
+
+```
+## [1] 0.5
+```
+
+```r
+pnorm(1)
+```
+
+```
+## [1] 0.8413447
+```
+
+```r
+pnorm(2)
+```
+
+```
+## [1] 0.9772499
+```
+
+To ask the inverse question, we use the quantile function. The obtain
+0.5, 0.8413447 and 0.9772499 of our distribution, we need means
+of:
+
+
+```r
+qnorm(0.5)
+```
+
+```
+## [1] 0
+```
+
+```r
+qnorm(pnorm(1))
+```
+
+```
+## [1] 1
+```
+
+```r
+qnorm(pnorm(2))
+```
+
+```
+## [1] 2
+```
+
+Finally, the density function gives us the *height* at which we are
+for a given mean:
+
+
+```r
+hist(xn, freq = FALSE)
+lines(density(xn), lwd = 2)
+points(0, dnorm(0), pch = 19, col = "red")
+points(1, dnorm(1), pch = 19, col = "red")
+points(2, dnorm(2), pch = 19, col = "red")
+```
+
+![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
+
 ## Calculate the confidence interval
 
 Now that we've covered the standard error of the mean and the standard
@@ -1263,7 +1336,7 @@ to the summary results we previously stored for protein
 
 Confidence interval: 
 
-$$\mbox{mean} \pm (SE \times \alpha /2 \mbox{quantile of t distribution})$$
+$$\mbox{mean} \pm (SE \times \frac{\alpha}{2} ~ \mbox{quantile of t distribution})$$
 
 
 To calculate the 95% confident interval, we need to be careful and set
@@ -1274,8 +1347,10 @@ example, 95% confidence interval, right tail is 2.5% and left tail is
 
 
 ```r
-summaryresult$ciw.lower.95 <- summaryresult$mean - qt(0.975,summaryresult$len-1) * summaryresult$se
-summaryresult$ciw.upper.95 <- summaryresult$mean + qt(0.975,summaryresult$len-1) * summaryresult$se
+summaryresult$ciw.lower.95 <- summaryresult$mean -
+    qt(0.975, summaryresult$len - 1) * summaryresult$se
+summaryresult$ciw.upper.95 <- summaryresult$mean +
+    qt(0.975, summaryresult$len - 1) * summaryresult$se
 summaryresult
 ```
 
@@ -1310,7 +1385,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
           legend.key = element_rect(colour='white'))
 ```
 
-![plot of chunk unnamed-chunk-51](figure/unnamed-chunk-51-1.png)
+![plot of chunk unnamed-chunk-55](figure/unnamed-chunk-55-1.png)
 
 > ### Challenges
 > 

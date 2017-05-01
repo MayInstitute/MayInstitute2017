@@ -292,105 +292,10 @@ diff(summaryresult12$mean)/sqrt(sum(summaryresult12$sd^2/summaryresult12$length)
 ## [1] -2.060799
 ```
 
-## Working with distributions
+## Re-calculating the p values
 
-For each statistical distribution, we have function to compute
-
-* density
-* distribution function
-* quantile function 
-* random generation
-
-For the normale distribution `norm`, these are respectively
-
-* `dnorm`
-* `pnorm`
-* `qnorm`
-* `rnorm`
-
-Let's start by sampling 10000 values from a normal distribution $N(0, 1)$:
-
-
-```r
-xn <- rnorm(1e6)
-hist(xn, freq = FALSE)
-rug(xn)
-lines(density(xn), lwd = 2)
-```
-
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
-
-By definition, the area under the density curve is 1. The area at the
-left of 0, 1, and 2 are respectively:
-
-
-```r
-pnorm(0)
-```
-
-```
-## [1] 0.5
-```
-
-```r
-pnorm(1)
-```
-
-```
-## [1] 0.8413447
-```
-
-```r
-pnorm(2)
-```
-
-```
-## [1] 0.9772499
-```
-
-To ask the inverse question, we use the quantile function. The obtain
-0.5, 0.8413447 and 0.9772499 of our distribution, we need means
-of:
-
-
-```r
-qnorm(0.5)
-```
-
-```
-## [1] 0
-```
-
-```r
-qnorm(pnorm(1))
-```
-
-```
-## [1] 1
-```
-
-```r
-qnorm(pnorm(2))
-```
-
-```
-## [1] 2
-```
-
-Finally, the density function gives us the *height* at which we are
-for a given mean:
-
-
-```r
-hist(xn, freq = FALSE)
-lines(density(xn), lwd = 2)
-points(0, dnorm(0), pch = 19, col = "red")
-points(1, dnorm(1), pch = 19, col = "red")
-points(2, dnorm(2), pch = 19, col = "red")
-```
-
-![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
-
+See the previous *Working with statistical distributions* for a
+reminder.
 
 Referring back to our t-test results above, we can manually calculate
 the one- and two-side tests p-values using the t-statistics and the
@@ -409,7 +314,7 @@ plot(density(xt), xlim = c(-10, 10))
 abline(v = result$statistic, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
 
 The area on the left of that point is given by `pt(result$statistic,
 result$parameter)`, which is 0.939693. The p-value for a one-sided test is this given by
@@ -539,7 +444,7 @@ ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
         axis.text.x = element_text(size=13)) 
 ```
 
-![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
 
 
 # Comparison of two proportions in R
@@ -619,7 +524,7 @@ ov
 dotchart(t(ov), xlab="Observed counts")
 ```
 
-![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
 
 
 ## Z-test
