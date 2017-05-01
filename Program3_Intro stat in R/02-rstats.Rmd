@@ -411,7 +411,6 @@ more detailed data exploration using a smalle subset of the data.
 
 > For each subset, how many measurements are there?
 
-<!-- <details> -->
 <!-- ```{r} -->
 <!-- iprg.condition1 <- iprg[iprg$Condition == 'Condition1', ] -->
 <!-- iprg.condition1.bio1 <- iprg[iprg$Condition == 'Condition1' & -->
@@ -428,11 +427,10 @@ more detailed data exploration using a smalle subset of the data.
 <!-- nrow(iprg.condition1.2) -->
 <!-- unique(iprg.condition1.2$Condition) -->
 <!-- ``` -->
-<!-- </details> -->
 
-## Summarizing and visualizing data
+# Part 2: Data visualisation
 
-### Histogram
+## Histogram
 
 Make a histogram of all the MS1 intensities, quantified by Skyline,
 for `iPRG_example`.
@@ -480,7 +478,7 @@ summary(iprg$Log2Intensity)
 > 10 scale, using the `log10` function. See also the more general
 > `log` function.
 
-### Boxplot or box-and-whisker plot
+## Boxplot or box-and-whisker plot
 
 Boxplots are extremely useful because they allow us to quickly
 visualise the data distribution, without making assumptions of the
@@ -590,7 +588,7 @@ Notes:
 > * Log-10 transform the raw intensities on the flight when plotting.
 
 
-### Customising plots 
+## Customising plots 
 
 First, let's colour the boxplot based on the condition:
 
@@ -687,7 +685,7 @@ save.image(file = '02-rstats-all.rda')
 contains the exact command that lead to the results! Or better, we can
 save and document our full analysis in an R markdown file!
 
-# Part 2: Basic statistics
+# Part 3: Basic statistics
 
 ## Randomisation
 
@@ -768,7 +766,7 @@ mean, standard deviation, standard error of the mean across all
 replicates per condition. We then store all the computed statistics
 into a single summary data frame for easy access.
 
-We can use the **aggregate** function to compute summary statistics
+We can use the `aggregate` function to compute summary statistics
 
 ```{r}
 # check what proteins are in dataset, show all protein names
@@ -804,7 +802,14 @@ sub.mean
 
 $$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
 
-```{r}
+> **Challenge**
+> 
+> Using the `aggregate` function above, calculate the standard
+> deviation, by applying the `sd` function.
+
+
+
+```{r, echo=FALSE}
 ## The same as mean calculation above. 'FUN' is changed to 'sd'.
 sub.sd <- aggregate(Log2Intensity ~ Condition,
                     data = oneproteindata, FUN = sd)
@@ -813,7 +818,13 @@ sub.sd
 
 ### Count the number of observation per groups
 
-```{r}
+> **Challenge**
+> 
+> Using the `aggregate` function above, count the number of
+> observations per group with the `length` function.
+
+
+```{r, echo=FALSE}
 ## The same as mean calculation. 'FUN' is changed 'length'.
 sub.len <- aggregate(Log2Intensity ~ Condition,
                      data = oneproteindata,
@@ -830,9 +841,10 @@ sub.se <- sqrt(sub.sd$Log2Intensity^2 / sub.len$Log2Intensity)
 sub.se
 ```
 
+We can now make the summary table including the results above (mean,
+sd, se and length).
+
 ```{r}
-## make the summary table including the results above (mean, sd, se
-## and length).
 (grp <- paste0("Condition", 1:4))
 summaryresult <- data.frame(Group = grp,
                             mean = sub.mean$Log2Intensity,
@@ -1054,6 +1066,17 @@ generated so far:
 save(summaryresult, file = "./data/summaryresults.rda")
 save(iprg, file = "./data/iprg.rda")
 ```
+
+We can also save the summary result as a `csv` file using the
+`write.csv` function:
+
+```{r, eval=FALSE}
+write.csv(sumamryresult, file = "./data/summary.csv")
+```
+
+**Tip**: Exporting to csv is useful to share your work with
+collaborators that do not use R, but for wany continous work in R, to
+assure data validity accords platforms, the best format is `rda`.
 
 ---
 

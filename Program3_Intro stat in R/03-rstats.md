@@ -19,7 +19,7 @@ output:
 
 ---
 
-# Statistical hypothesis test in R
+# Statistical hypothesis test
 
 First, we are going to prepare the session for further analyses.
 
@@ -345,6 +345,243 @@ which is the same as the one calculated by the t-test.
 
 
 
+
+# Comparison of two proportions
+
+For this part, we are going to use a new dataset, which contains the
+patient information from TCGA colorectal cohort. This data is from
+*Proteogenomic characterization of human colon and rectal cancer*
+(Zhang et al. 2014).
+
+Rows in the data array are patients and columns are patient
+information. The column definition is shown as following:
+
+| Variable            |
+|---------------------|
+| TCGA participant ID |
+| Gender              |
+| Cancer type         |
+| BTAF mutation status|
+| History of colon polyps |
+
+## Generate 2-way contingency tables
+
+We first need to calculate 2-way contingency tables for the
+statistical tests.
+
+
+Let's read in and explore the TCGA colorectal cancer data:
+
+
+```r
+TCGA.CRC <- read.csv("./data/TCGA_sample_information.csv")
+head(TCGA.CRC)
+```
+
+```
+##   TCGA.participant.ID Gender Cancer BRAF.mutation history_of_colon_polyps
+## 1        TCGA-A6-3807 Female  Colon             0                      NO
+## 2        TCGA-A6-3808   Male  Colon             0                     YES
+## 3        TCGA-A6-3810   Male  Colon             0                     YES
+## 4        TCGA-AA-3518 Female  Colon             0                      NO
+## 5        TCGA-AA-3525   Male  Colon             1                      NO
+## 6        TCGA-AA-3526   Male  Colon             0                     YES
+```
+
+We are interested in the cancer type and history of colon polyps;
+let's select columns from TCGA dataset:
+
+
+```r
+TCGA.CRC.gc <- TCGA.CRC[, c('Cancer', 'history_of_colon_polyps')]
+nrow(TCGA.CRC.gc)
+```
+
+```
+## [1] 78
+```
+
+and generate a 2-way contingency table using the `table` function and
+visualise the count data
+
+
+```r
+ov <- table(TCGA.CRC.gc)
+ov
+```
+
+```
+##         history_of_colon_polyps
+## Cancer   NO YES
+##   Colon  31  22
+##   Rectum 20   5
+```
+
+```r
+dotchart(t(ov), xlab = "Observed counts")
+```
+
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
+
+
+## Chi-squared test
+
+**Hypothesis** : 
+
+$H_0$ : each population has the same proportion of observations, $\pi_{j=1|i=1} = \pi_{j=1|i=2}$
+
+$H_a$ : different population has different proportion of observations$
+
+
+$$\chi^2 =\sum_{i=1}^2 \sum_{j=1}^2 \frac{(O_{ij}-E_{ij})^2}{E_{ij}} \sim \chi^2_{(2-1)(2-1)}$$
+
+$O_{ij}$ : $n_{ij}$, which is the count within the cells
+
+$E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is the column count sum and n is the total count.
+
+
+**Hypothesis**: whether the proportion of patients who have history of
+colon polyps in the patients with colon cancer is different from that
+in the patients with rectal cancer
+
+
+
+```r
+pt <- prop.test(ov)
+pt
+```
+
+```
+## 
+## 	2-sample test for equality of proportions with continuity
+## 	correction
+## 
+## data:  ov
+## X-squared = 2.5871, df = 1, p-value = 0.1077
+## alternative hypothesis: two.sided
+## 95 percent confidence interval:
+##  -0.44991310  0.01972442
+## sample estimates:
+##    prop 1    prop 2 
+## 0.5849057 0.8000000
+```
+
+```r
+# name of output
+names(pt)
+```
+
+```
+## [1] "statistic"   "parameter"   "p.value"     "estimate"    "null.value" 
+## [6] "conf.int"    "alternative" "method"      "data.name"
+```
+
+```r
+# proportion in each group
+pt$estimate 
+```
+
+```
+##    prop 1    prop 2 
+## 0.5849057 0.8000000
+```
+
+```r
+# test statistic value
+pt$statistic 
+```
+
+```
+## X-squared 
+##  2.587111
+```
+
+```r
+# degree of freedom
+pt$parameter
+```
+
+```
+## df 
+##  1
+```
+
+## Fisher's exact test
+
+The Fisher's exact test can be used with small sample sizes. It
+compares distributions of counts within the 4 cells.
+
+> ### Challenge
+>
+> Apply the Fisher's exact test using the `fisher.test` function and
+> extract the odds ratio.
+
+
+
+## Z-test
+
+Finally, we could also apply a z-test, defined as
+
+$$Z=\frac{\widehat{\pi}_1-\widehat{\pi}_2}{\sqrt{\frac{\widehat{\pi}_1(1 - \widehat{\pi}_1)}{n_1}+\frac{\widehat{\pi_2}(1 - \widehat{\pi_2})}{n_2}}}$$
+
+where $\widehat{\pi}_1 = \frac{y_{1}}{n_1}$ and $\widehat{\pi}_2 = \frac{y_{2}}{n_2}$.
+
+We are going to use this test to illustrate how to write functions in
+R. 
+
+An R function is created with the function constructor, named
+`function`, and is composed of:
+
+1. a name: we will call our function to calculate the p-value
+   `z.prop.p`;
+2. some inputs: our inputs are the number of observations for the
+   outcome of interest, `x1` and `x2`, and the total number of
+   observation in each category, `n1` and `n2`;
+3. a returned value (output): the computed p-value, named `pvalue`;
+4. a body, i.e. the code that, given the inputs, calculates the output.
+
+
+
+```r
+z.prop.p <- function(x1, x2, n1, n2) {
+    pi_1 <- x1/n1
+    pi_2 <- x2/n2
+    numerator <- pi_1 - pi_2
+    denominator <- sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
+    stat <- numerator/denominator
+    pvalue <- 2 * (1 - pnorm(abs(stat)))
+    return(pvalue)
+}
+
+z.prop.p(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
+```
+
+```
+## [1] 0.04010935
+```
+
+Same as above, for the confidence interval at a given alpha level.
+
+
+```r
+z.prop.ci <- function(x1, x2, n1, n2, alpha = 0.05){
+  pi_1 <- x1/n1
+  pi_2 <- x2/n2
+  numerator <- pi_1 - pi_2
+  denominator <- sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
+  cri_value <- qnorm(1-alpha/2)
+  prop.ci <- c(numerator + cri_value * denominator,
+               numerator - cri_value * denominator)
+  return(prop.ci)
+}
+
+z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
+```
+
+```
+## [1] -0.009709539 -0.420479141
+```
+
 # Sample size calculation
 
 To calculate the required sample size, you’ll need to know four
@@ -444,245 +681,60 @@ ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
         axis.text.x = element_text(size=13)) 
 ```
 
-![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
+![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
 
 
-# Comparison of two proportions in R
-
-For part 2, we are using a new dataset, which contains the patient
-information from TCGA colorectal cohort. Rows in the data array are
-patients and columns are patient information. The column definition is
-shown as following:
-
-| Variable            |
-|---------------------|
-| TCGA participant ID |
-| Gender              |
-| Cancer type         |
-| BTAF mutation status|
-| History of colon polyps |
-
-## Generate 2-way contingency tables
-
-We first need to calculate 2-way contingency tables for the following tests. 
+# Linear models and correlation
 
 
-```r
-#Dataset is from nature paper: Proteogenomic characterization of human colon and rectal cancer (Zhang et al. 2014)
-#Load in the TCGA colorectal cancer sample informtaion 
-TCGA.CRC <- read.csv("./data/TCGA_sample_information.csv")
-head(TCGA.CRC)
-```
+When considering correlations and modelling data, visualisation is key. 
 
-```
-##   TCGA.participant.ID Gender Cancer BRAF.mutation history_of_colon_polyps
-## 1        TCGA-A6-3807 Female  Colon             0                      NO
-## 2        TCGA-A6-3808   Male  Colon             0                     YES
-## 3        TCGA-A6-3810   Male  Colon             0                     YES
-## 4        TCGA-AA-3518 Female  Colon             0                      NO
-## 5        TCGA-AA-3525   Male  Colon             1                      NO
-## 6        TCGA-AA-3526   Male  Colon             0                     YES
-```
-
-```r
-#`colnames` is short for column names. 
-colnames(TCGA.CRC)
-```
-
-```
-## [1] "TCGA.participant.ID"     "Gender"                 
-## [3] "Cancer"                  "BRAF.mutation"          
-## [5] "history_of_colon_polyps"
-```
-
-```r
-# Select columns from TCGA dataset: 
-# We are interested in the cancer type and history of colon polyps
-TCGA.CRC.gc <- TCGA.CRC[, c('Cancer', 'history_of_colon_polyps')]
-nrow(TCGA.CRC.gc)
-```
-
-```
-## [1] 78
-```
-
-```r
-#Generate 2-way contingency tables
-ov <- table(TCGA.CRC.gc)
-ov
-```
-
-```
-##         history_of_colon_polyps
-## Cancer   NO YES
-##   Colon  31  22
-##   Rectum 20   5
-```
-
-```r
-#dotchart
-dotchart(t(ov), xlab="Observed counts")
-```
-
-![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
+Let's use the famous *Anscombe's quartet* data as a motivating
+example. This data is composed of 4 pairs of values, $(x_1, y_1)$ to
+$(x_4, y_4)$:
 
 
-## Z-test
+| x1| x2| x3| x4|    y1|   y2|    y3|    y4|
+|--:|--:|--:|--:|-----:|----:|-----:|-----:|
+| 10| 10| 10|  8|  8.04| 9.14|  7.46|  6.58|
+|  8|  8|  8|  8|  6.95| 8.14|  6.77|  5.76|
+| 13| 13| 13|  8|  7.58| 8.74| 12.74|  7.71|
+|  9|  9|  9|  8|  8.81| 8.77|  7.11|  8.84|
+| 11| 11| 11|  8|  8.33| 9.26|  7.81|  8.47|
+| 14| 14| 14|  8|  9.96| 8.10|  8.84|  7.04|
+|  6|  6|  6|  8|  7.24| 6.13|  6.08|  5.25|
+|  4|  4|  4| 19|  4.26| 3.10|  5.39| 12.50|
+| 12| 12| 12|  8| 10.84| 9.13|  8.15|  5.56|
+|  7|  7|  7|  8|  4.82| 7.26|  6.42|  7.91|
+|  5|  5|  5|  8|  5.68| 4.74|  5.73|  6.89|
 
-$$Z=\frac{\widehat{\pi}_1-\widehat{\pi}_2}{\sqrt{\frac{\widehat{\pi}_1(1 - \widehat{\pi}_1)}{n_1}+\frac{\widehat{\pi_2}(1 - \widehat{\pi_2})}{n_2}}}$$
-where $\widehat{\pi}_1 = \frac{y_{1}}{n_1}$ and $\widehat{\pi}_2 = \frac{y_{2}}{n_2}$.
-
-
-```r
-#p-value
-z.prop.p = function( x1, x2, n1, n2){
-    pi_1 <- x1/n1
-    pi_2 <- x2/n2
-    numerator = pi_1 - pi_2
-    denominator = sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
-    stat <- numerator/denominator
-    pvalue <- 2*(1 - pnorm(abs(stat)))
-    return(pvalue)
-}
-
-#confidence interval
-z.prop.ci = function( x1, x2, n1, n2, alpha = 0.05){
-  pi_1 <- x1/n1
-  pi_2 <- x2/n2
-  numerator = pi_1 - pi_2
-  denominator = sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
-  cri_value <- qnorm(1-alpha/2)
-  prop.ci = c(numerator + cri_value*denominator, numerator - cri_value*denominator)
-  return(prop.ci)
-}
-
-z.prop.p(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
-```
-
-```
-## [1] 0.04010935
-```
-
-```r
-z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
-```
-
-```
-## [1] -0.009709539 -0.420479141
-```
-
-## Chi-squared test
-
-**Hypothesis** : 
-
-$H_0$ : each population has the same proportion of observations, $\pi_{j=1|i=1} = \pi_{j=1|i=2}$
-
-$H_a$ : different population has different proportion of observations$
+Each of these $x$ and $y$ sets have the same variance, mean and
+correlation:
 
 
-$$\chi^2 =\sum_{i=1}^2 \sum_{j=1}^2 \frac{(O_{ij}-E_{ij})^2}{E_{ij}} \sim \chi^2_{(2-1)(2-1)}$$
-
-$O_{ij}$ : $n_{ij}$, which is the count within the cells
-
-$E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is the column count sum and n is the total count.
 
 
-```r
-#Hypothesis: whether the proportion of patients who have history of colon polyps in the patients with colon cancer is different from that in the patients with rectal cancer
-#chi-square test
-pt <- prop.test(ov)
-pt
-```
+|         |          1|          2|          3|          4|
+|:--------|----------:|----------:|----------:|----------:|
+|var(x)   | 11.0000000| 11.0000000| 11.0000000| 11.0000000|
+|mean(x)  |  9.0000000|  9.0000000|  9.0000000|  9.0000000|
+|var(y)   |  4.1272691|  4.1276291|  4.1226200|  4.1232491|
+|mean(y)  |  7.5009091|  7.5009091|  7.5000000|  7.5009091|
+|cor(x,y) |  0.8164205|  0.8162365|  0.8162867|  0.8165214|
 
-```
-## 
-## 	2-sample test for equality of proportions with continuity
-## 	correction
-## 
-## data:  ov
-## X-squared = 2.5871, df = 1, p-value = 0.1077
-## alternative hypothesis: two.sided
-## 95 percent confidence interval:
-##  -0.44991310  0.01972442
-## sample estimates:
-##    prop 1    prop 2 
-## 0.5849057 0.8000000
-```
+But...
 
-```r
-# name of output
-names(pt)
-```
+While the *residuals* of the linear regression clearly indicate
+fundamental differences in these data, the most simple and
+straightforward approach is *visualisation* to highlight the
+fundamental differences in the datasets.
 
-```
-## [1] "statistic"   "parameter"   "p.value"     "estimate"    "null.value" 
-## [6] "conf.int"    "alternative" "method"      "data.name"
-```
+![plot of chunk anscombefig](figure/anscombefig-1.png)
 
-```r
-# proportion in each group
-pt$estimate 
-```
+<!-- ```{r anscomberesids, echo=FALSE} -->
+<!-- kable(sapply(mods, residuals)) -->
+<!-- ``` -->
 
-```
-##    prop 1    prop 2 
-## 0.5849057 0.8000000
-```
-
-```r
-# test statistic value
-pt$statistic 
-```
-
-```
-## X-squared 
-##  2.587111
-```
-
-```r
-# degree of freedom
-pt$parameter
-```
-
-```
-## df 
-##  1
-```
-
-## Fisher’s exact test
-
-The Fisher’s exact test can be used with small sample sizes. It compares distributions of counts within the 4 cells.
-
-
-```r
-#Fisher's Exact Test
-ft <- fisher.test(ov) 
-ft
-```
-
-```
-## 
-## 	Fisher's Exact Test for Count Data
-## 
-## data:  ov
-## p-value = 0.07734
-## alternative hypothesis: true odds ratio is not equal to 1
-## 95 percent confidence interval:
-##  0.09057002 1.18269896
-## sample estimates:
-## odds ratio 
-##  0.3567853
-```
-
-```r
-# odds ratio
-ft$estimate 
-```
-
-```
-## odds ratio 
-##  0.3567853
-```
 
 
 --- 

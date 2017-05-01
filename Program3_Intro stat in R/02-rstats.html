@@ -556,7 +556,6 @@ dfr</code></pre>
 <blockquote>
 <p>For each subset, how many measurements are there?</p>
 </blockquote>
-<!-- <details> -->
 <!-- ```{r} -->
 <!-- iprg.condition1 <- iprg[iprg$Condition == 'Condition1', ] -->
 <!-- iprg.condition1.bio1 <- iprg[iprg$Condition == 'Condition1' & -->
@@ -571,12 +570,12 @@ dfr</code></pre>
 <!-- nrow(iprg.condition1.2) -->
 <!-- unique(iprg.condition1.2$Condition) -->
 <!-- ``` -->
-<!-- </details> -->
 </div>
-<div id="summarizing-and-visualizing-data" class="section level2">
-<h2>Summarizing and visualizing data</h2>
-<div id="histogram" class="section level3">
-<h3>Histogram</h3>
+</div>
+<div id="part-2-data-visualisation" class="section level1">
+<h1>Part 2: Data visualisation</h1>
+<div id="histogram" class="section level2">
+<h2>Histogram</h2>
 <p>Make a histogram of all the MS1 intensities, quantified by Skyline, for <code>iPRG_example</code>.</p>
 <pre class="r"><code>hist(iprg$Intensity)</code></pre>
 <div class="figure">
@@ -608,8 +607,8 @@ dfr</code></pre>
 <p>Reproduce the histogram above but plotting the data on the log base 10 scale, using the <code>log10</code> function. See also the more general <code>log</code> function.</p>
 </blockquote>
 </div>
-<div id="boxplot-or-box-and-whisker-plot" class="section level3">
-<h3>Boxplot or box-and-whisker plot</h3>
+<div id="boxplot-or-box-and-whisker-plot" class="section level2">
+<h2>Boxplot or box-and-whisker plot</h2>
 <p>Boxplots are extremely useful because they allow us to quickly visualise the data distribution, without making assumptions of the distribution type (non-parametric). We can read up on what statistics the different elements of a box-and-whisker represent in the R help files.</p>
 <pre class="r"><code>boxplot(iprg$Log2Intensity)</code></pre>
 <div class="figure">
@@ -637,7 +636,6 @@ boxplot(int_by_run)</code></pre>
 <ul>
 <li>We can use the <code>ggplot2</code> package that is very flexible to visualise data under different angles.</li>
 </ul>
-</div>
 </div>
 <div id="the-ggplot2-package" class="section level2">
 <h2>The <code>ggplot2</code> package</h2>
@@ -682,8 +680,9 @@ ints_plot + geom_boxplot()</code></pre>
 <li>Log-10 transform the raw intensities on the flight when plotting.</li>
 </ul>
 </blockquote>
-<div id="customising-plots" class="section level3">
-<h3>Customising plots</h3>
+</div>
+<div id="customising-plots" class="section level2">
+<h2>Customising plots</h2>
 <p>First, let’s colour the boxplot based on the condition:</p>
 <pre class="r"><code>ggplot(data = iprg,
        aes(x = Run, y = Log2Intensity,
@@ -748,7 +747,6 @@ p + geom_boxplot()</code></pre>
 </ul>
 </blockquote>
 </div>
-</div>
 <div id="saving-your-work" class="section level2">
 <h2>Saving your work</h2>
 <p>You can save plots to a number of different file formats. PDF is by far the most common format because it’s lightweight, cross-platform and scales up well but jpegs, pngs and a number of other file formats are also supported. Let’s redo the last barplot but save it to the file system this time.</p>
@@ -767,8 +765,8 @@ dev.off()</code></pre>
 <p><strong>Tip</strong>: The best way to save your work is to save the script that contains the exact command that lead to the results! Or better, we can save and document our full analysis in an R markdown file!</p>
 </div>
 </div>
-<div id="part-2-basic-statistics" class="section level1">
-<h1>Part 2: Basic statistics</h1>
+<div id="part-3-basic-statistics" class="section level1">
+<h1>Part 3: Basic statistics</h1>
 <div id="randomisation" class="section level2">
 <h2>Randomisation</h2>
 <div id="random-selection-of-samples-from-a-larger-set" class="section level3">
@@ -864,7 +862,7 @@ block.random(n = 12, c(Condition = 4))</code></pre>
 <div id="calculate-simple-statistics" class="section level3">
 <h3>Calculate simple statistics</h3>
 <p>Let’s start data with one protein as an example and calculate the mean, standard deviation, standard error of the mean across all replicates per condition. We then store all the computed statistics into a single summary data frame for easy access.</p>
-<p>We can use the <strong>aggregate</strong> function to compute summary statistics</p>
+<p>We can use the <code>aggregate</code> function to compute summary statistics</p>
 <pre class="r"><code># check what proteins are in dataset, show all protein names
 head(unique(iprg$Protein))</code></pre>
 <pre><code>## [1] sp|D6VTK4|STE2_YEAST  sp|O13297|CET1_YEAST  sp|O13329|FOB1_YEAST 
@@ -921,10 +919,10 @@ sub.mean</code></pre>
 <div id="calculate-sd-standard-deviation-per-groups" class="section level3">
 <h3>Calculate SD (standard deviation) per groups</h3>
 <p><span class="math display">\[ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} \]</span></p>
-<pre class="r"><code>## The same as mean calculation above. 'FUN' is changed to 'sd'.
-sub.sd &lt;- aggregate(Log2Intensity ~ Condition,
-                    data = oneproteindata, FUN = sd)
-sub.sd</code></pre>
+<blockquote>
+<p><strong>Challenge</strong></p>
+<p>Using the <code>aggregate</code> function above, calculate the standard deviation, by applying the <code>sd</code> function.</p>
+</blockquote>
 <pre><code>##    Condition Log2Intensity
 ## 1 Condition1    0.10396539
 ## 2 Condition2    0.16268179
@@ -933,11 +931,10 @@ sub.sd</code></pre>
 </div>
 <div id="count-the-number-of-observation-per-groups" class="section level3">
 <h3>Count the number of observation per groups</h3>
-<pre class="r"><code>## The same as mean calculation. 'FUN' is changed 'length'.
-sub.len &lt;- aggregate(Log2Intensity ~ Condition,
-                     data = oneproteindata,
-                     FUN = length)
-sub.len</code></pre>
+<blockquote>
+<p><strong>Challenge</strong></p>
+<p>Using the <code>aggregate</code> function above, count the number of observations per group with the <code>length</code> function.</p>
+</blockquote>
 <pre><code>##    Condition Log2Intensity
 ## 1 Condition1             3
 ## 2 Condition2             3
@@ -950,9 +947,8 @@ sub.len</code></pre>
 <pre class="r"><code>sub.se &lt;- sqrt(sub.sd$Log2Intensity^2 / sub.len$Log2Intensity)
 sub.se</code></pre>
 <pre><code>## [1] 0.06002444 0.09392438 0.05466236 0.42227499</code></pre>
-<pre class="r"><code>## make the summary table including the results above (mean, sd, se
-## and length).
-(grp &lt;- paste0(&quot;Condition&quot;, 1:4))</code></pre>
+<p>We can now make the summary table including the results above (mean, sd, se and length).</p>
+<pre class="r"><code>(grp &lt;- paste0(&quot;Condition&quot;, 1:4))</code></pre>
 <pre><code>## [1] &quot;Condition1&quot; &quot;Condition2&quot; &quot;Condition3&quot; &quot;Condition4&quot;</code></pre>
 <pre class="r"><code>summaryresult &lt;- data.frame(Group = grp,
                             mean = sub.mean$Log2Intensity,
@@ -1122,6 +1118,9 @@ ggplot(aes(x = Group, y = mean, colour = Group),
 </ul>
 <pre class="r"><code>save(summaryresult, file = &quot;./data/summaryresults.rda&quot;)
 save(iprg, file = &quot;./data/iprg.rda&quot;)</code></pre>
+<p>We can also save the summary result as a <code>csv</code> file using the <code>write.csv</code> function:</p>
+<pre class="r"><code>write.csv(sumamryresult, file = &quot;./data/summary.csv&quot;)</code></pre>
+<p><strong>Tip</strong>: Exporting to csv is useful to share your work with collaborators that do not use R, but for wany continous work in R, to assure data validity accords platforms, the best format is <code>rda</code>.</p>
 <hr />
 <p>Back to course <a href="https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md">home page</a></p>
 </div>
