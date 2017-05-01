@@ -1,8 +1,9 @@
 ---
 title: 'Day 1: Beginner''s statistics in R'
-author: "Laurent Gatto"
+author: "Laurent Gatto, Meena Choi and Data Carpentry"
 output: 
   html_document:
+    self_contained: true
     toc: true
     toc_float: true
 ---
@@ -16,11 +17,10 @@ output:
 - Find help about R
 - Install new R packages
 - R variables, functions, vectors, data.frames
-- Read spreadsheets into R
 - Simple arithmetics and data manipulation
-- Introduction to plotting
 - Learn about R markdown
 
+---
 
 Part 1 and 2 are adapted from the Data Carpentry
 [R for data analysis and visualization](http://www.datacarpentry.org/R-ecology-lesson/index.html)
@@ -171,6 +171,11 @@ tutorial.
 Your working directory should now look like this:
 
 ![How it should look like at the beginning of this lesson](img/r-starting-how-it-should-look-like.png)
+
+> ### Challenge
+>
+> Add the provided data files, namely `ABRF2015_skyline_report.csv.gz`
+> and `abrf.rda` to your `data` directory/
 
 ### Organizing your working directory
 
@@ -364,25 +369,30 @@ dput(head(iris))
 ## 6L), class = "data.frame")
 ```
 
-If the object is larger, provide either the raw file (i.e., your CSV file) with
-your script up to the point of the error (and after removing everything that is
-not relevant to your issue). Alternatively, in particular if your question is
-not related to a data frame, you can save any R object to a file:
+If the object is larger, provide either the raw file (i.e., your CSV
+file) with your script up to the point of the error (and after
+removing everything that is not relevant to your
+issue). Alternatively, in particular if your question is not related
+to a data frame, you can save any R object to a file using an
+R-specific binary format:
 
 
 ```r
-saveRDS(iris, file="/tmp/iris.rds")
+save(iris, file="iris.rda")
 ```
 
-The content of this file is however not human readable and cannot be posted
-directly on Stack Overflow. Instead, it can be sent to someone by email who can
-read it with the `readRDS()` command (here it is assumed that the downloaded
-file is in a `Downloads` folder in the user's home directory):
+The content of this file is however not human readable, but can easily
+and efficiently be loaded back into R on any other platform with: 
 
 
 ```r
-some_data <- readRDS(file="~/Downloads/iris.rds")
+load(file="iris.rds")
 ```
+
+> ### Challenge
+>
+> Load the `abrf.rda` data into your R session.
+
 
 Last, but certainly not least, **always include the output of `sessionInfo()`**
 as it provides critical information about your platform, the versions of R and
@@ -925,6 +935,7 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 
 
 
+
 ## Subsetting vectors
 
 If we want to extract one or several values from a vector, we must
@@ -1161,10 +1172,8 @@ Now that we have learned how to write scripts, and the basics of R's
 data structures, we are ready to start working with the Portal dataset
 we have been using in the other lessons, and learn about data frames.
 
-# Part 3: Starting with data and plotting
 
-
-# Part 4: R markdown
+# Part 3: R markdown
 
 Markdown (extension `.md`) is a very simple markup language in plain
 text, that can be converted to many different outputs, such as pdf and
@@ -1187,3 +1196,14 @@ whole process is made relatively easy with RStudio and available
 [documentation](http://rmarkdown.rstudio.com/lesson-1.html).
 
 We are going to walk through the creation of such a document.
+
+
+--- 
+
+In the next sections, we are going to learn how to read data sets into
+R, how to explore and visualise the data, and how to perform basic
+statistical analyses.
+
+
+---
+Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)

@@ -2,9 +2,9 @@
 
 ### Material
 
-* [Day 1](01-rstats.md)
-* [Day 2](02-rstats.md)
-* [Day 3](03-rstats.md)
+* [Day 1](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/01-rstats.html)
+* [Day 2](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/02-rstats.html)
+* [Day 3](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/03-rstats.html)
 
 ### License
 

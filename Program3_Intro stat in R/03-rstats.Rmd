@@ -3,6 +3,7 @@ title: 'Day 3: Beginner''s statistics in R'
 author: "Laurent Gatto and Meena Choi"
 output: 
   html_document:
+    self_contained: true
     toc: true
     toc_float: true
 ---
@@ -14,7 +15,366 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Objectives
 
+- Hypothesis testing: t-test
 - Categorical data
-- Correlation
-- Hypothesis testing: Chi-sequare
 - Power calculation
+
+---
+
+# Statistical hypothesis test in R
+
+First, we are going to prepare the session for further analyses.
+
+```{r}
+load("./data/summaryresults.rda")
+load("./data/iprg.rda")
+```
+
+## Two sample t-test for one protein with one feature
+
+Now, we'll perform a t-test whether protein `sp|P44015|VAC2_YEAST` has
+a change in abundance between Condition 1 and Condition 2.
+
+### Hypothesis
+
+* $H_0$: no change in abundance, mean(Condition1) - mean(Condition2) = 0
+* $H_a$: change in abundance, mean(Condition1) - mean(Condition 2) $\neq$ 0
+
+### Statistics
+
+* Observed $t = \frac{\mbox{difference of group means}}{\mbox{estimate of variation}} = \frac{(mean_{1} - mean_{2})}{SE} \sim t_{\alpha/2, df}$
+* Standard error, $SE=\sqrt{\frac{s_{1}^2}{n_{1}} + \frac{s_{2}^2}{n_{2}}}$
+
+with 
+* $n_{1}$ : Number of replicates
+* $s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$ : Sample variance
+
+### Data preparation
+
+```{r}
+## Let's start with one protein, named "sp|P44015|VAC2_YEAST"
+oneproteindata <- iprg[iprg$Protein == "sp|P44015|VAC2_YEAST", ]
+
+## Then, get two conditions only, because t.test only works for two
+## groups (conditions).
+oneproteindata.condition12 <- oneproteindata[oneproteindata$Condition %in% 
+                                             c('Condition1', 'Condition2'), ]
+oneproteindata.condition12
+unique(oneproteindata.condition12$Condition)
+unique(oneproteindata$Condition)
+```
+
+To perform the t-test, we use the `t.test` function. Let's first
+familiarise ourselves with it by looking that the manual 
+
+```{r, eval=FALSE}
+?t.test
+```
+
+And now apply to to our data
+
+```{r}
+# t test for different abundance (log2Int) between Groups (Condition)
+result <- t.test(Log2Intensity ~ Condition,
+                 data = oneproteindata.condition12,
+                 var.equal = FALSE)
+
+result
+```
+
+We can redo the t-test and change the confidence level for the log2 fold change.
+
+```{r}
+result.ci90 <- t.test(Log2Intensity ~ Condition, 
+                      var.equal = FALSE,
+                      data = oneproteindata.condition12,
+                      conf.level = 0.9)
+result.ci90
+```
+
+### The `htest` class
+
+The `t.test` function, like other hypothesis testing function, return
+a result of a type we haven't encountered yet, the `htest` class:
+
+```{r}
+class(result)
+```
+
+which stores typical results from such tests. Let's have a more
+detailed look at what information we can learn from the results our
+t-test. When we type the name of our `result` object, we get a short
+textual summary, but the object contains more details:
+
+```{r}
+names(result)
+```
+
+and we can access each of these by using the `$` operator, like we
+used to access a single column from a `data.frame`, but the `htest`
+class is not a `data.frame` (it's actually a `list`). For example, to
+access the group means, we would use
+
+```{r}
+result$estimate
+```
+
+> ### Challenge
+> 
+> * Calculate the (log2-transformed) fold change between groups
+> * Extract the value of the t-statistics
+> * Calculate the standard error (fold-change/t-statistics)
+> * Extract the degrees of freedom (parameter)
+> * Extract the p values
+> * Extract the 95% confidence intervals
+> * Manually calculate the one- and two-side tests p-values using the
+>   t-statistics and the test parameter (using the `pt` function).
+
+
+```{r, echo=FALSE}
+## log2 fold-change
+result$estimate[1]-result$estimate[2]
+## test statistic value, T value
+result$statistic 
+## standard error
+(result$estimate[1]-result$estimate[2])/result$statistic
+## degree of freedom
+result$parameter 
+## p value for two-sides testing
+result$p.value 
+## 95% confidence interval for log2 fold change
+result$conf.int 
+## p value calculation for one side
+1-pt(result$statistic, result$parameter)
+## p value for two sides, which is the same as pvalue from t test
+## (result$p.value)
+2*(1-pt(result$statistic, result$parameter))
+```
+
+We can also manually compute our t-test statistic using the formulas
+we descibed above and compare it with the `summaryresult`.
+
+Recall the `summaryresult` we generated last section
+
+```{r}
+summaryresult
+summaryresult12 <- summaryresult[1:2, ]
+
+## test statistic, It is the same as 'result$statistic' above.
+diff(summaryresult12$mean) ## same as result$estimate[1]-result$estimate[2]
+sqrt(sum(summaryresult12$sd^2/summaryresult12$length)) ## same as stand error
+
+## the t-statistic
+diff(summaryresult12$mean)/sqrt(sum(summaryresult12$sd^2/summaryresult12$length))
+```
+
+# Sample size calculation
+
+To calculate the required sample size, you’ll need to know four
+things:
+
+* $\alpha$: confidence level
+* $power$: 1 - $\beta$, where $\beta$ is probability of a true positive discovery
+* $\Delta$: anticipated fold change
+* $\sigma$: anticipated variance
+
+## R code
+
+Assuming equal varaince and number of samples across groups, the
+following formula is used for sample size estimation:
+
+$$\frac{2{\sigma}^2}{n}\leq(\frac{\Delta}{z_{1-\beta}+z_{1-\alpha/2}})^2$$
+
+
+```{r}
+library("pwr")
+
+## ?pwr.t.test
+
+# Significance level alpha
+alpha <- 0.05
+
+# Power = 1 - beta
+power <- 0.95
+
+# anticipated log2 fold change 
+delta <- 1
+
+# anticipated variability
+sigma <- 1.5
+
+# Effect size
+# It quantifies the size of the difference between two groups
+d <- delta/sigma
+
+#Sample size estimation
+pwr.t.test(d = d, sig.level = alpha, power = power, type = 'two.sample')
+```
+
+Then, we investigate the effect of required fold change and variance on the sample size estimation.
+
+```{r, warning=FALSE}
+# anticipated log2 fold change 
+delta <- seq(0.1, 0.7, .1)
+nd <- length(delta)
+
+# anticipated variability
+sigma <- seq(0.1,0.5,.1)
+ns <- length(sigma)
+
+# obtain sample sizes
+samsize <- matrix(0, nrow=ns*nd, ncol = 3)
+counter <- 0
+for (i in 1:nd){
+  for (j in 1:ns){
+    result <- pwr.t.test(d = delta[i]/sigma[j],
+                         sig.level = alpha, power = power,
+                         type = "two.sample")
+    counter <- counter + 1
+    samsize[counter,1] <- delta[i]
+    samsize[counter,2] <- sigma[j]
+    samsize[counter,3] <- ceiling(result$n)
+  }
+}
+colnames(samsize) <- c("fd","var","value")
+
+
+library("ggplot2")
+samsize <- as.data.frame(samsize)
+samsize$var <- as.factor(samsize$var)
+ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
+  geom_line() +
+  geom_point(size=2, shape=21, fill="white") +
+  labs(title="Sig=0.05 Power=0.05", x="Anticipated log2 fold change", y='Sample Size (n)') +
+  theme(plot.title = element_text(size=20, colour="darkblue"),
+        axis.title.x = element_text(size=15),
+        axis.title.y = element_text(size=15),
+        axis.text.x = element_text(size=13)) 
+```
+
+
+# Comparison of two proportions in R
+
+For part 2, we are using a new dataset, which contains the patient
+information from TCGA colorectal cohort. Rows in the data array are
+patients and columns are patient information. The column definition is
+shown as following:
+
+| Variable            |
+|---------------------|
+| TCGA participant ID |
+| Gender              |
+| Cancer type         |
+| BTAF mutation status|
+| History of colon polyps |
+
+## Generate 2-way contingency tables
+
+We first need to calculate 2-way contingency tables for the following tests. 
+
+```{r, warning=FALSE}
+#Dataset is from nature paper: Proteogenomic characterization of human colon and rectal cancer (Zhang et al. 2014)
+#Load in the TCGA colorectal cancer sample informtaion 
+TCGA.CRC <- read.csv("./data/TCGA_sample_information.csv")
+head(TCGA.CRC)
+
+#`colnames` is short for column names. 
+colnames(TCGA.CRC)
+
+# Select columns from TCGA dataset: 
+# We are interested in the cancer type and history of colon polyps
+TCGA.CRC.gc <- TCGA.CRC[, c('Cancer', 'history_of_colon_polyps')]
+nrow(TCGA.CRC.gc)
+
+#Generate 2-way contingency tables
+ov <- table(TCGA.CRC.gc)
+ov
+
+#dotchart
+dotchart(t(ov), xlab="Observed counts")
+```
+
+
+## Z-test
+
+$$Z=\frac{\widehat{\pi}_1-\widehat{\pi}_2}{\sqrt{\frac{\widehat{\pi}_1(1 - \widehat{\pi}_1)}{n_1}+\frac{\widehat{\pi_2}(1 - \widehat{\pi_2})}{n_2}}}$$
+where $\widehat{\pi}_1 = \frac{y_{1}}{n_1}$ and $\widehat{\pi}_2 = \frac{y_{2}}{n_2}$.
+
+```{r, warning=FALSE}
+#p-value
+z.prop.p = function( x1, x2, n1, n2){
+    pi_1 <- x1/n1
+    pi_2 <- x2/n2
+    numerator = pi_1 - pi_2
+    denominator = sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
+    stat <- numerator/denominator
+    pvalue <- 2*(1 - pnorm(abs(stat)))
+    return(pvalue)
+}
+
+#confidence interval
+z.prop.ci = function( x1, x2, n1, n2, alpha = 0.05){
+  pi_1 <- x1/n1
+  pi_2 <- x2/n2
+  numerator = pi_1 - pi_2
+  denominator = sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
+  cri_value <- qnorm(1-alpha/2)
+  prop.ci = c(numerator + cri_value*denominator, numerator - cri_value*denominator)
+  return(prop.ci)
+}
+
+z.prop.p(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
+z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
+```
+
+## Chi-squared test
+
+**Hypothesis** : 
+
+$H_0$ : each population has the same proportion of observations, $\pi_{j=1|i=1} = \pi_{j=1|i=2}$
+
+$H_a$ : different population has different proportion of observations$
+
+
+$$\chi^2 =\sum_{i=1}^2 \sum_{j=1}^2 \frac{(O_{ij}-E_{ij})^2}{E_{ij}} \sim \chi^2_{(2-1)(2-1)}$$
+
+$O_{ij}$ : $n_{ij}$, which is the count within the cells
+
+$E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is the column count sum and n is the total count.
+
+```{r, warning=FALSE}
+#Hypothesis: whether the proportion of patients who have history of colon polyps in the patients with colon cancer is different from that in the patients with rectal cancer
+#chi-square test
+pt <- prop.test(ov)
+pt
+
+# name of output
+names(pt)
+
+# proportion in each group
+pt$estimate 
+
+# test statistic value
+pt$statistic 
+
+# degree of freedom
+pt$parameter
+```
+
+## Fisher’s exact test
+
+The Fisher’s exact test can be used with small sample sizes. It compares distributions of counts within the 4 cells.
+
+```{r, warning=FALSE}
+#Fisher's Exact Test
+ft <- fisher.test(ov) 
+ft
+
+# odds ratio
+ft$estimate 
+```
+
+
+--- 
+
+Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)
