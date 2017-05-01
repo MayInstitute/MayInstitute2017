@@ -45,6 +45,7 @@ a change in abundance between Condition 1 and Condition 2.
 * Standard error, $SE=\sqrt{\frac{s_{1}^2}{n_{1}} + \frac{s_{2}^2}{n_{2}}}$
 
 with 
+
 * $n_{1}$ : Number of replicates
 * $s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$ : Sample variance
 
