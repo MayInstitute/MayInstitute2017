@@ -152,13 +152,14 @@ str(iprg)
 ```
 
 ```
-## 'data.frame':	36321 obs. of  6 variables:
+## 'data.frame':	36321 obs. of  7 variables:
 ##  $ Protein      : Factor w/ 3027 levels "sp|D6VTK4|STE2_YEAST",..: 1 1 1 1 1 1 1 1 1 1 ...
 ##  $ Log2Intensity: num  26.8 26.6 26.6 26.8 26.8 ...
 ##  $ Run          : Factor w/ 12 levels "JD_06232014_sample1-A.raw",..: 2 3 1 4 5 6 7 8 9 11 ...
 ##  $ Condition    : Factor w/ 4 levels "Condition1","Condition2",..: 1 1 1 2 2 2 3 3 3 4 ...
 ##  $ BioReplicate : int  1 1 1 2 2 2 3 3 3 4 ...
 ##  $ Intensity    : num  1.18e+08 1.02e+08 1.01e+08 1.20e+08 1.16e+08 ...
+##  $ TechReplicate: Factor w/ 3 levels "A","B","C": 2 3 1 1 2 3 1 2 3 2 ...
 ```
 
 ### Inspecting `data.frame` objects
@@ -821,24 +822,11 @@ defines how to subset the data into different *panels* (facets).
 
 
 ```r
-names(iprg)
-```
-
-```
-## [1] "Protein"       "Log2Intensity" "Run"           "Condition"    
-## [5] "BioReplicate"  "Intensity"
-```
-
-```r
 ggplot(data = iprg,
        aes(x = TechReplicate, y = Log2Intensity,
            fill = Condition)) +
     geom_boxplot() + 
     facet_grid(~ Condition)
-```
-
-```
-## Error in FUN(X[[i]], ...): object 'TechReplicate' not found
 ```
 
 ![plot of chunk unnamed-chunk-34](figure/unnamed-chunk-34-1.png)
@@ -1096,19 +1084,19 @@ oneproteindata
 ## 21105 sp|P44015|VAC2_YEAST      20.94536 JD_06232014_sample4_B.raw
 ## 21106 sp|P44015|VAC2_YEAST      21.71424 JD_06232014_sample4_C.raw
 ## 21107 sp|P44015|VAC2_YEAST      20.25209 JD_06232014_sample4-A.raw
-##        Condition BioReplicate Intensity
-## 21096 Condition1            1  82714388
-## 21097 Condition1            1  72749239
-## 21098 Condition1            1  82100518
-## 21099 Condition2            2  59219741
-## 21100 Condition2            2  72690802
-## 21101 Condition2            2  71180513
-## 21102 Condition3            3   9295260
-## 21103 Condition3            3  10505591
-## 21104 Condition3            3  10295788
-## 21105 Condition4            4   2019205
-## 21106 Condition4            4   3440629
-## 21107 Condition4            4   1248781
+##        Condition BioReplicate Intensity TechReplicate
+## 21096 Condition1            1  82714388             B
+## 21097 Condition1            1  72749239             C
+## 21098 Condition1            1  82100518             A
+## 21099 Condition2            2  59219741             A
+## 21100 Condition2            2  72690802             B
+## 21101 Condition2            2  71180513             C
+## 21102 Condition3            3   9295260             A
+## 21103 Condition3            3  10505591             B
+## 21104 Condition3            3  10295788             C
+## 21105 Condition4            4   2019205             B
+## 21106 Condition4            4   3440629             C
+## 21107 Condition4            4   1248781             A
 ```
 
 

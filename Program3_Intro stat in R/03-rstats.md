@@ -73,13 +73,13 @@ oneproteindata.condition12
 ## 21099 sp|P44015|VAC2_YEAST      25.81957 JD_06232014_sample2_A.raw
 ## 21100 sp|P44015|VAC2_YEAST      26.11527 JD_06232014_sample2_B.raw
 ## 21101 sp|P44015|VAC2_YEAST      26.08498 JD_06232014_sample2_C.raw
-##        Condition BioReplicate Intensity
-## 21096 Condition1            1  82714388
-## 21097 Condition1            1  72749239
-## 21098 Condition1            1  82100518
-## 21099 Condition2            2  59219741
-## 21100 Condition2            2  72690802
-## 21101 Condition2            2  71180513
+##        Condition BioReplicate Intensity TechReplicate
+## 21096 Condition1            1  82714388             B
+## 21097 Condition1            1  72749239             C
+## 21098 Condition1            1  82100518             A
+## 21099 Condition2            2  59219741             A
+## 21100 Condition2            2  72690802             B
+## 21101 Condition2            2  71180513             C
 ```
 
 ```r

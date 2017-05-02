@@ -702,7 +702,6 @@ Finally, a very useful feature of `ggplot2` is **facetting**, that
 defines how to subset the data into different *panels* (facets).
 
 ```{r}
-names(iprg)
 ggplot(data = iprg,
        aes(x = TechReplicate, y = Log2Intensity,
            fill = Condition)) +
