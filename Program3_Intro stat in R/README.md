@@ -37,7 +37,7 @@ anything the license permits.
 
 ### Credit
 
-Some of the material from day 1 has been adapted from the Data
+Some of the material from day 1 and 2 has been adapted from the Data
 Carpentry R lessons (see references in the respective sections), which
 are licensed under CC-BY.
 
