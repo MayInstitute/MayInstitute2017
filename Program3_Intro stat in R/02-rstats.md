@@ -822,6 +822,15 @@ defines how to subset the data into different *panels* (facets).
 
 
 ```r
+names(iprg)
+```
+
+```
+## [1] "Protein"       "Log2Intensity" "Run"           "Condition"    
+## [5] "BioReplicate"  "Intensity"     "TechReplicate"
+```
+
+```r
 ggplot(data = iprg,
        aes(x = TechReplicate, y = Log2Intensity,
            fill = Condition)) +
@@ -879,8 +888,7 @@ save and document our full analysis in an R markdown file!
 
 ### Random selection of samples from a larger set
 
-This particular dataset contains a total of 10 subjects across
-conditions. Suppose we label them from 1 to 14 and randomly would like
+Let's assume that we have the population with a total of 10 subjects. Suppose we label them from 1 to 10 and randomly would like
 to select 3 subjects we can do this using the `sample` function. When
 we run `sample` another time, different subjects will be selected. Try
 this a couple times.
@@ -924,6 +932,18 @@ sample(10, 3)
 ## [1] 5 8 7
 ```
 
+Let's practice with fun example. Select two in our group member for coming early next Monday.
+
+```r
+group.member <- c('Meena', 'Tsung-Heng', 'Ting', 'April', 'Dan', 'Cyril', 'Kylie', 'Sara')
+sample(group.member, 2)
+```
+
+```
+## [1] "Dan"   "Cyril"
+```
+
+
 ### Completely randomized order of MS runs
 
 We can also create a random order using all elements of iPRG
@@ -953,12 +973,12 @@ sample(msrun, length(msrun))
 ```
 
 ```
-##  [1] JD_06232014_sample3_A.raw JD_06232014_sample3_C.raw
-##  [3] JD_06232014_sample1_B.raw JD_06232014_sample4-A.raw
-##  [5] JD_06232014_sample3_B.raw JD_06232014_sample4_B.raw
-##  [7] JD_06232014_sample2_C.raw JD_06232014_sample4_C.raw
-##  [9] JD_06232014_sample2_B.raw JD_06232014_sample1-A.raw
-## [11] JD_06232014_sample1_C.raw JD_06232014_sample2_A.raw
+##  [1] JD_06232014_sample1_B.raw JD_06232014_sample3_C.raw
+##  [3] JD_06232014_sample4_B.raw JD_06232014_sample1_C.raw
+##  [5] JD_06232014_sample3_B.raw JD_06232014_sample4_C.raw
+##  [7] JD_06232014_sample3_A.raw JD_06232014_sample2_B.raw
+##  [9] JD_06232014_sample1-A.raw JD_06232014_sample2_C.raw
+## [11] JD_06232014_sample4-A.raw JD_06232014_sample2_A.raw
 ## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
 ```
 
@@ -968,12 +988,12 @@ sample(msrun, length(msrun))
 ```
 
 ```
-##  [1] JD_06232014_sample1_B.raw JD_06232014_sample3_B.raw
-##  [3] JD_06232014_sample2_C.raw JD_06232014_sample1-A.raw
-##  [5] JD_06232014_sample4_B.raw JD_06232014_sample2_A.raw
-##  [7] JD_06232014_sample2_B.raw JD_06232014_sample3_A.raw
-##  [9] JD_06232014_sample4_C.raw JD_06232014_sample1_C.raw
-## [11] JD_06232014_sample3_C.raw JD_06232014_sample4-A.raw
+##  [1] JD_06232014_sample3_B.raw JD_06232014_sample2_A.raw
+##  [3] JD_06232014_sample3_A.raw JD_06232014_sample2_B.raw
+##  [5] JD_06232014_sample2_C.raw JD_06232014_sample3_C.raw
+##  [7] JD_06232014_sample4-A.raw JD_06232014_sample1-A.raw
+##  [9] JD_06232014_sample4_B.raw JD_06232014_sample1_C.raw
+## [11] JD_06232014_sample1_B.raw JD_06232014_sample4_C.raw
 ## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
 ```
 
@@ -990,7 +1010,7 @@ sample(msrun, length(msrun))
 This particular dataset contains a total of 12 MS runs across 4
 conditions, 3 technical replicates per condition. Using the
 `block.random` function in the `psych` package, we can achieve
-randomized block designs!
+randomized block designs! `block.random` function makes random assignment of `n` subjects with an equal number in all of `N` conditions.
 
 
 ```r
@@ -1023,18 +1043,38 @@ block.random(n = 12, c(Condition = 4))
 
 ```
 ##     blocks Condition
-## S1       1         2
-## S2       1         1
+## S1       1         4
+## S2       1         2
 ## S3       1         3
-## S4       1         4
-## S5       2         1
-## S6       2         4
-## S7       2         2
-## S8       2         3
+## S4       1         1
+## S5       2         2
+## S6       2         1
+## S7       2         3
+## S8       2         4
 ## S9       3         4
-## S10      3         2
-## S11      3         3
+## S10      3         3
+## S11      3         2
 ## S12      3         1
+```
+
+```r
+block.random(n = 12, c(Condition = 4, BioReplicate=3))
+```
+
+```
+##     blocks Condition BioReplicate
+## S1       1         4            2
+## S2       1         4            1
+## S3       1         3            1
+## S4       1         1            1
+## S5       1         1            2
+## S6       1         3            3
+## S7       1         2            1
+## S8       1         2            3
+## S9       1         4            3
+## S10      1         2            2
+## S11      1         1            3
+## S12      1         3            2
 ```
 
 
@@ -1047,7 +1087,7 @@ mean, standard deviation, standard error of the mean across all
 replicates per condition. We then store all the computed statistics
 into a single summary data frame for easy access.
 
-We can use the `aggregate` function to compute summary statistics
+We can use the `aggregate` function to compute summary statistics. `aggregate` splits the data into subsets, computes summary statistics for each, and returns the result in a convenient form.
 
 
 ```r
@@ -1133,9 +1173,20 @@ $$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
 > **Challenge**
 > 
 > Using the `aggregate` function above, calculate the standard
+> deviation, by applying the `median` function.
+
+
+
+```
+##    Condition Log2Intensity
+## 1 Condition1      26.29089
+## 2 Condition2      26.08498
+## 3 Condition3      23.29555
+## 4 Condition4      20.94536
+```
+
+> Using the `aggregate` function above, calculate the standard
 > deviation, by applying the `sd` function.
-
-
 
 
 ```
@@ -1146,13 +1197,13 @@ $$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
 ## 4 Condition4    0.73140174
 ```
 
+
 ### Count the number of observation per groups
 
 > **Challenge**
 > 
 > Using the `aggregate` function above, count the number of
 > observations per group with the `length` function.
-
 
 
 ```
@@ -1182,7 +1233,8 @@ sd, se and length).
 
 
 ```r
-(grp <- paste0("Condition", 1:4))
+## paste0 : concatenate vectors after convering to character.
+(grp <- paste0("Condition", 1:4)) 
 ```
 
 ```
@@ -1190,6 +1242,7 @@ sd, se and length).
 ```
 
 ```r
+## It is equivalent to paste("Condition", 1:4, sep="")
 summaryresult <- data.frame(Group = grp,
                             mean = sub.mean$Log2Intensity,
                             sd = sub.sd$Log2Intensity, 
@@ -1224,9 +1277,9 @@ p <- ggplot(aes(x = Group, y = mean, colour = Group),
 p
 ```
 
-![plot of chunk unnamed-chunk-49](figure/unnamed-chunk-49-1.png)
+![plot of chunk unnamed-chunk-51](figure/unnamed-chunk-51-1.png)
 
-Let's change a number of visual properties to make the plot more attractive
+Let's change a number of visual properties to make the plot more attractive.
  
 * Let's change the labels of x-axis and y-axis and title: `labs(title="Mean", x="Condition", y='Log2(Intensity)')`
 * Let's change background color for white: `theme_bw()`
@@ -1251,7 +1304,7 @@ p2 <- p + labs(title = "Mean", x = "Group", y = 'Log2(Intensity)') +
 p2
 ```
 
-![plot of chunk unnamed-chunk-50](figure/unnamed-chunk-50-1.png)
+![plot of chunk unnamed-chunk-52](figure/unnamed-chunk-52-1.png)
 
 Let's now add the **standard deviation**:
 
@@ -1262,12 +1315,18 @@ p2 + geom_errorbar(aes(ymax = mean + sd, ymin = mean - sd), width = 0.1) +
       labs(title="Mean with SD")
 ```
 
-![plot of chunk unnamed-chunk-51](figure/unnamed-chunk-51-1.png)
+![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
 
 > **Challenge**
 > 
 > Add the **standard error of the mean**. Which one is smaller?
 
+
+
+
+> **Challenge**
+> 
+> Add the **standard error of the mean** with black color. 
 
 
 
@@ -1287,7 +1346,7 @@ For the normale distribution `norm`, these are respectively
 * `qnorm`
 * `rnorm`
 
-Let's start by sampling 10000 values from a normal distribution $N(0, 1)$:
+Let's start by sampling 1000000 values from a normal distribution $N(0, 1)$:
 
 
 ```r
@@ -1297,7 +1356,7 @@ rug(xn)
 lines(density(xn), lwd = 2)
 ```
 
-![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
+![plot of chunk unnamed-chunk-56](figure/unnamed-chunk-56-1.png)
 
 By definition, the area under the density curve is 1. The area at the
 left of 0, 1, and 2 are respectively:
@@ -1364,11 +1423,11 @@ for a given mean:
 hist(xn, freq = FALSE)
 lines(density(xn), lwd = 2)
 points(0, dnorm(0), pch = 19, col = "red")
-points(1, dnorm(1), pch = 19, col = "red")
-points(2, dnorm(2), pch = 19, col = "red")
+points(1, dnorm(1), pch = 1, col = "blue")
+points(2, dnorm(2), pch = 4, col = "orange")
 ```
 
-![plot of chunk unnamed-chunk-56](figure/unnamed-chunk-56-1.png)
+![plot of chunk unnamed-chunk-59](figure/unnamed-chunk-59-1.png)
 
 ## Calculate the confidence interval
 
@@ -1376,7 +1435,7 @@ Now that we've covered the standard error of the mean and the standard
 deviation, let's investigate how we can add custom confidence
 intervals (CI) for our measurement of the mean. We'll add these CI's
 to the summary results we previously stored for protein
-`sp|P44015|VAC2_YEAST`
+`sp|P44015|VAC2_YEAST`.
 
 Confidence interval: 
 
@@ -1417,7 +1476,7 @@ summaryresult
 ggplot(aes(x = Group, y = mean, colour = Group),
        data = summaryresult) +
     geom_point() +
-    geom_errorbar(aes(ymax = ciw.upper.95, ymin=ciw.lower.95), width = 0.1) +
+    geom_errorbar(aes(ymax = ciw.upper.95, ymin = ciw.lower.95), width = 0.1) +
     labs(title="Mean with 95% confidence interval", x="Condition", y='Log2(Intensity)') +
     theme_bw() +
     theme(plot.title = element_text(size=25, colour="darkblue"),
@@ -1429,7 +1488,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
           legend.key = element_rect(colour='white'))
 ```
 
-![plot of chunk unnamed-chunk-58](figure/unnamed-chunk-58-1.png)
+![plot of chunk unnamed-chunk-61](figure/unnamed-chunk-61-1.png)
 
 > **Challenges**
 > 
