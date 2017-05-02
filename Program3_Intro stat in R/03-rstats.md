@@ -201,7 +201,7 @@ result$estimate
 ##                 26.23632                 26.00661
 ```
 
-> ### Challenge
+> **Challenge**
 > 
 > * Calculate the (log2-transformed) fold change between groups
 > * Extract the value of the t-statistics
@@ -512,7 +512,7 @@ pt$parameter
 The Fisher's exact test can be used with small sample sizes. It
 compares distributions of counts within the 4 cells.
 
-> ### Challenge
+> **Challenge**
 >
 > Apply the Fisher's exact test using the `fisher.test` function and
 > extract the odds ratio.
