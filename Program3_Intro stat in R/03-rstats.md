@@ -21,7 +21,7 @@ output:
 
 ---
 
-# Statistical hypothesis test
+# Part 4: Statistical hypothesis test
 
 First, we are going to prepare the session for further analyses.
 
@@ -313,8 +313,108 @@ which is the same as the one calculated by the t-test.
 
 
 
+# Part 5a: Sample size calculation
 
-# Comparison of two proportions
+To calculate the required sample size, you’ll need to know four
+things:
+
+* $\alpha$: confidence level
+* $power$: 1 - $\beta$, where $\beta$ is probability of a true positive discovery
+* $\Delta$: anticipated fold change
+* $\sigma$: anticipated variance
+
+## R code
+
+Assuming equal varaince and number of samples across groups, the
+following formula is used for sample size estimation:
+
+$$\frac{2{\sigma}^2}{n}\leq(\frac{\Delta}{z_{1-\beta}+z_{1-\alpha/2}})^2$$
+
+
+
+```r
+library("pwr")
+
+## ?pwr.t.test
+
+# Significance level alpha
+alpha <- 0.05
+
+# Power = 1 - beta
+power <- 0.95
+
+# anticipated log2 fold change 
+delta <- 1
+
+# anticipated variability
+sigma <- 1.5
+
+# Effect size
+# It quantifies the size of the difference between two groups
+d <- delta/sigma
+
+#Sample size estimation
+pwr.t.test(d = d, sig.level = alpha, power = power, type = 'two.sample')
+```
+
+```
+## 
+##      Two-sample t test power calculation 
+## 
+##               n = 59.45415
+##               d = 0.6666667
+##       sig.level = 0.05
+##           power = 0.95
+##     alternative = two.sided
+## 
+## NOTE: n is number in *each* group
+```
+
+Then, we investigate the effect of required fold change and variance on the sample size estimation.
+
+
+```r
+# anticipated log2 fold change 
+delta <- seq(0.1, 0.7, .1)
+nd <- length(delta)
+
+# anticipated variability
+sigma <- seq(0.1,0.5,.1)
+ns <- length(sigma)
+
+# obtain sample sizes
+samsize <- matrix(0, nrow=ns*nd, ncol = 3)
+counter <- 0
+for (i in 1:nd){
+  for (j in 1:ns){
+    result <- pwr.t.test(d = delta[i]/sigma[j],
+                         sig.level = alpha, power = power,
+                         type = "two.sample")
+    counter <- counter + 1
+    samsize[counter,1] <- delta[i]
+    samsize[counter,2] <- sigma[j]
+    samsize[counter,3] <- ceiling(result$n)
+  }
+}
+colnames(samsize) <- c("fd","var","value")
+
+
+library("ggplot2")
+samsize <- as.data.frame(samsize)
+samsize$var <- as.factor(samsize$var)
+ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
+  geom_line() +
+  geom_point(size=2, shape=21, fill="white") +
+  labs(title="Sig=0.05 Power=0.05", x="Anticipated log2 fold change", y='Sample Size (n)') +
+  theme(plot.title = element_text(size=20, colour="darkblue"),
+        axis.title.x = element_text(size=15),
+        axis.title.y = element_text(size=15),
+        axis.text.x = element_text(size=13)) 
+```
+
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
+
+# Part 5b: Comparison of two proportions
 
 For this part, we are going to use a new dataset, which contains the
 patient information from TCGA colorectal cohort. This data is from
@@ -389,7 +489,7 @@ ov
 dotchart(t(ov), xlab = "Observed counts")
 ```
 
-![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
 
 
 ## Chi-squared test
@@ -556,109 +656,8 @@ z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
 > from Fahrenheit to Celsium (Celsium to Fahrenheit) using the
 > following formula $F = C \times 1 + 32$ ($C = \frac{F - 32}{1.8}$).
 
-# Sample size calculation
 
-To calculate the required sample size, you’ll need to know four
-things:
-
-* $\alpha$: confidence level
-* $power$: 1 - $\beta$, where $\beta$ is probability of a true positive discovery
-* $\Delta$: anticipated fold change
-* $\sigma$: anticipated variance
-
-## R code
-
-Assuming equal varaince and number of samples across groups, the
-following formula is used for sample size estimation:
-
-$$\frac{2{\sigma}^2}{n}\leq(\frac{\Delta}{z_{1-\beta}+z_{1-\alpha/2}})^2$$
-
-
-
-```r
-library("pwr")
-
-## ?pwr.t.test
-
-# Significance level alpha
-alpha <- 0.05
-
-# Power = 1 - beta
-power <- 0.95
-
-# anticipated log2 fold change 
-delta <- 1
-
-# anticipated variability
-sigma <- 1.5
-
-# Effect size
-# It quantifies the size of the difference between two groups
-d <- delta/sigma
-
-#Sample size estimation
-pwr.t.test(d = d, sig.level = alpha, power = power, type = 'two.sample')
-```
-
-```
-## 
-##      Two-sample t test power calculation 
-## 
-##               n = 59.45415
-##               d = 0.6666667
-##       sig.level = 0.05
-##           power = 0.95
-##     alternative = two.sided
-## 
-## NOTE: n is number in *each* group
-```
-
-Then, we investigate the effect of required fold change and variance on the sample size estimation.
-
-
-```r
-# anticipated log2 fold change 
-delta <- seq(0.1, 0.7, .1)
-nd <- length(delta)
-
-# anticipated variability
-sigma <- seq(0.1,0.5,.1)
-ns <- length(sigma)
-
-# obtain sample sizes
-samsize <- matrix(0, nrow=ns*nd, ncol = 3)
-counter <- 0
-for (i in 1:nd){
-  for (j in 1:ns){
-    result <- pwr.t.test(d = delta[i]/sigma[j],
-                         sig.level = alpha, power = power,
-                         type = "two.sample")
-    counter <- counter + 1
-    samsize[counter,1] <- delta[i]
-    samsize[counter,2] <- sigma[j]
-    samsize[counter,3] <- ceiling(result$n)
-  }
-}
-colnames(samsize) <- c("fd","var","value")
-
-
-library("ggplot2")
-samsize <- as.data.frame(samsize)
-samsize$var <- as.factor(samsize$var)
-ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
-  geom_line() +
-  geom_point(size=2, shape=21, fill="white") +
-  labs(title="Sig=0.05 Power=0.05", x="Anticipated log2 fold change", y='Sample Size (n)') +
-  theme(plot.title = element_text(size=20, colour="darkblue"),
-        axis.title.x = element_text(size=15),
-        axis.title.y = element_text(size=15),
-        axis.text.x = element_text(size=13)) 
-```
-
-![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23-1.png)
-
-
-# Linear models and correlation
+# Part 6: Linear models and correlation
 
 
 When considering correlations and modelling data, visualisation is key. 
@@ -905,6 +904,6 @@ See also `?influence.measures`.
 >    a linear model for one $(x_i, y_i)$ pair of your choice and
 >    visualise/check the model.
 
---- 
 
+--- 
 Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)

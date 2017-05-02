@@ -1,5 +1,8 @@
 # May Institute 2017: Beginner's statistics in R
 
+* This page: http://bit.ly/2017MayInstRstats
+* Etherpad: https://public.etherpad-mozilla.org/p/2017MayInstRstat
+
 ### Material
 
 * [Day 1](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/01-rstats.html)
