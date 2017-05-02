@@ -916,5 +916,26 @@ See also `?influence.measures`.
 >    visualise/check the model.
 
 
+Finally, let's conclude by illustrating how `ggplot2` can very
+elegantly be used to produce similar plots, with useful annotations:
+
+
+```r
+library("ggplot2")
+dfr <- data.frame(r1, r2, M, A)
+p <- ggplot(aes(x = r1, y = r2), data = dfr) + geom_point()
+p + geom_smooth(method = "lm") +
+    geom_quantile(colour = "red")
+```
+
+![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
+
+> **Challenge**
+>
+> Replicate the MA plot above using `ggplot2`. Then add a
+> non-parametric lowess regression using `geom_smooth()`.
+
+
+
 --- 
 Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)

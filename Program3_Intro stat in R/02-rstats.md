@@ -617,6 +617,42 @@ changes if the underlying data change or if we decide to change from a
 bar plot to a scatterplot. This helps in creating publication quality
 plots with minimal amounts of adjustments and tweaking.
 
+### Comparison between base graphics and `ggplot2`
+
+**Base graphics**
+
+Uses a *canvas model* a series of instructions that sequentially fill
+the plotting canvas. While this model is very useful to build plots
+bits by bits bottom up, which is useful in some cases, it has some
+clear drawback:
+
+* Layout choices have to be made without global overview over what may
+  still be coming.
+* Different functions for different plot types with different
+  interfaces.
+* No standard data input.
+* Many routine tasks require a lot of boilerplate code.
+* No concept of facets/lattices/viewports.
+* Poor default colours.
+
+**The grammar of graphics**
+
+The components of `ggplot2`'s of graphics are
+
+1. A **tidy** dataset
+2. A choice of geometric objects that servers as the visual
+   representation of the data - for instance, points, lines,
+   rectangles, contours.
+3. A description of how the variables in the data are mapped to visual
+   properties (aesthetics) or the geometric objects, and an associated
+   scale (e.g. linear, logarithmic, rang)
+4. A statistical summarisation rule
+5. A coordinate system.
+6. A facet specification, i.e. the use of several plots to look at the
+   same data.
+
+
+
 Fist of all, we need to load the `ggplot2` package
 
 
@@ -654,6 +690,10 @@ ggplot(data = iprg, aes(x = Run, y = Log2Intensity)) +
 ```
 
 ![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+
+See the [documentation page](http://ggplot2.tidyverse.org/reference/)
+to explore the many available `geoms`.
+
 
 The `+` in the `ggplot2` package is particularly useful because it
 allows you to modify existing `ggplot` objects. This means you can
@@ -774,6 +814,34 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 > * Overlay a boxplot goem on top of a jitter geom for the raw or
 >   log-10 transformed intensities.
 > * Customise the plot as suggested above.
+
+
+Finally, a very useful feature of `ggplot2` is **facetting**, that
+defines how to subset the data into different *panels* (facets).
+
+
+```r
+names(iprg)
+```
+
+```
+## [1] "Protein"       "Log2Intensity" "Run"           "Condition"    
+## [5] "BioReplicate"  "Intensity"
+```
+
+```r
+ggplot(data = iprg,
+       aes(x = TechReplicate, y = Log2Intensity,
+           fill = Condition)) +
+    geom_boxplot() + 
+    facet_grid(~ Condition)
+```
+
+```
+## Error in FUN(X[[i]], ...): object 'TechReplicate' not found
+```
+
+![plot of chunk unnamed-chunk-34](figure/unnamed-chunk-34-1.png)
 
 ## Saving your work
 
@@ -1168,7 +1236,7 @@ p <- ggplot(aes(x = Group, y = mean, colour = Group),
 p
 ```
 
-![plot of chunk unnamed-chunk-48](figure/unnamed-chunk-48-1.png)
+![plot of chunk unnamed-chunk-49](figure/unnamed-chunk-49-1.png)
 
 Let's change a number of visual properties to make the plot more attractive
  
@@ -1195,7 +1263,7 @@ p2 <- p + labs(title = "Mean", x = "Group", y = 'Log2(Intensity)') +
 p2
 ```
 
-![plot of chunk unnamed-chunk-49](figure/unnamed-chunk-49-1.png)
+![plot of chunk unnamed-chunk-50](figure/unnamed-chunk-50-1.png)
 
 Let's now add the **standard deviation**:
 
@@ -1206,7 +1274,7 @@ p2 + geom_errorbar(aes(ymax = mean + sd, ymin = mean - sd), width = 0.1) +
       labs(title="Mean with SD")
 ```
 
-![plot of chunk unnamed-chunk-50](figure/unnamed-chunk-50-1.png)
+![plot of chunk unnamed-chunk-51](figure/unnamed-chunk-51-1.png)
 
 > **Challenge**
 > 
@@ -1241,7 +1309,7 @@ rug(xn)
 lines(density(xn), lwd = 2)
 ```
 
-![plot of chunk unnamed-chunk-52](figure/unnamed-chunk-52-1.png)
+![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
 
 By definition, the area under the density curve is 1. The area at the
 left of 0, 1, and 2 are respectively:
@@ -1312,7 +1380,7 @@ points(1, dnorm(1), pch = 19, col = "red")
 points(2, dnorm(2), pch = 19, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-55](figure/unnamed-chunk-55-1.png)
+![plot of chunk unnamed-chunk-56](figure/unnamed-chunk-56-1.png)
 
 ## Calculate the confidence interval
 
@@ -1373,7 +1441,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
           legend.key = element_rect(colour='white'))
 ```
 
-![plot of chunk unnamed-chunk-57](figure/unnamed-chunk-57-1.png)
+![plot of chunk unnamed-chunk-58](figure/unnamed-chunk-58-1.png)
 
 > **Challenges**
 > 

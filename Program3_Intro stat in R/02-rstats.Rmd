@@ -533,6 +533,42 @@ changes if the underlying data change or if we decide to change from a
 bar plot to a scatterplot. This helps in creating publication quality
 plots with minimal amounts of adjustments and tweaking.
 
+### Comparison between base graphics and `ggplot2`
+
+**Base graphics**
+
+Uses a *canvas model* a series of instructions that sequentially fill
+the plotting canvas. While this model is very useful to build plots
+bits by bits bottom up, which is useful in some cases, it has some
+clear drawback:
+
+* Layout choices have to be made without global overview over what may
+  still be coming.
+* Different functions for different plot types with different
+  interfaces.
+* No standard data input.
+* Many routine tasks require a lot of boilerplate code.
+* No concept of facets/lattices/viewports.
+* Poor default colours.
+
+**The grammar of graphics**
+
+The components of `ggplot2`'s of graphics are
+
+1. A **tidy** dataset
+2. A choice of geometric objects that servers as the visual
+   representation of the data - for instance, points, lines,
+   rectangles, contours.
+3. A description of how the variables in the data are mapped to visual
+   properties (aesthetics) or the geometric objects, and an associated
+   scale (e.g. linear, logarithmic, rang)
+4. A statistical summarisation rule
+5. A coordinate system.
+6. A facet specification, i.e. the use of several plots to look at the
+   same data.
+
+
+
 Fist of all, we need to load the `ggplot2` package
 
 ```{r}
@@ -564,6 +600,10 @@ ggplot(data = iprg, aes(x = Run, y = Log2Intensity))
 ggplot(data = iprg, aes(x = Run, y = Log2Intensity)) +
   geom_boxplot()
 ```
+
+See the [documentation page](http://ggplot2.tidyverse.org/reference/)
+to explore the many available `geoms`.
+
 
 The `+` in the `ggplot2` package is particularly useful because it
 allows you to modify existing `ggplot` objects. This means you can
@@ -656,6 +696,19 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 > * Overlay a boxplot goem on top of a jitter geom for the raw or
 >   log-10 transformed intensities.
 > * Customise the plot as suggested above.
+
+
+Finally, a very useful feature of `ggplot2` is **facetting**, that
+defines how to subset the data into different *panels* (facets).
+
+```{r}
+names(iprg)
+ggplot(data = iprg,
+       aes(x = TechReplicate, y = Log2Intensity,
+           fill = Condition)) +
+    geom_boxplot() + 
+    facet_grid(~ Condition)
+```
 
 ## Saving your work
 
