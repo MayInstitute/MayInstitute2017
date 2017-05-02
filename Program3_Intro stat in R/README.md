@@ -2,6 +2,7 @@
 
 * This page: http://bit.ly/2017MayInstRstats
 * Etherpad: https://public.etherpad-mozilla.org/p/2017MayInstRstat
+* [May Institute page](http://computationalproteomics.ccis.northeastern.edu/programs/beginners-statistics-in-r/)
 
 ### Material
 
