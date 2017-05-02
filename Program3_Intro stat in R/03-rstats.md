@@ -847,11 +847,28 @@ function:
 
 ```r
 lmod <- lm(r2 ~ r1)
-summaru(lmod)
+summary(lmod)
 ```
 
 ```
-## Error in summaru(lmod): could not find function "summaru"
+## 
+## Call:
+## lm(formula = r2 ~ r1)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.4939 -0.0721  0.0126  0.0881  3.4595 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) 0.348190   0.091842   3.791 0.000153 ***
+## r1          0.985878   0.003688 267.357  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.3263 on 3024 degrees of freedom
+## Multiple R-squared:  0.9594,	Adjusted R-squared:  0.9594 
+## F-statistic: 7.148e+04 on 1 and 3024 DF,  p-value: < 2.2e-16
 ```
 
 which can be used to add the adequate line that reflects the (linear)
