@@ -21,7 +21,7 @@ output:
 
 ---
 
-Parts of the `data.frame` material is based on the
+Parts of the `data.frame` and `ggplot2` material are based on the
 [R for data analysis and visualization](http://www.datacarpentry.org/R-ecology-lesson/index.html)
 Data Carpentry course.
 

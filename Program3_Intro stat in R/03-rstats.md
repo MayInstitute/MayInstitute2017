@@ -654,7 +654,7 @@ z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
 >
 > Write a function named `f2c` (`c2f`) that converts a temperature
 > from Fahrenheit to Celsium (Celsium to Fahrenheit) using the
-> following formula $F = C \times 1 + 32$ ($C = \frac{F - 32}{1.8}$).
+> following formula $F = C \times 1.8 + 32$ ($C = \frac{F - 32}{1.8}$).
 
 
 # Part 6: Linear models and correlation
