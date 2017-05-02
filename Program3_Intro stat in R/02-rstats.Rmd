@@ -694,8 +694,7 @@ save and document our full analysis in an R markdown file!
 
 ### Random selection of samples from a larger set
 
-This particular dataset contains a total of 10 subjects across
-conditions. Suppose we label them from 1 to 14 and randomly would like
+Let's assume that we have the population with a total of 10 subjects. Suppose we label them from 1 to 10 and randomly would like
 to select 3 subjects we can do this using the `sample` function. When
 we run `sample` another time, different subjects will be selected. Try
 this a couple times.
@@ -715,6 +714,13 @@ sample(10, 3)
 set.seed(3728)
 sample(10, 3)
 ```
+
+Let's practice with fun example. Select two in our group member for coming early next Monday.
+```{r}
+group.member <- c('Meena', 'Tsung-Heng', 'Ting', 'April', 'Dan', 'Cyril', 'Kylie', 'Sara')
+sample(group.member, 2)
+```
+
 
 ### Completely randomized order of MS runs
 
@@ -747,7 +753,7 @@ sample(msrun, length(msrun))
 This particular dataset contains a total of 12 MS runs across 4
 conditions, 3 technical replicates per condition. Using the
 `block.random` function in the `psych` package, we can achieve
-randomized block designs!
+randomized block designs! `block.random` function makes random assignment of `n` subjects with an equal number in all of `N` conditions.
 
 ```{r, message = FALSE}
 library("psych") ## load the psych package
@@ -757,6 +763,8 @@ msrun
 
 ## 4 Conditions of 12 MS runs randomly ordered
 block.random(n = 12, c(Condition = 4))
+block.random(n = 12, c(Condition = 4, BioReplicate=3))
+
 ```
 
 
@@ -769,7 +777,7 @@ mean, standard deviation, standard error of the mean across all
 replicates per condition. We then store all the computed statistics
 into a single summary data frame for easy access.
 
-We can use the `aggregate` function to compute summary statistics
+We can use the `aggregate` function to compute summary statistics. `aggregate` splits the data into subsets, computes summary statistics for each, and returns the result in a convenient form.
 
 ```{r}
 # check what proteins are in dataset, show all protein names
@@ -808,9 +816,18 @@ $$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
 > **Challenge**
 > 
 > Using the `aggregate` function above, calculate the standard
+> deviation, by applying the `median` function.
+
+
+```{r, echo=FALSE}
+## The same as mean calculation above. 'FUN' is changed to 'sd'.
+sub.median <- aggregate(Log2Intensity ~ Condition,
+                    data = oneproteindata, FUN = median)
+sub.median
+```
+
+> Using the `aggregate` function above, calculate the standard
 > deviation, by applying the `sd` function.
-
-
 
 ```{r, echo=FALSE}
 ## The same as mean calculation above. 'FUN' is changed to 'sd'.
@@ -819,13 +836,13 @@ sub.sd <- aggregate(Log2Intensity ~ Condition,
 sub.sd
 ```
 
+
 ### Count the number of observation per groups
 
 > **Challenge**
 > 
 > Using the `aggregate` function above, count the number of
 > observations per group with the `length` function.
-
 
 ```{r, echo=FALSE}
 ## The same as mean calculation. 'FUN' is changed 'length'.
@@ -848,7 +865,9 @@ We can now make the summary table including the results above (mean,
 sd, se and length).
 
 ```{r}
-(grp <- paste0("Condition", 1:4))
+## paste0 : concatenate vectors after convering to character.
+(grp <- paste0("Condition", 1:4)) 
+## It is equivalent to paste("Condition", 1:4, sep="")
 summaryresult <- data.frame(Group = grp,
                             mean = sub.mean$Log2Intensity,
                             sd = sub.sd$Log2Intensity, 
@@ -874,7 +893,7 @@ p <- ggplot(aes(x = Group, y = mean, colour = Group),
 p
 ```
 
-Let's change a number of visual properties to make the plot more attractive
+Let's change a number of visual properties to make the plot more attractive.
  
 * Let's change the labels of x-axis and y-axis and title: `labs(title="Mean", x="Condition", y='Log2(Intensity)')`
 * Let's change background color for white: `theme_bw()`
@@ -918,6 +937,16 @@ p2 + geom_errorbar(aes(ymax = mean + se, ymin=mean - se), width = 0.1) +
 ## The SE is narrow than the SD!
 ```
 
+> **Challenge**
+> 
+> Add the **standard error of the mean** with black color. 
+
+```{r, eval=FALSE, echo=FALSE}
+# mean with SE
+p2 + geom_errorbar(aes(ymax = mean + se, ymin=mean - se), width = 0.1, color='black') +
+    labs(title="Mean with SE")
+```
+
 ## Working with statistical distributions
 
 For each statistical distribution, we have function to compute
@@ -934,7 +963,7 @@ For the normale distribution `norm`, these are respectively
 * `qnorm`
 * `rnorm`
 
-Let's start by sampling 10000 values from a normal distribution $N(0, 1)$:
+Let's start by sampling 1000000 values from a normal distribution $N(0, 1)$:
 
 ```{r}
 xn <- rnorm(1e6)
@@ -969,8 +998,8 @@ for a given mean:
 hist(xn, freq = FALSE)
 lines(density(xn), lwd = 2)
 points(0, dnorm(0), pch = 19, col = "red")
-points(1, dnorm(1), pch = 19, col = "red")
-points(2, dnorm(2), pch = 19, col = "red")
+points(1, dnorm(1), pch = 1, col = "blue")
+points(2, dnorm(2), pch = 4, col = "orange")
 ```
 
 ## Calculate the confidence interval
@@ -979,7 +1008,7 @@ Now that we've covered the standard error of the mean and the standard
 deviation, let's investigate how we can add custom confidence
 intervals (CI) for our measurement of the mean. We'll add these CI's
 to the summary results we previously stored for protein
-`sp|P44015|VAC2_YEAST`
+`sp|P44015|VAC2_YEAST`.
 
 Confidence interval: 
 
@@ -1005,7 +1034,7 @@ summaryresult
 ggplot(aes(x = Group, y = mean, colour = Group),
        data = summaryresult) +
     geom_point() +
-    geom_errorbar(aes(ymax = ciw.upper.95, ymin=ciw.lower.95), width = 0.1) +
+    geom_errorbar(aes(ymax = ciw.upper.95, ymin = ciw.lower.95), width = 0.1) +
     labs(title="Mean with 95% confidence interval", x="Condition", y='Log2(Intensity)') +
     theme_bw() +
     theme(plot.title = element_text(size=25, colour="darkblue"),
