@@ -17,6 +17,7 @@ output:
 - Hypothesis testing: t-test
 - Categorical data
 - Power calculation
+- Linear models and correlation
 
 ---
 
@@ -132,30 +133,12 @@ result
 ##                 26.23632                 26.00661
 ```
 
-We can redo the t-test and change the confidence level for the log2 fold change.
+> **Challenge**
+>
+> Repeat the t-test above but with calculating a 90% confidence interval
+> for the log2 fold change.
 
 
-```r
-result.ci90 <- t.test(Log2Intensity ~ Condition, 
-                      var.equal = FALSE,
-                      data = oneproteindata.condition12,
-                      conf.level = 0.9)
-result.ci90
-```
-
-```
-## 
-## 	Welch Two Sample t-test
-## 
-## data:  Log2Intensity by Condition
-## t = 2.0608, df = 3.4001, p-value = 0.1206
-## alternative hypothesis: true difference in means is not equal to 0
-## 90 percent confidence interval:
-##  -0.02049268  0.47991165
-## sample estimates:
-## mean in group Condition1 mean in group Condition2 
-##                 26.23632                 26.00661
-```
 
 ### The `htest` class
 
@@ -212,35 +195,6 @@ result$estimate
 
 
 
-```
-## mean in group Condition1 
-##                0.2297095
-```
-
-```
-##        t 
-## 2.060799
-```
-
-```
-## mean in group Condition1 
-##                0.1114662
-```
-
-```
-##       df 
-## 3.400112
-```
-
-```
-## [1] 0.1206139
-```
-
-```
-## [1] -0.1025408  0.5619598
-## attr(,"conf.level")
-## [1] 0.95
-```
 
 We can also manually compute our t-test statistic using the formulas
 we descibed above and compare it with the `summaryresult`.

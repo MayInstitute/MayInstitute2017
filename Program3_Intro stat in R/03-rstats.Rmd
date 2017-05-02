@@ -19,6 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 - Hypothesis testing: t-test
 - Categorical data
 - Power calculation
+- Linear models and correlation
 
 ---
 
@@ -83,9 +84,12 @@ result <- t.test(Log2Intensity ~ Condition,
 result
 ```
 
-We can redo the t-test and change the confidence level for the log2 fold change.
+> **Challenge**
+>
+> Repeat the t-test above but with calculating a 90% confidence interval
+> for the log2 fold change.
 
-```{r}
+```{r, eval=FALSE, echo=FALSE}
 result.ci90 <- t.test(Log2Intensity ~ Condition, 
                       var.equal = FALSE,
                       data = oneproteindata.condition12,
@@ -130,7 +134,7 @@ result$estimate
 > * Extract the 95% confidence intervals
 
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, include=FALSE}
 ## log2 fold-change
 result$estimate[1]-result$estimate[2]
 ## test statistic value, T value
