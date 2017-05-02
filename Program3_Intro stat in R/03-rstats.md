@@ -713,6 +713,169 @@ See also another, more recent example:
 ![The Datasaurus Dozen dataset](https://d2f99xq7vri1nk.cloudfront.net/DinoSequentialSmaller.gif)
 </details>
 
+
+## Correlation
+
+Here is an example where a wide format comes very handy. We are going
+to convert our iPRG data using the `spread` function from the `tidyr`
+package:
+
+
+
+```r
+library("tidyr")
+iprg2 <- spread(iprg[, 1:3], Run, Log2Intensity)
+rownames(iprg2) <- iprg2$Protein
+iprg2 <- iprg2[, -1]
+```
+
+And lets focus on the 3 runs, i.e. 2 replicates from condition
+1 and 
+
+
+```r
+x <- iprg2[, c(1, 2, 10)]
+head(x)
+```
+
+```
+##                       JD_06232014_sample1-A.raw JD_06232014_sample1_B.raw
+## sp|D6VTK4|STE2_YEAST                   26.58301                  26.81232
+## sp|O13297|CET1_YEAST                   24.71809                  24.71912
+## sp|O13329|FOB1_YEAST                   23.47075                  23.37678
+## sp|O13539|THP2_YEAST                   24.29661                  27.52021
+## sp|O13547|CCW14_YEAST                  27.11638                  27.22234
+## sp|O13563|RPN13_YEAST                  26.17056                  26.09476
+##                       JD_06232014_sample4-A.raw
+## sp|D6VTK4|STE2_YEAST                   26.65573
+## sp|O13297|CET1_YEAST                   24.50814
+## sp|O13329|FOB1_YEAST                   23.03473
+## sp|O13539|THP2_YEAST                   25.07576
+## sp|O13547|CCW14_YEAST                  27.07526
+## sp|O13563|RPN13_YEAST                  25.77958
+```
+
+```r
+pairs(x)
+```
+
+![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
+
+We can use the `cor` function to calculate the Pearson correlation
+between two vectors of the same length (making sure the order is
+correct), or a dataframe. But, we have missing values in the data,
+which will stop us from calculating the correlation:
+
+
+```r
+cor(x)
+```
+
+```
+##                           JD_06232014_sample1-A.raw
+## JD_06232014_sample1-A.raw                         1
+## JD_06232014_sample1_B.raw                        NA
+## JD_06232014_sample4-A.raw                        NA
+##                           JD_06232014_sample1_B.raw
+## JD_06232014_sample1-A.raw                        NA
+## JD_06232014_sample1_B.raw                         1
+## JD_06232014_sample4-A.raw                        NA
+##                           JD_06232014_sample4-A.raw
+## JD_06232014_sample1-A.raw                        NA
+## JD_06232014_sample1_B.raw                        NA
+## JD_06232014_sample4-A.raw                         1
+```
+
+We first need to omit the proteins/rows that contain missing values
+
+
+```r
+x2 <- na.omit(x)
+cor(x2)
+```
+
+```
+##                           JD_06232014_sample1-A.raw
+## JD_06232014_sample1-A.raw                 1.0000000
+## JD_06232014_sample1_B.raw                 0.9794954
+## JD_06232014_sample4-A.raw                 0.9502142
+##                           JD_06232014_sample1_B.raw
+## JD_06232014_sample1-A.raw                 0.9794954
+## JD_06232014_sample1_B.raw                 1.0000000
+## JD_06232014_sample4-A.raw                 0.9502517
+##                           JD_06232014_sample4-A.raw
+## JD_06232014_sample1-A.raw                 0.9502142
+## JD_06232014_sample1_B.raw                 0.9502517
+## JD_06232014_sample4-A.raw                 1.0000000
+```
+
+### A note on correlation and replication
+
+It is often assumed that high correlation is a halmark of good
+replication. This is however a simplistic view. To illustrate this,
+let's focus on the two first replicates, which have a high
+correlation.
+
+
+```r
+r1 <- x2[, 1]
+r2 <- x2[, 2]
+cor(r1, r2)
+```
+
+```
+## [1] 0.9794954
+```
+
+Now lets assume we have a third replicate, `r3`. When we repeat a
+measurement, we don't obtain exactly the same values. Let's add
+normally distributed noise when creating a first thyroid replicate.
+
+
+```r
+r3a <- r1 + rnorm(length(r1))
+```
+
+Let's now create another third replicate, `r3b` that has a small noise
+component, and a systematic biais.
+
+
+```r
+r3b <- r1 + rnorm(length(r1), 2, 0.5)
+```
+
+Which ones of `r1` and `r3a` or `r1` and `r3b` correlate better?
+
+
+```r
+par(mfrow = c(2, 1))
+plot(r1, r3a, main = round(cor(r1, r3a), 3))
+grid(); abline(0, 1, "red")
+```
+
+```
+## Warning in int_abline(a = a, b = b, h = h, v = v, untf = untf, ...): NAs
+## introduced by coercion
+```
+
+```r
+plot(r1, r3b, main = round(cor(r1, r3b), 3))
+grid(); abline(0, 1, col = "red")
+```
+
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+
+A better measurement would be to look a the log2 fold-changes,
+i.e. the variation of our measurements:
+
+
+```r
+boxplot(data.frame(r1 - r3a, r1 - r3b))
+```
+
+![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
+
+
 --- 
 
 Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)
