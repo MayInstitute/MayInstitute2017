@@ -6,6 +6,7 @@ output:
     self_contained: true
     toc: true
     toc_float: true
+    fig_caption: no
 ---
 
 
@@ -734,6 +735,7 @@ fundamental differences in the datasets.
 <!-- ```{r anscomberesids, echo=FALSE} -->
 <!-- kable(sapply(mods, residuals)) -->
 <!-- ``` -->
+
 
 
 

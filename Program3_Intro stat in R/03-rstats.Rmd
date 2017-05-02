@@ -360,6 +360,10 @@ z.prop.ci <- function(x1, x2, n1, n2, alpha = 0.05){
 z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
 ```
 
+> **Challenge**
+>
+
+
 # Sample size calculation
 
 To calculate the required sample size, you’ll need to know four

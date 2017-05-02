@@ -1253,7 +1253,7 @@ rug(xn)
 lines(density(xn), lwd = 2)
 ```
 
-![plot of chunk hello](figure/hello-1.png)
+![plot of chunk unnamed-chunk-50](figure/unnamed-chunk-50-1.png)
 
 By definition, the area under the density curve is 1. The area at the
 left of 0, 1, and 2 are respectively:
@@ -1324,7 +1324,7 @@ points(1, dnorm(1), pch = 19, col = "red")
 points(2, dnorm(2), pch = 19, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-52](figure/unnamed-chunk-52-1.png)
+![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
 
 ## Calculate the confidence interval
 
@@ -1385,7 +1385,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
           legend.key = element_rect(colour='white'))
 ```
 
-![plot of chunk unnamed-chunk-54](figure/unnamed-chunk-54-1.png)
+![plot of chunk unnamed-chunk-55](figure/unnamed-chunk-55-1.png)
 
 > ### Challenges
 > 
