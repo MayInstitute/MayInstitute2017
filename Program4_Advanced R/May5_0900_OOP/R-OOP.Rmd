@@ -1,0 +1,455 @@
+---
+title: "Object-oriented programming in R"
+author: "Advanced R"
+date: "Friday May 5, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
+
+## Learning goals
+
+1. Understand what is object-oriented programming and when to use it.
+
+2. What are the ways to use object-oriented programming in R?
+
+## What is object-oriented programming (OOP)?
+
+OOP is a way of organizing code around commonly re-used data "classes" and "methods".
+
+A **class** is a blueprint for a way of organizing data.
+
+- E.g., you might write a class for a proteomics experiment.
+
+An **object** is a particular instance of a class.
+
+- E.g., the twin case study is a particular instance of a proteomics experiment.
+
+Using **inheritance** allows *subclasses* to specialize *superclasses*.
+
+- E.g., a DIA or SRM class which specializes a proteomics experiment class.
+
+A **method** is a function associated with behavior specialized to a particular class. In __R__ this is done using *generic functions*.
+
+- E.g., `plot` is a generic function. A proteomics experiment class may have a `plot` method that knows how to plot proteomics experiments.
+
+## A simple example
+
+Consider a pet simulator game. It may consist of the following elements:
+
+- An `Animal` class with subclasses `Cat` and `Dog`.
+
+- A generic function called `speak`.
+
+- A `speak` method for both the `Cat` and `Dog` classes
+
+- An object named `Mittens` as an instance of the `Cat` class
+
+- An object named `Duke` as an instance of the `Dog` class
+
+- `speak(Mittens)`
+    + `"Meow!"`
+
+- `speak(Duke)`
+    + `"Woof!"`
+
+## OOP in R
+
+There are two major object-oriented programming systems in R.
+
+- S3 classes
+    + Very simple class system
+    + No formal class definitions
+    + Single dispatch (methods only specialized on first argument)
+    + Single inheritance
+
+- S4 classes
+    + More complex class system
+    + Formal class definitions
+    + Multiple dispatch (methods specialized on multiple arguments)
+    + Multiple inheritance
+    
+When to use which?
+
+- Use S3 for simple data structures without complex dependencies
+
+- Use S4 for more complex data structures
+
+S3 is more common in base R and CRAN packages.
+
+S4 is more common in Bioconductor packages.
+
+## Introduction to S3 classes
+
+S3 classes are created from base R types with `attribute`s.
+
+That means S3 classes are based on:
+
+- `raw`
+- `integer`
+- `numeric`
+- `character`
+- `list`
+
+...etc.
+
+S3 classes are defined by their `class` attribute which can be accessed and set by the `class()` function
+
+What are some common S3 classes you already use in R?
+
+- `factor`
+
+- `data.frame`
+
+```{r}
+# investigate factors
+fc <- factor(c("a", "a", "b", "c"))
+class(fc)
+typeof(fc) # built on top of 'integer' base type
+attributes(fc) # has 'class' and 'levels' attributes
+```
+
+```{r}
+# investigate data.frames
+df <- data.frame(x=1:3, y=4:6)
+class(df)
+typeof(df) # built on top of 'list' base type
+attributes(df) # has 'class', 'names', and 'row.names' attributes
+```
+
+```{r}
+class(df) <- "list"
+df
+class(df) <- "data.frame"
+df
+```
+
+S3 classes can inherit from other S3 classes by simply appending the superclass to the `class` attribute.
+
+For example, for an ordered factor:
+
+```{r}
+od <- ordered(c("a", "a", "b", "c"))
+class(od) # class 'ordered' inherits from 'factor'
+```
+
+## Introduction to S3 methods
+
+A generic function is a function that should behave differently depending on what kind of object is it given.
+
+S3 generic functions are defined by a body consisting of `UseMethod("name")` (where "name" is the name of the function).
+
+S3 methods are then defined by the naming scheme `name.class()`.
+
+Available S3 methods can be listed using the `methods()` function.
+
+What are some common S3 methods you already use in R?
+
+- `print`
+
+- `plot`
+
+- `summary`
+
+```{r}
+print # its body uses 'UseMethod', so it's a generic function
+head(methods("print")) # there are a lot of 'print' methods
+plot # plot is also a generic function with UseMethod("plot")
+head(methods("plot")) # 'plot' has a lot of methods too
+summary # summary is a generic function with UseMethod("summary")
+head(methods("summary")) # 'summary' also has many methods
+```
+
+S3 methods are how R (almost) always knows how to print, plot, summarize, etc. whatever objects you give it, appropriately for each object type.
+
+## Create an S3 class with S3 methods
+
+Earlier, we learned how to write functions and how to normalize, summarize, and plot proteomics experiments.
+
+These are things we would like to do again whenever we get a new proteomics experiment dataset, but also which should (reasonably) behave differently for different types of experiments.
+
+In addition, `plot` and `summary` are already generic functions in R, and `normalize` is a good candidate to be a generic function, too.
+
+In this section, we will:
+
+- Create an S3 class called `S3ProteomicsExperiment`
+
+- Create a `normalize` S3 generic function
+
+- Create `normalize`, `summary`, and `plot` methods for our class
+
+Because S3 classes are not rigorously defined by anything except the `class` attribute, the first step is to write a function for creating `S3ProteomicsExperiment` objects.
+
+We decide, at minimum, a valid proteomics experiment should have proteins, features, intensities, labels, and runs. For simplicity, our proteomics experiment class will inherit from `data.frame`.
+
+```{r}
+S3ProteomicsExperiment <- function(protein, feature, run, intensity, label, ..., is_log_trans = FALSE)
+{
+  dots <- list(...)
+  if ( length(dots) > 0 ) {
+    object <- data.frame(protein=protein, feature=feature,
+         run=run, intensity=intensity, label=label, list(...)) 
+  } else {
+    object <- data.frame(protein=protein, feature=feature,
+         run=run, intensity=intensity, label=label) 
+  }
+  attr(object, "is_log_trans") <- is_log_trans
+  class(object) <- c("S3ProteomicsExperiment", "data.frame")
+  object
+}
+```
+
+Notice that we handle `...` as an argument to allow additional variables to be added to the proteomics experiment.
+
+We also include an attribute for tracking whether the intensities are log_2 transformed or not.
+
+```{r}
+library(tidyverse)
+load("../data/adv-R-twin.RData")
+twin_dia2 <- twin_dia %>%
+  rename(heavy = intensity_h, light = intensity_l) %>% 
+  gather(label, intensity, heavy, light)
+
+twin_dia3 <- S3ProteomicsExperiment(protein=twin_dia2$protein,
+                               feature=twin_dia2$feature,
+                               run=twin_dia2$run,
+                               intensity=twin_dia2$intensity,
+                               label=twin_dia2$label)
+head(twin_dia3)
+```
+
+Because `S3ProteomicsExperiment` inherits from `data.frame`, it inherits the `print` method for data.frames.
+
+Now, we write a `normalize` method for our class. Since `normalize` is not already an S3 generic function, we first create an S3 generic function called `normalize`.
+
+```{r}
+normalize <- function(object, ...) UseMethod("normalize")
+
+normalize.S3ProteomicsExperiment <- function(object, by, ...) {
+  if ( !attr(object, "is_log_trans") ) {
+    object$intensity <- log2(object$intensity)
+    attr(object, "is_log_trans") <- TRUE
+  }
+  std <- object$label == by
+  medians <- tapply(object$intensity[std], object$run[std],
+                    median, na.rm=TRUE)
+  gbl_median <- median(medians, na.rm=TRUE)
+  object$intensity <- object$intensity - medians[object$run] + gbl_median
+  object
+}
+```
+
+Now we write methods for `summary` and `plot`:
+
+```{r}
+summary.S3ProteomicsExperiment <- function(object, ...) {
+  if ( attr(object, "is_log_trans") )
+    object$intensity <- 2^object$intensity
+  tapply(object$intensity,
+         list(run=object$run,
+              protein=object$protein,
+              label=object$label),
+         function(x) log2(sum(x, na.rm=TRUE)))
+}
+
+plot.S3ProteomicsExperiment <- function(x, y, ...) {
+  if ( attr(x, "is_log_trans") ) {
+    ylab <- "log2(intensity)"
+  } else {
+    ylab <- "intensity"
+  }
+  boxplot(x$intensity ~ x$run, xlab="run", ylab=ylab)
+}
+```
+
+Now we can do:
+
+```{r}
+twin_dia3 <- normalize(twin_dia3, by="heavy")
+head(summary(twin_dia3)[,,"light"])
+plot(twin_dia3)
+```
+
+## All about S4 classes
+
+S4 classes are rare in base R, but are more common in Bioconductor packages. S4 classes have formal class definitions and more rigorous structure, making them tedious to use for simpler data structures, but very useful for more complex data structures.
+
+S4 classes are defined by the `setClass` function. They have named `slots` of specified types, and can define a `validObject` method that checks whether certain validity conditions are met.
+
+Class definitions can be examined with the `getClass` function.
+
+Although `data.frame` is an S3 class, the __methods__ package also provides an S4 version of many S3 classes, including `data.frame`.
+
+```{r}
+getClass("data.frame")
+```
+
+Here, we see that the S4 version of `data.frame` has the following slots:
+
+- `.Data` is a `list`
+
+- `names` is a `character`
+
+- `row.names` is a special class called `data.frameRowLabels`
+
+- `.S3Class` is a `character`
+
+You define what slots a class has and what they are when you define the class using `setClass`.
+
+Let's define an S4 class called `S4ProteomicsExperiment` that inherits from `data.frame`.
+
+```{r}
+setClass("S4ProteomicsExperiment",
+         contains="data.frame",
+         slots=c(is_log_trans = "logical",
+                 title = "character"),
+         validity=function(object) {
+           reqCols <- c("protein", "feature",
+                        "run", "intensity", "label")
+           msngCols <- !reqCols %in% object@names
+           if ( any(msngCols) ) {
+             msngNames <- paste0(reqCols[msngCols], collapse=" ")
+             paste0("missing columns: ", msngNames)
+           } else {
+             TRUE
+           }
+         })
+```
+
+Notice that slots of S4 objects are accessed via `object@slotname`. However, users should not access slots this way. Typically, accessor functions are defined for this purpose.
+
+For example, above, we accessed the `names` slot using `object@name`. However, users should access the `names` using `names(object)` and set them via `names(object) <- value`. (These getter and setter functions already exist for us since we extend the `data.frame` class.)
+
+Although S4 objects can be created using the `new` function, it's good form to write a constructor for our class, too.
+
+```{r}
+S4ProteomicsExperiment <- function(protein, feature, run, intensity, label, ..., title="My First Proteomics Experiment",
+                                   is_log_trans = FALSE)
+{
+  dots <- list(...)
+  if ( length(dots) > 0 ) {
+    object <- data.frame(protein=protein, feature=feature,
+         run=run, intensity=intensity, label=label, list(...)) 
+  } else {
+    object <- data.frame(protein=protein, feature=feature,
+         run=run, intensity=intensity, label=label) 
+  }
+  new("S4ProteomicsExperiment", object,
+      title=title, is_log_trans=is_log_trans)
+}
+```
+
+```{r}
+twin_dia4 <- S4ProteomicsExperiment(protein=twin_dia2$protein,
+                               feature=twin_dia2$feature,
+                               run=twin_dia2$run,
+                               intensity=twin_dia2$intensity,
+                               label=twin_dia2$label,
+                               title="Twin DIA Experiment")
+head(twin_dia4)
+```
+
+## All about S4 generic functions
+
+S4 generic functions are defined using `setGeneric`. If `setGeneric` is given the name of an existing function, it will convert it into a generic function, and use the existing version as the default method.
+
+You can use `getGeneric()` or `isGeneric()` to check if an S4 generic function already exists.
+
+```{r}
+isGeneric("normalize")
+isGeneric("summary")
+isGeneric("plot")
+```
+
+Currently, no S4 generics exist for `normalize`, `summary`, or `plot`, so we will create them.
+
+```{r}
+setGeneric("normalize")
+setGeneric("summary")
+setGeneric("plot")
+```
+
+Now the S4 generics exist:
+
+```{r}
+getGeneric("normalize")
+getGeneric("summary")
+getGeneric("plot")
+```
+
+We can use `showMethods()` and `selectMethod()` to find the available S4 methods for an S4 generic funciton.
+
+```{r}
+showMethods("normalize")
+selectMethod("normalize", "ANY")
+```
+
+We can see that the default S4 method for `normalize` is the S3 generic function we defined earlier.
+
+## All about S4 methods
+
+S4 methods are defined using the `setMethod` function. S4 methods are distinguished by their *signature*, which defines the classes of their formal arguments.
+
+While S3 methods could only dispatch on a single class, S4 methods can dispatch on multiple arguments.
+
+For example, consider the S4 generic function for `plot`:
+
+```{r}
+getGeneric("plot")
+```
+
+While the S3 `plot` methods only depend on the class of `x`, S4 methods can depend on the class of both `x` *and* `y`. While not all developers will take advantage of this, it is one way that S4 methods are more powerful and more complex than S3 methods.
+
+Let's define our S4 `normalize`, `summary`, and `plot` methods using `setMethod()` now.
+
+```{r}
+setMethod("normalize", "S4ProteomicsExperiment",
+          function(object, by, ...) {
+  if ( !object@is_log_trans ) {
+    object$intensity <- log2(object$intensity)
+    object@is_log_trans <- TRUE
+  }
+  std <- object$label == by
+  medians <- tapply(object$intensity[std], object$run[std],
+                    median, na.rm=TRUE)
+  gbl_median <- median(medians, na.rm=TRUE)
+  object$intensity <- object$intensity - medians[object$run] + gbl_median
+  if ( validObject(object) )
+    object
+})
+
+setMethod("summary", "S4ProteomicsExperiment",
+          function(object, ...) {
+  if ( object@is_log_trans )
+    object$intensity <- 2^object$intensity
+  tapply(object$intensity,
+         list(run=object$run,
+              protein=object$protein,
+              label=object$label),
+         function(x) log2(sum(x, na.rm=TRUE)))
+})
+
+setMethod("plot", "S4ProteomicsExperiment",
+          function(x, y, ...) {
+  if ( x@is_log_trans ) {
+    ylab <- "log2(intensity)"
+  } else {
+    ylab <- "intensity"
+  }
+  boxplot(x$intensity ~ x$run,
+          xlab="run", ylab=ylab,
+          title=x@title)
+})
+```
+
+Now we can do:
+
+```{r}
+twin_dia4 <- normalize(twin_dia4, by="heavy")
+head(summary(twin_dia4)[,,"light"])
+plot(twin_dia4)
+```
