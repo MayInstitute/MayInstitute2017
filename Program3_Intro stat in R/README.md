@@ -9,6 +9,8 @@
 * [Day 2](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/02-rstats.html)
 * [Day 3](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/03-rstats.html)
 
+Link to [more teaching material](https://lgatto.github.io/TeachingMaterial/)
+
 ### License
 
 
