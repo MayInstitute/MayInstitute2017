@@ -885,6 +885,17 @@ plot(lmod)
 
 ![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
 
+* *Cook's distance* is a commonly used estimate of the influence of a
+  data point when performing a least-squares regression analysis and
+  can be used to highlight points that particularly influence the
+  regression.
+  
+* *Leverage* quantifies the influence of a given observation on the
+  regression due to its location in the space of the inputs.
+
+See also `?influence.measures`.
+
+
 > **Challenge**
 > 
 > 1. Take any of the `iprg2` replicates, model and plot their linear
