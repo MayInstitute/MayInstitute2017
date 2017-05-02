@@ -16,10 +16,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Objectives
 
-- Hypothesis testing: t-test
-- Categorical data
-- Power calculation
-- Linear models and correlation
+- Statistical hypothesis testing: t-test
+- Sample size calculation
+- Analysis for categorical data 
+- Linear regression and correlation
 
 ---
 
@@ -49,8 +49,8 @@ a change in abundance between Condition 1 and Condition 2.
 
 with 
 
-* $n_{1}$: number of replicates
-* $s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$: sample variance
+* $n_{i}$: number of replicates
+* $s_{i}^2 = \frac{1}{n_{i}-1} \sum (Y_{ij} - \bar{Y_{i \cdot}})^2$: sample variance
 
 ### Data preparation
 
@@ -58,8 +58,7 @@ with
 ## Let's start with one protein, named "sp|P44015|VAC2_YEAST"
 oneproteindata <- iprg[iprg$Protein == "sp|P44015|VAC2_YEAST", ]
 
-## Then, get two conditions only, because t.test only works for two
-## groups (conditions).
+## Then, get two conditions only, because t.test only works for two groups (conditions).
 oneproteindata.condition12 <- oneproteindata[oneproteindata$Condition %in% 
                                              c('Condition1', 'Condition2'), ]
 oneproteindata.condition12
@@ -160,17 +159,17 @@ result$conf.int
 We can also manually compute our t-test statistic using the formulas
 we descibed above and compare it with the `summaryresult`.
 
-Recall the `summaryresult` we generated last section
+Recall the `summaryresult` we generated last section.
 
 ```{r}
 summaryresult
 summaryresult12 <- summaryresult[1:2, ]
 
 ## test statistic, It is the same as 'result$statistic' above.
-diff(summaryresult12$mean) ## same as result$estimate[1]-result$estimate[2]
+diff(summaryresult12$mean) ## different sign, but absolute values are same as result$estimate[1]-result$estimate[2]
 sqrt(sum(summaryresult12$sd^2/summaryresult12$length)) ## same as stand error
 
-## the t-statistic
+## the t-statistic : sign is different
 diff(summaryresult12$mean)/sqrt(sum(summaryresult12$sd^2/summaryresult12$length))
 ```
 
@@ -191,14 +190,16 @@ distribution. Let's create data from such a distribution, making sure
 we set to appropriate parameter.
 
 ```{r}
-xt <- rt(1e5, result$parameter)
+## generate 10^5 number with the same degree of freedom for distribution.
+xt <- rt(1e5, result$parameter) 
 plot(density(xt), xlim = c(-10, 10))
-abline(v = result$statistic, col = "red")
+abline(v = result$statistic, col = "red") ## where t statistics are located.
+abline(h = 0, col = "gray") ## horizontal line at 0
 ```
 
-The area on the left of that point is given by `pt(result$statistic,
+**The area on the left** of that point is given by `pt(result$statistic,
 result$parameter)`, which is `r pt(result$statistic,
-result$parameter)`. The p-value for a one-sided test is this given by
+result$parameter)`. The p-value for a one-sided test, which is ** the area on the right** of red line, is this given by
 
 ```{r}
 1 - pt(result$statistic, result$parameter)
@@ -244,7 +245,7 @@ alpha <- 0.05
 power <- 0.95
 
 # anticipated log2 fold change 
-delta <- 1
+delta <- 1.5
 
 # anticipated variability
 sigma <- 1.5
@@ -296,6 +297,16 @@ ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
         axis.title.x = element_text(size=15),
         axis.title.y = element_text(size=15),
         axis.text.x = element_text(size=13)) 
+```
+
+
+> **Challenge**
+> 
+> * Calculate power with 20 samples per group for 5% significance level, desired log2 fol change=2, sigma=1.5
+
+```{r, echo=FALSE, include=FALSE}
+## log2 fold-change
+pwr.t.test(d = d, sig.level = alpha, n=20, power = NULL, type = 'two.sample')
 ```
 
 # Part 5b: Comparison of two proportions
