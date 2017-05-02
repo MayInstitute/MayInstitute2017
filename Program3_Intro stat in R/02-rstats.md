@@ -6,6 +6,7 @@ output:
     self_contained: true
     toc: true
     toc_float: true
+    fig_caption: no	
 ---
 
 
@@ -410,7 +411,7 @@ Let's do some more data exploration by examining how R read in the
 iPRG dataset.
 
 
-> ### Challenge: 
+> **Challenge**
 > 
 > Explore the data as described below
 >
@@ -425,8 +426,10 @@ Let's now inspect the possible values for the `Conditions` and the
 `BioReplicate` columns. To aswer the questions, below, we will need to
 use the `unique` function. From the manual page, we learn that 
 
-> 'unique' returns a vector, data frame or array like 'x' but with
-> duplicate elements/rows removed.
+```
+'unique' returns a vector, data frame or array like 'x' but with
+duplicate elements/rows removed.
+```
 
 For example
 
@@ -471,8 +474,8 @@ unique(dfr)
 ## 3 2 b
 ```
 
-> ### Challenge
-
+> **Challenge**
+>
 > * How many conditions are there?
 > * How many biological replicates are there?
 > * How many condition/biological replicates combinations are there?
@@ -481,7 +484,7 @@ unique(dfr)
 It is often useful to start a preliminary analysis, or proceed with a
 more detailed data exploration using a smalle subset of the data.
 
-> ### Challenge
+> **Challenge**
 > 
 > Select subsets of rows from iPRG dataset. Let's focus on 
 > 
@@ -1250,7 +1253,7 @@ rug(xn)
 lines(density(xn), lwd = 2)
 ```
 
-![plot of chunk unnamed-chunk-50](figure/unnamed-chunk-50-1.png)
+![plot of chunk hello](figure/hello-1.png)
 
 By definition, the area under the density curve is 1. The area at the
 left of 0, 1, and 2 are respectively:
@@ -1321,7 +1324,7 @@ points(1, dnorm(1), pch = 19, col = "red")
 points(2, dnorm(2), pch = 19, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
+![plot of chunk unnamed-chunk-52](figure/unnamed-chunk-52-1.png)
 
 ## Calculate the confidence interval
 
@@ -1382,7 +1385,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
           legend.key = element_rect(colour='white'))
 ```
 
-![plot of chunk unnamed-chunk-55](figure/unnamed-chunk-55-1.png)
+![plot of chunk unnamed-chunk-54](figure/unnamed-chunk-54-1.png)
 
 > ### Challenges
 > 

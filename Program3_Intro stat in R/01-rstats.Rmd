@@ -6,6 +6,7 @@ output:
     self_contained: true
     toc: true
     toc_float: true
+    fig_caption: no	
 ---
 
 ```{r setup, include=FALSE}

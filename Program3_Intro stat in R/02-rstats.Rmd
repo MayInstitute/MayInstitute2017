@@ -6,6 +6,7 @@ output:
     self_contained: true
     toc: true
     toc_float: true
+    fig_caption: no	
 ---
 
 ```{r setup, include=FALSE}
@@ -358,7 +359,7 @@ Let's do some more data exploration by examining how R read in the
 iPRG dataset.
 
 
-> ### Challenge: 
+> **Challenge**
 > 
 > Explore the data as described below
 >
@@ -373,8 +374,10 @@ Let's now inspect the possible values for the `Conditions` and the
 `BioReplicate` columns. To aswer the questions, below, we will need to
 use the `unique` function. From the manual page, we learn that 
 
-> 'unique' returns a vector, data frame or array like 'x' but with
-> duplicate elements/rows removed.
+```
+'unique' returns a vector, data frame or array like 'x' but with
+duplicate elements/rows removed.
+```
 
 For example
 
@@ -390,8 +393,8 @@ dfr
 unique(dfr)
 ```
 
-> ### Challenge
-
+> **Challenge**
+>
 > * How many conditions are there?
 > * How many biological replicates are there?
 > * How many condition/biological replicates combinations are there?
@@ -400,7 +403,7 @@ unique(dfr)
 It is often useful to start a preliminary analysis, or proceed with a
 more detailed data exploration using a smalle subset of the data.
 
-> ### Challenge
+> **Challenge**
 > 
 > Select subsets of rows from iPRG dataset. Let's focus on 
 > 
