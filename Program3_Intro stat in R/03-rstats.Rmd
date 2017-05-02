@@ -606,7 +606,7 @@ function:
 
 ```{r}
 lmod <- lm(r2 ~ r1)
-lmod
+summaru(lmod)
 ```
 
 which can be used to add the adequate line that reflects the (linear)

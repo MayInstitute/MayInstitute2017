@@ -847,17 +847,11 @@ function:
 
 ```r
 lmod <- lm(r2 ~ r1)
-lmod
+summaru(lmod)
 ```
 
 ```
-## 
-## Call:
-## lm(formula = r2 ~ r1)
-## 
-## Coefficients:
-## (Intercept)           r1  
-##      0.3482       0.9859
+## Error in summaru(lmod): could not find function "summaru"
 ```
 
 which can be used to add the adequate line that reflects the (linear)
