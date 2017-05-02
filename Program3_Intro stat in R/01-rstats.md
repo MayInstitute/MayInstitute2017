@@ -176,7 +176,7 @@ Your working directory should now look like this:
 > **Challenge** 
 >
 > Add the provided data files (`iPRG_example_runsummary.csv`,
-> `TCGA_sample_information.csv`, `abrf.rda`, `iprg2.rda`) to your
+> `TCGA_sample_information.csv`, `iprg.rda` and `iprg2.rda`) to your
 > `data` directory.
 
 ### Organizing your working directory
@@ -393,7 +393,7 @@ load(file="iris.rds")
 
 > **Challenge**
 >
-> Load the `abrf.rda` data into your R session.
+> Load the `iprg.rda` data into your R session.
 
 
 Last, but certainly not least, **always include the output of `sessionInfo()`**
