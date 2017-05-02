@@ -814,68 +814,29 @@ cor(x2)
 ### A note on correlation and replication
 
 It is often assumed that high correlation is a halmark of good
-replication. This is however a simplistic view. To illustrate this,
-let's focus on the two first replicates, which have a high
-correlation.
+replication. Rather than focus on the correlation of the data, a
+better measurement would be to look a the log2 fold-changes, i.e. the
+distance between or repeated measurements. The ideal way to visualise
+this is on an MA-plot:
+
 
 
 ```r
+par(mfrow = c(1, 2))
 r1 <- x2[, 1]
 r2 <- x2[, 2]
-cor(r1, r2)
+M <- r1 - r2
+A <- (r1 + r2)/2
+plot(A, M); grid()
+suppressPackageStartupMessages(library("affy"))
+affy::ma.plot(A, M)
 ```
 
-```
-## [1] 0.9794954
-```
+![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
 
-Now lets assume we have a third replicate, `r3`. When we repeat a
-measurement, we don't obtain exactly the same values. Let's add
-normally distributed noise when creating a first thyroid replicate.
-
-
-```r
-r3a <- r1 + rnorm(length(r1))
-```
-
-Let's now create another third replicate, `r3b` that has a small noise
-component, and a systematic biais.
-
-
-```r
-r3b <- r1 + rnorm(length(r1), 2, 0.5)
-```
-
-Which ones of `r1` and `r3a` or `r1` and `r3b` correlate better?
-
-
-```r
-par(mfrow = c(2, 1))
-plot(r1, r3a, main = round(cor(r1, r3a), 3))
-grid(); abline(0, 1, "red")
-```
-
-```
-## Warning in int_abline(a = a, b = b, h = h, v = v, untf = untf, ...): NAs
-## introduced by coercion
-```
-
-```r
-plot(r1, r3b, main = round(cor(r1, r3b), 3))
-grid(); abline(0, 1, col = "red")
-```
-
-![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
-
-A better measurement would be to look a the log2 fold-changes,
-i.e. the variation of our measurements:
-
-
-```r
-boxplot(data.frame(r1 - r3a, r1 - r3b))
-```
-
-![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
+See also this
+[post](http://simplystatistics.org/2015/08/12/correlation-is-not-a-measure-of-reproducibility/)
+on the *Simply Statistics* blog.
 
 ## Linear modelling
 
@@ -909,7 +870,7 @@ plot(r1, r2)
 abline(lmod, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-35](figure/unnamed-chunk-35-1.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
 
 As we have seen in the beginning of this section, it is essential not
 to rely solely on the correlation value, but look at the data. This
@@ -922,7 +883,7 @@ par(mfrow = c(2, 2))
 plot(lmod)
 ```
 
-![plot of chunk unnamed-chunk-36](figure/unnamed-chunk-36-1.png)
+![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
 
 > **Challenge**
 > 

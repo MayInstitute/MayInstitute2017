@@ -577,47 +577,26 @@ cor(x2)
 ### A note on correlation and replication
 
 It is often assumed that high correlation is a halmark of good
-replication. This is however a simplistic view. To illustrate this,
-let's focus on the two first replicates, which have a high
-correlation.
+replication. Rather than focus on the correlation of the data, a
+better measurement would be to look a the log2 fold-changes, i.e. the
+distance between or repeated measurements. The ideal way to visualise
+this is on an MA-plot:
 
-```{r}
+
+```{r, fig.width = 12}
+par(mfrow = c(1, 2))
 r1 <- x2[, 1]
 r2 <- x2[, 2]
-cor(r1, r2)
+M <- r1 - r2
+A <- (r1 + r2)/2
+plot(A, M); grid()
+suppressPackageStartupMessages(library("affy"))
+affy::ma.plot(A, M)
 ```
 
-Now lets assume we have a third replicate, `r3`. When we repeat a
-measurement, we don't obtain exactly the same values. Let's add
-normally distributed noise when creating a first thyroid replicate.
-
-```{r}
-r3a <- r1 + rnorm(length(r1))
-```
-
-Let's now create another third replicate, `r3b` that has a small noise
-component, and a systematic biais.
-
-```{r}
-r3b <- r1 + rnorm(length(r1), 2, 0.5)
-```
-
-Which ones of `r1` and `r3a` or `r1` and `r3b` correlate better?
-
-```{r}
-par(mfrow = c(2, 1))
-plot(r1, r3a, main = round(cor(r1, r3a), 3))
-grid(); abline(0, 1, "red")
-plot(r1, r3b, main = round(cor(r1, r3b), 3))
-grid(); abline(0, 1, col = "red")
-```
-
-A better measurement would be to look a the log2 fold-changes,
-i.e. the variation of our measurements:
-
-```{r}
-boxplot(data.frame(r1 - r3a, r1 - r3b))
-```
+See also this
+[post](http://simplystatistics.org/2015/08/12/correlation-is-not-a-measure-of-reproducibility/)
+on the *Simply Statistics* blog.
 
 ## Linear modelling
 
