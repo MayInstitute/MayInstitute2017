@@ -121,7 +121,7 @@ omics data is often presented as shown below
 which is not stictly tidy, as the protein intensity is presented along
 muliple columns. 
 
-> ### Challenge
+> **Challenge**
 > 
 > Compare the structure of the data presented above and the `iprg`
 > data.
@@ -187,7 +187,7 @@ Note: most of these functions are "generic", they can be used on other types of
 objects besides `data.frame`.
 
 
-> ### Challenge
+> **Challenge**
 >
 > Based on the output of `str(iprg)`, can you answer the following questions?
 >
@@ -240,7 +240,7 @@ For our purposes, the last three notations are equivalent. RStudio
 knows about the columns in your data frame, so you can take advantage
 of the autocompletion feature to get the full and correct column name.
 
-> ### Challenge
+> **Challenge**
 >
 > 1. Create a `data.frame` (`iprg_200`) containing only the observations from
 >    row 200 of the `iprg` dataset.
@@ -372,7 +372,7 @@ In most cases, it's preferable to set `stringsAsFactors = FALSE` when
 importing your data, and converting as a factor only the columns that
 require this data type.
 
-> Challenge
+> **Challenge**
 > 
 > Compare the output of `str(surveys)` when setting `stringsAsFactors = TRUE` (default) and `stringsAsFactors = FALSE`:
 
@@ -571,7 +571,7 @@ summary(iprg$Log2Intensity)
 ```
 
 
-> ### Challenge
+> **Challenge**
 > 
 > Reproduce the histogram above but plotting the data on the log base
 > 10 scale, using the `log10` function. See also the more general
@@ -697,7 +697,7 @@ Notes:
   and will return an error message.
 
 
-> ### Challenge
+> **Challenge**
 > 
 > * Repeat the plot above but displaying the raw intensities. 
 > * Log-10 transform the raw intensities on the flight when plotting.
@@ -781,7 +781,7 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 
 ![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-4.png)
 
-> ### Challenge
+> **Challenge**
 > 
 > * Overlay a boxplot goem on top of a jitter geom for the raw or
 >   log-10 transformed intensities.
@@ -808,7 +808,7 @@ The default file name is `Rplots.pdf`. We can customise that file name
 specifying it by passing the file name, as a character, to the `pdf()`
 function.
 
-> ### Challenge
+> **Challenge**
 > 
 > Save a figure of your choice to a pdf file. Read the manual for the
 > `png` function and save that same image to a png file.
@@ -1220,7 +1220,7 @@ p2 + geom_errorbar(aes(ymax = mean + sd, ymin = mean - sd), width = 0.1) +
 
 ![plot of chunk unnamed-chunk-48](figure/unnamed-chunk-48-1.png)
 
-> ### Challenge:
+> **Challenge**
 > 
 > Add the **standard error of the mean**. Which one is smaller?
 
@@ -1387,7 +1387,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
 
 ![plot of chunk unnamed-chunk-55](figure/unnamed-chunk-55-1.png)
 
-> ### Challenges
+> **Challenges**
 > 
 > Replicate the above for the 99% two-sided confidence interval. 
 

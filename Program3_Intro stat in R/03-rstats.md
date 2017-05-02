@@ -583,6 +583,12 @@ z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
 ## [1] -0.009709539 -0.420479141
 ```
 
+> **Challenge**
+>
+> Write a function named `f2c` (`c2f`) that converts a temperature
+> from Fahrenheit to Celsium (Celsium to Fahrenheit) using the
+> following formula $F = C \times 1 + 32$ ($C = \frac{F - 32}{1.8}$).
+
 # Sample size calculation
 
 To calculate the required sample size, you’ll need to know four
