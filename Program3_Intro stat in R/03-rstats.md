@@ -47,8 +47,9 @@ a change in abundance between Condition 1 and Condition 2.
 * Standard error, $SE=\sqrt{\frac{s_{1}^2}{n_{1}} + \frac{s_{2}^2}{n_{2}}}$
 
 with 
-* $n_{1}$ : Number of replicates
-* $s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$ : Sample variance
+
+* $n_{1}$: number of replicates
+* $s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$: sample variance
 
 ### Data preparation
 
@@ -82,21 +83,32 @@ oneproteindata.condition12
 ```
 
 ```r
-unique(oneproteindata.condition12$Condition)
+table(oneproteindata.condition12[, c("Condition", "BioReplicate")])
 ```
 
 ```
-## [1] Condition1 Condition2
-## Levels: Condition1 Condition2 Condition3 Condition4
+##             BioReplicate
+## Condition    1 2
+##   Condition1 3 0
+##   Condition2 0 3
+##   Condition3 0 0
+##   Condition4 0 0
 ```
+
+If we want to remove the levels that are not relevant anymore, we can
+use `droplevels`:
+
 
 ```r
-unique(oneproteindata$Condition)
+oneproteindata.condition12 <- droplevels(oneproteindata.condition12)
+table(oneproteindata.condition12[, c("Condition", "BioReplicate")])
 ```
 
 ```
-## [1] Condition1 Condition2 Condition3 Condition4
-## Levels: Condition1 Condition2 Condition3 Condition4
+##             BioReplicate
+## Condition    1 2
+##   Condition1 3 0
+##   Condition2 0 3
 ```
 
 To perform the t-test, we use the `t.test` function. Let's first
@@ -249,8 +261,9 @@ diff(summaryresult12$mean)/sqrt(sum(summaryresult12$sd^2/summaryresult12$length)
 
 ## Re-calculating the p values
 
-See the previous *Working with statistical distributions* for a
-reminder.
+See the previous
+[*Working with statistical distributions*](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/02-rstats.html#working_with_statistical_distributions)
+for a reminder.
 
 Referring back to our t-test results above, we can manually calculate
 the one- and two-side tests p-values using the t-statistics and the
@@ -269,7 +282,7 @@ plot(density(xt), xlim = c(-10, 10))
 abline(v = result$statistic, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
+![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png)
 
 The area on the left of that point is given by `pt(result$statistic,
 result$parameter)`, which is 0.939693. The p-value for a one-sided test is this given by
@@ -376,7 +389,7 @@ ov
 dotchart(t(ov), xlab = "Observed counts")
 ```
 
-![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
+![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
 
 
 ## Chi-squared test
@@ -385,7 +398,7 @@ dotchart(t(ov), xlab = "Observed counts")
 
 $H_0$ : each population has the same proportion of observations, $\pi_{j=1|i=1} = \pi_{j=1|i=2}$
 
-$H_a$ : different population has different proportion of observations$
+$H_a$ : different population have different proportion of observations
 
 
 $$\chi^2 =\sum_{i=1}^2 \sum_{j=1}^2 \frac{(O_{ij}-E_{ij})^2}{E_{ij}} \sim \chi^2_{(2-1)(2-1)}$$
@@ -642,7 +655,7 @@ ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
         axis.text.x = element_text(size=13)) 
 ```
 
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
+![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23-1.png)
 
 
 # Linear models and correlation
@@ -650,9 +663,10 @@ ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
 
 When considering correlations and modelling data, visualisation is key. 
 
-Let's use the famous *Anscombe's quartet* data as a motivating
-example. This data is composed of 4 pairs of values, $(x_1, y_1)$ to
-$(x_4, y_4)$:
+Let's use the famous
+[*Anscombe's quartet*](https://en.wikipedia.org/wiki/Anscombe%27s_quartet)
+data as a motivating example. This data is composed of 4 pairs of
+values, $(x_1, y_1)$ to $(x_4, y_4)$:
 
 
 | x1| x2| x3| x4|    y1|   y2|    y3|    y4|
@@ -692,12 +706,12 @@ fundamental differences in the datasets.
 
 ![plot of chunk anscombefig](figure/anscombefig-1.png)
 
-<!-- ```{r anscomberesids, echo=FALSE} -->
-<!-- kable(sapply(mods, residuals)) -->
-<!-- ``` -->
+See also another, more recent example:
+[The Datasaurus Dozen dataset](https://www.autodeskresearch.com/publications/samestats).
+<details>
 
-
-
+![The Datasaurus Dozen dataset](https://d2f99xq7vri1nk.cloudfront.net/DinoSequentialSmaller.gif)
+</details>
 
 --- 
 

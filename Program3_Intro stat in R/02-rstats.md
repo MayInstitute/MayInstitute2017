@@ -1393,16 +1393,19 @@ ggplot(aes(x = Group, y = mean, colour = Group),
 
 
 
-### Comment
+### Some comments
 
-Let's compare all three versions of the means with different error
-bars. Every gap between error bars is different. Furthermore, error
-bars with SD and CI are overlapping between groups! Error bars for SD
-show the spread of the population while error bars based on SE reflect
-the uncertainty in the mean and depend on the sample size. Confidence
-intervals of `n` on the other hand mean that the interval captures the
-population mean `n %` of the time. When the sample size increases, CI
-and SE are getting closer to each other.
+* Error bars with SD and CI are overlapping between groups! 
+
+* Error bars for the SD show the spread of the population while error
+  bars based on SE reflect the uncertainty in the mean and depend on
+  the sample size.
+
+* Confidence intervals of `n` on the other hand mean that the
+  intervals capture the population mean `n` percent of the time.
+
+* When the sample size increases, CI and SE are getting closer to each
+  other.
 
 ## Saving our results
 

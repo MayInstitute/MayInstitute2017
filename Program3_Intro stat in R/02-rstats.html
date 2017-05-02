@@ -1041,9 +1041,14 @@ ggplot(aes(x = Group, y = mean, colour = Group),
 <p><strong>Challenges</strong></p>
 <p>Replicate the above for the 99% two-sided confidence interval.</p>
 </blockquote>
-<div id="comment" class="section level3">
-<h3>Comment</h3>
-<p>Let’s compare all three versions of the means with different error bars. Every gap between error bars is different. Furthermore, error bars with SD and CI are overlapping between groups! Error bars for SD show the spread of the population while error bars based on SE reflect the uncertainty in the mean and depend on the sample size. Confidence intervals of <code>n</code> on the other hand mean that the interval captures the population mean <code>n %</code> of the time. When the sample size increases, CI and SE are getting closer to each other.</p>
+<div id="some-comments" class="section level3">
+<h3>Some comments</h3>
+<ul>
+<li><p>Error bars with SD and CI are overlapping between groups!</p></li>
+<li><p>Error bars for the SD show the spread of the population while error bars based on SE reflect the uncertainty in the mean and depend on the sample size.</p></li>
+<li><p>Confidence intervals of <code>n</code> on the other hand mean that the intervals capture the population mean <code>n</code> percent of the time.</p></li>
+<li><p>When the sample size increases, CI and SE are getting closer to each other.</p></li>
+</ul>
 </div>
 </div>
 <div id="saving-our-results" class="section level2">
