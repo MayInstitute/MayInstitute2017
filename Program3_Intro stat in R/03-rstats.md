@@ -875,6 +875,59 @@ boxplot(data.frame(r1 - r3a, r1 - r3b))
 
 ![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
 
+## Linear modelling
+
+On the plots above, `abline(0, 1)` was used to add a line with
+intercept 0 and slop 1. It we want to add the line that models the
+data linearly, we can calculate the parameters using the `lm`
+function:
+
+
+```r
+lmod <- lm(r2 ~ r1)
+lmod
+```
+
+```
+## 
+## Call:
+## lm(formula = r2 ~ r1)
+## 
+## Coefficients:
+## (Intercept)           r1  
+##      0.3482       0.9859
+```
+
+which can be used to add the adequate line that reflects the (linear)
+relationship between the two data
+
+
+```r
+plot(r1, r2)
+abline(lmod, col = "red")
+```
+
+![plot of chunk unnamed-chunk-34](figure/unnamed-chunk-34-1.png)
+
+As we have seen in the beginning of this section, it is essential not
+to rely solely on the correlation value, but look at the data. This
+also holds true for linear (or any) modelling, which can be done by
+plotting the model:
+
+
+```r
+par(mfrow = c(2, 2))
+plot(lmod)
+```
+
+![plot of chunk unnamed-chunk-35](figure/unnamed-chunk-35-1.png)
+
+> **Challenge**
+> 
+
+
+
+
 
 --- 
 
