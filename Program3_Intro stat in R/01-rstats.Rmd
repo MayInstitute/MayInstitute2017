@@ -177,9 +177,9 @@ Your working directory should now look like this:
 
 > **Challenge** 
 >
-> Add the provided data files, namely `iPRG_example_runsummary.csv`,
->`TCGA_sample_information.csv`, and `abrf.rda` to your `data`
-> directory.
+> Add the provided data files (`iPRG_example_runsummary.csv`,
+> `TCGA_sample_information.csv`, `abrf.rda`, `iprg2.rda`) to your
+> `data` directory.
 
 ### Organizing your working directory
 
