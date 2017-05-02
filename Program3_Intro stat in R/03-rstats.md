@@ -729,6 +729,8 @@ rownames(iprg2) <- iprg2$Protein
 iprg2 <- iprg2[, -1]
 ```
 
+
+
 And lets focus on the 3 runs, i.e. 2 replicates from condition
 1 and 
 
@@ -759,7 +761,7 @@ head(x)
 pairs(x)
 ```
 
-![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
+![plot of chunk unnamed-chunk-26](figure/unnamed-chunk-26-1.png)
 
 We can use the `cor` function to calculate the Pearson correlation
 between two vectors of the same length (making sure the order is
@@ -863,7 +865,7 @@ plot(r1, r3b, main = round(cor(r1, r3b), 3))
 grid(); abline(0, 1, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
 
 A better measurement would be to look a the log2 fold-changes,
 i.e. the variation of our measurements:
@@ -873,7 +875,7 @@ i.e. the variation of our measurements:
 boxplot(data.frame(r1 - r3a, r1 - r3b))
 ```
 
-![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
+![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
 
 ## Linear modelling
 
@@ -907,7 +909,7 @@ plot(r1, r2)
 abline(lmod, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-34](figure/unnamed-chunk-34-1.png)
+![plot of chunk unnamed-chunk-35](figure/unnamed-chunk-35-1.png)
 
 As we have seen in the beginning of this section, it is essential not
 to rely solely on the correlation value, but look at the data. This
@@ -920,14 +922,16 @@ par(mfrow = c(2, 2))
 plot(lmod)
 ```
 
-![plot of chunk unnamed-chunk-35](figure/unnamed-chunk-35-1.png)
+![plot of chunk unnamed-chunk-36](figure/unnamed-chunk-36-1.png)
 
 > **Challenge**
 > 
-
-
-
-
+> 1. Take any of the `iprg2` replicates, model and plot their linear
+>    relationship. The `iprg2` data is available as an `rda` file, or
+>    regenerate it as shown above.
+> 2. The Anscombe quartet is available as `anscombe`. Load it, create
+>    a linear model for one $(x_i, y_i)$ pair of your choice and
+>    visualise/check the model.
 
 --- 
 

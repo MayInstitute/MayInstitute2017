@@ -545,6 +545,10 @@ rownames(iprg2) <- iprg2$Protein
 iprg2 <- iprg2[, -1]
 ```
 
+```{r, echo = FALSE}
+save(iprg2, file = "./data/iprg2.rda")
+```
+
 And lets focus on the 3 runs, i.e. 2 replicates from condition
 1 and 
 
@@ -647,10 +651,12 @@ plot(lmod)
 
 > **Challenge**
 > 
-
-
-
-
+> 1. Take any of the `iprg2` replicates, model and plot their linear
+>    relationship. The `iprg2` data is available as an `rda` file, or
+>    regenerate it as shown above.
+> 2. The Anscombe quartet is available as `anscombe`. Load it, create
+>    a linear model for one $(x_i, y_i)$ pair of your choice and
+>    visualise/check the model.
 
 --- 
 
