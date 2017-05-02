@@ -21,7 +21,7 @@ output:
 
 ---
 
-Parts of the `data.frame` material is based on the
+Parts of the `data.frame` and `ggplot2` material are based on the
 [R for data analysis and visualization](http://www.datacarpentry.org/R-ecology-lesson/index.html)
 Data Carpentry course.
 
@@ -73,9 +73,9 @@ class(iprg)
 
 These object are the equivalent of a sheet in a spreadsheet file. They
 are composed on a set of columns, which are different vectors (or
-characters, numerics, factors, ...) as seen prevously. 
+characters, numerics, factors, ...) as seen previously. 
 
-There are actually some additional contstrains compared to a
+There are actually some additional cont strains compared to a
 spreadsheet. Rather than being limitations, these constrains are an
 important feature that allow some standardisation and hence automatic
 computations.
@@ -91,7 +91,7 @@ computations.
 * No colours or font decorations.
 
 This leads us to a very important concept in data formatting and data
-manipuation, which is that data should be *tidy*, where 
+manipulation, which is that data should be *tidy*, where 
 
 * Columns describe different variables
 * Rows describe different observations
@@ -106,25 +106,30 @@ There are two important reasons that we want tidy data
    or programming languages, and is easy to reason about.
 
 
-Note that data is alwasy tidy, and for good reasons so. For example,
+Note that data is always tidy, and for good reasons so. For example,
 omics data is often presented as shown below
 
 
-|         | rep1_0hr| rep1_16hr| rep1_24hr| rep1_48hr| rep1_72hr|
-|:--------|--------:|---------:|---------:|---------:|---------:|
-|P48432   |    0.486|     0.248|     0.177|     0.037|     0.026|
-|Q62315-2 |    0.388|     0.196|     0.157|     0.105|     0.082|
-|P55821   |    0.349|     0.258|     0.198|     0.089|     0.051|
-|P17809   |    0.321|     0.169|     0.170|     0.109|     0.121|
-|Q8K3F7   |    0.363|     0.237|     0.223|     0.091|     0.061|
+|                                | JD_06232014_sample1-A.raw| JD_06232014_sample1_B.raw|
+|:-------------------------------|-------------------------:|-------------------------:|
+|sp&#124;D6VTK4&#124;STE2_YEAST  |                  26.58301|                  26.81232|
+|sp&#124;O13297&#124;CET1_YEAST  |                  24.71809|                  24.71912|
+|sp&#124;O13329&#124;FOB1_YEAST  |                  23.47075|                  23.37678|
+|sp&#124;O13539&#124;THP2_YEAST  |                  24.29661|                  27.52021|
+|sp&#124;O13547&#124;CCW14_YEAST |                  27.11638|                  27.22234|
 
-which is not stictly tidy, as the protein intensity is presented along
-muliple columns. 
+which is not strictly tidy, as the protein intensity is presented along
+multiple columns. Some situations lend themselves more to a long or
+wide format (as we will see later), but the data should never be
+*messy*, as for example below:
+
+![messy data](./img/multiple-info.png)
+![Help!](./img/2_datasheet_example.jpg)
 
 > **Challenge**
 > 
-> Compare the structure of the data presented above and the `iprg`
-> data.
+> Compare the structure of the data presented above (loaded from the
+> `iprg2.rda` files) and the `iprg` data.
 
 ### What are data frames?
 
@@ -147,13 +152,14 @@ str(iprg)
 ```
 
 ```
-## 'data.frame':	36321 obs. of  6 variables:
+## 'data.frame':	36321 obs. of  7 variables:
 ##  $ Protein      : Factor w/ 3027 levels "sp|D6VTK4|STE2_YEAST",..: 1 1 1 1 1 1 1 1 1 1 ...
 ##  $ Log2Intensity: num  26.8 26.6 26.6 26.8 26.8 ...
 ##  $ Run          : Factor w/ 12 levels "JD_06232014_sample1-A.raw",..: 2 3 1 4 5 6 7 8 9 11 ...
 ##  $ Condition    : Factor w/ 4 levels "Condition1","Condition2",..: 1 1 1 2 2 2 3 3 3 4 ...
 ##  $ BioReplicate : int  1 1 1 2 2 2 3 3 3 4 ...
 ##  $ Intensity    : num  1.18e+08 1.02e+08 1.01e+08 1.20e+08 1.16e+08 ...
+##  $ TechReplicate: Factor w/ 3 levels "A","B","C": 2 3 1 1 2 3 1 2 3 2 ...
 ```
 
 ### Inspecting `data.frame` objects
@@ -253,11 +259,11 @@ of the autocompletion feature to get the full and correct column name.
 >      * Pull out that last row using `nrow()` instead of the row number.
 >      * Create a new data frame object (`iprg_last`) from that last row.
 >
-> 3. Use `nrow()` to extract the row that is in the middle of the data
->    frame. Store the content of this row in an object named `iprg_middle`.
+> 3. Extract the row that is in the middle of the data frame. Store
+>    the content of this row in an object named `iprg_middle`.
 >
 > 4. Combine `nrow()` with the `-` notation above to reproduce the behavior of
->    `head(iprg)` keeping just the first through 6th rows of the iprg
+>    `head(iprg)` keeping just the first through 6th rows of the `iprg`
 >    dataset.
 
 ## Factors
@@ -376,12 +382,7 @@ require this data type.
 > 
 > Compare the output of `str(surveys)` when setting `stringsAsFactors = TRUE` (default) and `stringsAsFactors = FALSE`:
 
-```r
-iprg <- read.csv("data/iPRG_example_runsummary.csv", stringsAsFactors = TRUE)
-str(iprg)
-iprg <- read.csv("data/iPRG_example_runsummary.csv", stringsAsFactors = FALSE)
-str(iprg)
-```
+
 
 ## Other data structures
 
@@ -397,7 +398,7 @@ str(iprg)
 
 Let's explore some basic properties of our dataset. Go to the RStudio
 Environment pane and double click the `iPRG_example` entry. This data
-is in tidy,*long* format, which is an easier data format for data
+is in tidy, long format, which is an easier data format for data
 manipulation operations such as selecting, grouping, summarizing, etc.
 
 Data exported out of many omics processing or quantification tools are
@@ -478,7 +479,8 @@ unique(dfr)
 >
 > * How many conditions are there?
 > * How many biological replicates are there?
-> * How many condition/biological replicates combinations are there?
+> * How many condition/technical replicates combinations are there?
+
 
 
 It is often useful to start a preliminary analysis, or proceed with a
@@ -489,28 +491,13 @@ more detailed data exploration using a smalle subset of the data.
 > Select subsets of rows from iPRG dataset. Let's focus on 
 > 
 > * Condition 1 only 
-> * Condition 1 and BioReplicate 1
+> * Condition 1 and TechReplicate A
 > * all measurements on one particular MS run.
 > * Conditions 1 and 2
+>
+> For each of there, how many measurements are there?
 
-> For each subset, how many measurements are there?
 
-<!-- ```{r} -->
-<!-- iprg.condition1 <- iprg[iprg$Condition == 'Condition1', ] -->
-<!-- iprg.condition1.bio1 <- iprg[iprg$Condition == 'Condition1' & -->
-<!--                              iprg$BioReplicate == 1, ] -->
-<!-- nrow(iprg.condition1.bio1) -->
-
-<!-- ## subset of data for condition1 or condition2 -->
-<!-- iprg.condition1.2 <- iprg[iprg$Condition == 'Condition1' | -->
-<!--                           iprg$Condition == 'Condition2', ] -->
-<!-- nrow(iprg.condition1.2) -->
-
-<!-- ## subset of data for condition1 or condition2 -->
-<!-- iprg.condition1.2 <- iprg[which(iprg$Condition %in% c('Condition1', 'Condition2')), ] -->
-<!-- nrow(iprg.condition1.2) -->
-<!-- unique(iprg.condition1.2$Condition) -->
-<!-- ``` -->
 
 # Part 2: Data visualisation
 
@@ -524,15 +511,17 @@ for `iPRG_example`.
 hist(iprg$Intensity)
 ```
 
-![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
+![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
 
-Our histogram looks quite skewed. How does this look on log-scale? Do
-you recognize this distribution? The distribution for log2-transformed
-intensities looks very similar to the normal distribution. The
-advantage of working with normally distributed data is that we can
-apply a variety of statistical tests to analyzeand interpret our
-data. Let's add a log2-scaled intensity column to our data so we don't
-have to transform the original intensities every time we need them.
+Our histogram looks quite skewed. How does this look on log-scale? 
+
+Do you recognise this distribution? The distribution for
+log2-transformed intensities looks very similar to the normal
+distribution. The advantage of working with normally distributed data
+is that we can apply a variety of statistical tests to analyse and
+interpret our data. Let's add a log2-scaled intensity column to our
+data so we don't have to transform the original intensities every time
+we need them.
 
 
 ```r
@@ -541,7 +530,7 @@ hist(iprg$Log2Intensity,
      main = "Histogram of iPRG data")
 ```
 
-![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
 
 In this case, we have duplicated information in our data, we have the
 raw and log-transformed data. This is not necessary (and not advised),
@@ -555,7 +544,7 @@ hist(log2(iprg$Intensity),
      main = "Histogram of iPRG data")
 ```
 
-![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
+![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
 
 We look at the summary for the log2-transformed values including the
 value for the mean. Let's fix that first.
@@ -590,7 +579,7 @@ files.
 boxplot(iprg$Log2Intensity)
 ```
 
-![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
+![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
 
 The boxplot, however, shows us the intensities for all conditions and
 replicates. If we want to display the data for, we have multile
@@ -604,7 +593,7 @@ int_by_run <- by(iprg$Log2Intensity, iprg$Run, c)
 boxplot(int_by_run)
 ```
 
-![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
+![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23-1.png)
 
 * We can use the formula syntax
 
@@ -613,7 +602,7 @@ boxplot(int_by_run)
 boxplot(Log2Intensity ~ Run, data = iprg)
 ```
 
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
+![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
 
 * We can use the `ggplot2` package that is very flexible to visualise
   data under different angles.
@@ -628,6 +617,42 @@ are displayed, and general visual properties, so we only need minimal
 changes if the underlying data change or if we decide to change from a
 bar plot to a scatterplot. This helps in creating publication quality
 plots with minimal amounts of adjustments and tweaking.
+
+### Comparison between base graphics and `ggplot2`
+
+**Base graphics**
+
+Uses a *canvas model* a series of instructions that sequentially fill
+the plotting canvas. While this model is very useful to build plots
+bits by bits bottom up, which is useful in some cases, it has some
+clear drawback:
+
+* Layout choices have to be made without global overview over what may
+  still be coming.
+* Different functions for different plot types with different
+  interfaces.
+* No standard data input.
+* Many routine tasks require a lot of boilerplate code.
+* No concept of facets/lattices/viewports.
+* Poor default colours.
+
+**The grammar of graphics**
+
+The components of `ggplot2`'s of graphics are
+
+1. A **tidy** dataset
+2. A choice of geometric objects that servers as the visual
+   representation of the data - for instance, points, lines,
+   rectangles, contours.
+3. A description of how the variables in the data are mapped to visual
+   properties (aesthetics) or the geometric objects, and an associated
+   scale (e.g. linear, logarithmic, rang)
+4. A statistical summarisation rule
+5. A coordinate system.
+6. A facet specification, i.e. the use of several plots to look at the
+   same data.
+
+
 
 Fist of all, we need to load the `ggplot2` package
 
@@ -665,7 +690,11 @@ ggplot(data = iprg, aes(x = Run, y = Log2Intensity)) +
   geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-26](figure/unnamed-chunk-26-1.png)
+![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+
+See the [documentation page](http://ggplot2.tidyverse.org/reference/)
+to explore the many available `geoms`.
+
 
 The `+` in the `ggplot2` package is particularly useful because it
 allows you to modify existing `ggplot` objects. This means you can
@@ -715,7 +744,7 @@ ggplot(data = iprg,
   geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
 
 Now let's rename all axis labels and title, and rotate the x-axis
 labels 90 degrees. We can add those specifications using the `labs`
@@ -732,7 +761,7 @@ ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
     theme(axis.text.x = element_text(angle = 90))    
 ```
 
-![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
 
 
 And easily switch from a boxplot to a violin plot representation by
@@ -749,7 +778,7 @@ ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
     theme(axis.text.x = element_text(angle = 90))
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
+![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
 
 Finally, we can also overlay multiple geoms by simply *adding* them
 one after the other.
@@ -761,31 +790,46 @@ p <- ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
 p + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
 
 ```r
 p + geom_boxplot() + geom_jitter() ## not very usefull
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-2.png)
+![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-2.png)
 
 ```r
 p + geom_jitter() + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-3.png)
+![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-3.png)
 
 ```r
 p + geom_jitter(alpha = 0.1) + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-4.png)
+![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-4.png)
 
 > **Challenge**
 > 
 > * Overlay a boxplot goem on top of a jitter geom for the raw or
 >   log-10 transformed intensities.
 > * Customise the plot as suggested above.
+
+
+Finally, a very useful feature of `ggplot2` is **facetting**, that
+defines how to subset the data into different *panels* (facets).
+
+
+```r
+ggplot(data = iprg,
+       aes(x = TechReplicate, y = Log2Intensity,
+           fill = Condition)) +
+    geom_boxplot() + 
+    facet_grid(~ Condition)
+```
+
+![plot of chunk unnamed-chunk-34](figure/unnamed-chunk-34-1.png)
 
 ## Saving your work
 
@@ -847,7 +891,7 @@ sample(10, 3)
 ```
 
 ```
-## [1]  9  1 10
+## [1]  1 10  7
 ```
 
 ```r
@@ -855,7 +899,7 @@ sample(10, 3)
 ```
 
 ```
-## [1] 4 6 9
+## [1] 7 9 3
 ```
 
 Now suppose we would like to select the same randomly selected samples
@@ -1040,19 +1084,19 @@ oneproteindata
 ## 21105 sp|P44015|VAC2_YEAST      20.94536 JD_06232014_sample4_B.raw
 ## 21106 sp|P44015|VAC2_YEAST      21.71424 JD_06232014_sample4_C.raw
 ## 21107 sp|P44015|VAC2_YEAST      20.25209 JD_06232014_sample4-A.raw
-##        Condition BioReplicate Intensity
-## 21096 Condition1            1  82714388
-## 21097 Condition1            1  72749239
-## 21098 Condition1            1  82100518
-## 21099 Condition2            2  59219741
-## 21100 Condition2            2  72690802
-## 21101 Condition2            2  71180513
-## 21102 Condition3            3   9295260
-## 21103 Condition3            3  10505591
-## 21104 Condition3            3  10295788
-## 21105 Condition4            4   2019205
-## 21106 Condition4            4   3440629
-## 21107 Condition4            4   1248781
+##        Condition BioReplicate Intensity TechReplicate
+## 21096 Condition1            1  82714388             B
+## 21097 Condition1            1  72749239             C
+## 21098 Condition1            1  82100518             A
+## 21099 Condition2            2  59219741             A
+## 21100 Condition2            2  72690802             B
+## 21101 Condition2            2  71180513             C
+## 21102 Condition3            3   9295260             A
+## 21103 Condition3            3  10505591             B
+## 21104 Condition3            3  10295788             C
+## 21105 Condition4            4   2019205             B
+## 21106 Condition4            4   3440629             C
+## 21107 Condition4            4   1248781             A
 ```
 
 
@@ -1180,7 +1224,7 @@ p <- ggplot(aes(x = Group, y = mean, colour = Group),
 p
 ```
 
-![plot of chunk unnamed-chunk-46](figure/unnamed-chunk-46-1.png)
+![plot of chunk unnamed-chunk-49](figure/unnamed-chunk-49-1.png)
 
 Let's change a number of visual properties to make the plot more attractive
  
@@ -1207,7 +1251,7 @@ p2 <- p + labs(title = "Mean", x = "Group", y = 'Log2(Intensity)') +
 p2
 ```
 
-![plot of chunk unnamed-chunk-47](figure/unnamed-chunk-47-1.png)
+![plot of chunk unnamed-chunk-50](figure/unnamed-chunk-50-1.png)
 
 Let's now add the **standard deviation**:
 
@@ -1218,7 +1262,7 @@ p2 + geom_errorbar(aes(ymax = mean + sd, ymin = mean - sd), width = 0.1) +
       labs(title="Mean with SD")
 ```
 
-![plot of chunk unnamed-chunk-48](figure/unnamed-chunk-48-1.png)
+![plot of chunk unnamed-chunk-51](figure/unnamed-chunk-51-1.png)
 
 > **Challenge**
 > 
@@ -1253,7 +1297,7 @@ rug(xn)
 lines(density(xn), lwd = 2)
 ```
 
-![plot of chunk unnamed-chunk-50](figure/unnamed-chunk-50-1.png)
+![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
 
 By definition, the area under the density curve is 1. The area at the
 left of 0, 1, and 2 are respectively:
@@ -1324,7 +1368,7 @@ points(1, dnorm(1), pch = 19, col = "red")
 points(2, dnorm(2), pch = 19, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
+![plot of chunk unnamed-chunk-56](figure/unnamed-chunk-56-1.png)
 
 ## Calculate the confidence interval
 
@@ -1385,7 +1429,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
           legend.key = element_rect(colour='white'))
 ```
 
-![plot of chunk unnamed-chunk-55](figure/unnamed-chunk-55-1.png)
+![plot of chunk unnamed-chunk-58](figure/unnamed-chunk-58-1.png)
 
 > **Challenges**
 > 

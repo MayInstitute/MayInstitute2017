@@ -73,13 +73,13 @@ oneproteindata.condition12
 ## 21099 sp|P44015|VAC2_YEAST      25.81957 JD_06232014_sample2_A.raw
 ## 21100 sp|P44015|VAC2_YEAST      26.11527 JD_06232014_sample2_B.raw
 ## 21101 sp|P44015|VAC2_YEAST      26.08498 JD_06232014_sample2_C.raw
-##        Condition BioReplicate Intensity
-## 21096 Condition1            1  82714388
-## 21097 Condition1            1  72749239
-## 21098 Condition1            1  82100518
-## 21099 Condition2            2  59219741
-## 21100 Condition2            2  72690802
-## 21101 Condition2            2  71180513
+##        Condition BioReplicate Intensity TechReplicate
+## 21096 Condition1            1  82714388             B
+## 21097 Condition1            1  72749239             C
+## 21098 Condition1            1  82100518             A
+## 21099 Condition2            2  59219741             A
+## 21100 Condition2            2  72690802             B
+## 21101 Condition2            2  71180513             C
 ```
 
 ```r
@@ -654,7 +654,7 @@ z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
 >
 > Write a function named `f2c` (`c2f`) that converts a temperature
 > from Fahrenheit to Celsium (Celsium to Fahrenheit) using the
-> following formula $F = C \times 1 + 32$ ($C = \frac{F - 32}{1.8}$).
+> following formula $F = C \times 1.8 + 32$ ($C = \frac{F - 32}{1.8}$).
 
 
 # Part 6: Linear models and correlation
@@ -847,7 +847,7 @@ function:
 
 ```r
 lmod <- lm(r2 ~ r1)
-lmod
+summary(lmod)
 ```
 
 ```
@@ -855,9 +855,20 @@ lmod
 ## Call:
 ## lm(formula = r2 ~ r1)
 ## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.4939 -0.0721  0.0126  0.0881  3.4595 
+## 
 ## Coefficients:
-## (Intercept)           r1  
-##      0.3482       0.9859
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept) 0.348190   0.091842   3.791 0.000153 ***
+## r1          0.985878   0.003688 267.357  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.3263 on 3024 degrees of freedom
+## Multiple R-squared:  0.9594,	Adjusted R-squared:  0.9594 
+## F-statistic: 7.148e+04 on 1 and 3024 DF,  p-value: < 2.2e-16
 ```
 
 which can be used to add the adequate line that reflects the (linear)
@@ -903,6 +914,27 @@ See also `?influence.measures`.
 > 2. The Anscombe quartet is available as `anscombe`. Load it, create
 >    a linear model for one $(x_i, y_i)$ pair of your choice and
 >    visualise/check the model.
+
+
+Finally, let's conclude by illustrating how `ggplot2` can very
+elegantly be used to produce similar plots, with useful annotations:
+
+
+```r
+library("ggplot2")
+dfr <- data.frame(r1, r2, M, A)
+p <- ggplot(aes(x = r1, y = r2), data = dfr) + geom_point()
+p + geom_smooth(method = "lm") +
+    geom_quantile(colour = "red")
+```
+
+![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
+
+> **Challenge**
+>
+> Replicate the MA plot above using `ggplot2`. Then add a
+> non-parametric lowess regression using `geom_smooth()`.
+
 
 
 --- 
