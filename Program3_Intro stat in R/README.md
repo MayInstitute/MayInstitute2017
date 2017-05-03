@@ -1,10 +1,16 @@
 # May Institute 2017: Beginner's statistics in R
 
+* This page: http://bit.ly/2017MayInstRstats
+* Etherpad: https://public.etherpad-mozilla.org/p/2017MayInstRstat
+* [May Institute page](http://computationalproteomics.ccis.northeastern.edu/programs/beginners-statistics-in-r/)
+
 ### Material
 
 * [Day 1](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/01-rstats.html)
 * [Day 2](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/02-rstats.html)
 * [Day 3](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/03-rstats.html)
+
+Link to [more teaching material](https://lgatto.github.io/TeachingMaterial/)
 
 ### License
 
@@ -34,7 +40,7 @@ anything the license permits.
 
 ### Credit
 
-Some of the material from day 1 has been adapted from the Data
+Some of the material from day 1 and 2 has been adapted from the Data
 Carpentry R lessons (see references in the respective sections), which
 are licensed under CC-BY.
 

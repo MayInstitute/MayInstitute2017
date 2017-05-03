@@ -1,0 +1,48 @@
+---
+title: "ProtExp demo"
+author: "Advanced R"
+date: "Friday May 5, 2017"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{ProtExp-demo}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
+## Example
+
+Load the __ProtExp__ package and the dataset.
+
+```{r}
+library(ProtExp)
+data(twin)
+head(twin_dia)
+```
+
+Create a `ProtExp` object from the dataset.
+
+```{r}
+library(tidyverse)
+twin_dia2 <- twin_dia %>%
+  rename(heavy = intensity_h, light = intensity_l) %>% 
+  gather(label, intensity, heavy, light)
+
+exp1 <- ProtExp(protein=twin_dia2$protein,
+                               feature=twin_dia2$feature,
+                               run=twin_dia2$run,
+                               intensity=twin_dia2$intensity,
+                               label=twin_dia2$label)
+head(exp1)
+```
+
+Now we can do:
+
+```{r}
+exp1norm <- normalize(exp1, by="heavy")
+head(summary(exp1norm)[,,"light"])
+plot(exp1norm)
+```
