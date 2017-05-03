@@ -14,10 +14,10 @@ output:
 
 # Objectives
 
-- Hypothesis testing: t-test
-- Categorical data
-- Power calculation
-- Linear models and correlation
+- Statistical hypothesis testing: t-test
+- Sample size calculation
+- Analysis for categorical data 
+- Linear regression and correlation
 
 ---
 
@@ -48,8 +48,8 @@ a change in abundance between Condition 1 and Condition 2.
 
 with 
 
-* $n_{1}$: number of replicates
-* $s_{1}^2 = \frac{1}{n_{1}-1} \sum (Y_{1i} - \bar{Y_{1 \cdot}})^2$: sample variance
+* $n_{i}$: number of replicates
+* $s_{i}^2 = \frac{1}{n_{i}-1} \sum (Y_{ij} - \bar{Y_{i \cdot}})^2$: sample variance
 
 ### Data preparation
 
@@ -58,8 +58,7 @@ with
 ## Let's start with one protein, named "sp|P44015|VAC2_YEAST"
 oneproteindata <- iprg[iprg$Protein == "sp|P44015|VAC2_YEAST", ]
 
-## Then, get two conditions only, because t.test only works for two
-## groups (conditions).
+## Then, get two conditions only, because t.test only works for two groups (conditions).
 oneproteindata.condition12 <- oneproteindata[oneproteindata$Condition %in% 
                                              c('Condition1', 'Condition2'), ]
 oneproteindata.condition12
@@ -211,7 +210,7 @@ result$estimate
 We can also manually compute our t-test statistic using the formulas
 we descibed above and compare it with the `summaryresult`.
 
-Recall the `summaryresult` we generated last section
+Recall the `summaryresult` we generated last section.
 
 
 ```r
@@ -235,7 +234,7 @@ summaryresult
 summaryresult12 <- summaryresult[1:2, ]
 
 ## test statistic, It is the same as 'result$statistic' above.
-diff(summaryresult12$mean) ## same as result$estimate[1]-result$estimate[2]
+diff(summaryresult12$mean) ## different sign, but absolute values are same as result$estimate[1]-result$estimate[2]
 ```
 
 ```
@@ -251,7 +250,7 @@ sqrt(sum(summaryresult12$sd^2/summaryresult12$length)) ## same as stand error
 ```
 
 ```r
-## the t-statistic
+## the t-statistic : sign is different
 diff(summaryresult12$mean)/sqrt(sum(summaryresult12$sd^2/summaryresult12$length))
 ```
 
@@ -277,15 +276,17 @@ we set to appropriate parameter.
 
 
 ```r
-xt <- rt(1e5, result$parameter)
+## generate 10^5 number with the same degree of freedom for distribution.
+xt <- rt(1e5, result$parameter) 
 plot(density(xt), xlim = c(-10, 10))
-abline(v = result$statistic, col = "red")
+abline(v = result$statistic, col = "red") ## where t statistics are located.
+abline(h = 0, col = "gray") ## horizontal line at 0
 ```
 
 ![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png)
 
-The area on the left of that point is given by `pt(result$statistic,
-result$parameter)`, which is 0.939693. The p-value for a one-sided test is this given by
+**The area on the left** of that point is given by `pt(result$statistic,
+result$parameter)`, which is 0.939693. The p-value for a one-sided test, which is ** the area on the right** of red line, is this given by
 
 
 ```r
@@ -311,7 +312,7 @@ And the p-value for a two-sided test is
 
 which is the same as the one calculated by the t-test.
 
-
+***
 
 # Part 5a: Sample size calculation
 
@@ -347,7 +348,7 @@ power <- 0.95
 delta <- 1
 
 # anticipated variability
-sigma <- 1.5
+sigma <- 0.9
 
 # Effect size
 # It quantifies the size of the difference between two groups
@@ -361,8 +362,8 @@ pwr.t.test(d = d, sig.level = alpha, power = power, type = 'two.sample')
 ## 
 ##      Two-sample t test power calculation 
 ## 
-##               n = 59.45415
-##               d = 0.6666667
+##               n = 22.06036
+##               d = 1.111111
 ##       sig.level = 0.05
 ##           power = 0.95
 ##     alternative = two.sided
@@ -370,7 +371,15 @@ pwr.t.test(d = d, sig.level = alpha, power = power, type = 'two.sample')
 ## NOTE: n is number in *each* group
 ```
 
-Then, we investigate the effect of required fold change and variance on the sample size estimation.
+
+> **Challenge**
+> 
+> * Calculate power with 10 samples and the same parameters as above.
+
+
+
+
+Let's investigate the effect of required fold change and variance on the sample size estimation.
 
 
 ```r
@@ -388,7 +397,8 @@ counter <- 0
 for (i in 1:nd){
   for (j in 1:ns){
     result <- pwr.t.test(d = delta[i]/sigma[j],
-                         sig.level = alpha, power = power,
+                         sig.level = alpha, 
+                         power = power,
                          type = "two.sample")
     counter <- counter + 1
     samsize[counter,1] <- delta[i]
@@ -396,46 +406,51 @@ for (i in 1:nd){
     samsize[counter,3] <- ceiling(result$n)
   }
 }
-colnames(samsize) <- c("fd","var","value")
+colnames(samsize) <- c("desiredlog2FC","variability","samplesize")
 
 
 library("ggplot2")
 samsize <- as.data.frame(samsize)
-samsize$var <- as.factor(samsize$var)
-ggplot(data=samsize, aes(x=fd, y=value, group = var, colour = var)) +
+samsize$variability <- as.factor(samsize$variability)
+ggplot(data=samsize, aes(x=desiredlog2FC, y=samplesize, group = variability, colour = variability)) +
   geom_line() +
   geom_point(size=2, shape=21, fill="white") +
-  labs(title="Sig=0.05 Power=0.05", x="Anticipated log2 fold change", y='Sample Size (n)') +
+  labs(title="Significance level=0.05, Power=0.95", x="Anticipated log2 fold change", y='Sample Size (n)') +
   theme(plot.title = element_text(size=20, colour="darkblue"),
         axis.title.x = element_text(size=15),
         axis.title.y = element_text(size=15),
         axis.text.x = element_text(size=13)) 
 ```
 
-![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
+![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
 
-# Part 5b: Comparison of two proportions
+***
+# Part 5b: Choosing a model
+
+The decision of which statistical model is appropriate for a given set of observations depends on the type of data that have been collected.
+
+* Quantitative response with quantitative predictors : regression model
+
+* Categorical response with quantitative predictors : logistic regression model for bivariate categorical response (e.g., Yes/No, dead/alive), multivariate logistic regression model when the response variable has more than two possible values.
+
+* Quantitative response with categorical predictors : ANOVA model (quantitative response across several populations defined by one or more categorical predictor variables)
+
+* Categorical response with categorical predictors : contingency table that can be used to draw conclusions about the relationships between variables.
+
+
+Part 5b are adapted from *Bremer & Doerge*,
+[Using R at the Bench : Step-by-Step Data Analytics for Biologists](https://www.amazon.com/dp/1621821129/ref=olp_product_details?_encoding=UTF8&me=)
+, cold Spring Harbor LaboratoryPress, 2015.
+
+
+***
+
+# Part 5c: Analysis of categorical data
 
 For this part, we are going to use a new dataset, which contains the
 patient information from TCGA colorectal cohort. This data is from
 *Proteogenomic characterization of human colon and rectal cancer*
 (Zhang et al. 2014).
-
-Rows in the data array are patients and columns are patient
-information. The column definition is shown as following:
-
-| Variable            |
-|---------------------|
-| TCGA participant ID |
-| Gender              |
-| Cancer type         |
-| BTAF mutation status|
-| History of colon polyps |
-
-## Generate 2-way contingency tables
-
-We first need to calculate 2-way contingency tables for the
-statistical tests.
 
 
 Let's read in and explore the TCGA colorectal cancer data:
@@ -456,66 +471,235 @@ head(TCGA.CRC)
 ## 6        TCGA-AA-3526   Male  Colon             0                     YES
 ```
 
-We are interested in the cancer type and history of colon polyps;
-let's select columns from TCGA dataset:
+Rows in the data array are patients and columns are patient
+information. The column definition is shown as following:
 
+| Variable            |
+|---------------------|
+| TCGA participant ID |
+| Gender              |
+| Cancer type         |
+| BTAF mutation status|
+| History of colon polyps |
 
-```r
-TCGA.CRC.gc <- TCGA.CRC[, c('Cancer', 'history_of_colon_polyps')]
-nrow(TCGA.CRC.gc)
-```
-
-```
-## [1] 78
-```
-
-and generate a 2-way contingency table using the `table` function and
-visualise the count data
-
+Let's be familiar with data first.
 
 ```r
-ov <- table(TCGA.CRC.gc)
-ov
+## check the dimension of data
+dim(TCGA.CRC)
 ```
 
 ```
-##         history_of_colon_polyps
-## Cancer   NO YES
-##   Colon  31  22
-##   Rectum 20   5
+## [1] 78  5
 ```
 
 ```r
-dotchart(t(ov), xlab = "Observed counts")
+dim(TCGA.CRC$Gender) # dim function is for matrix, array or data frame.
 ```
 
-![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
+```
+## NULL
+```
+
+```r
+## check unique information of Gender column.
+unique(TCGA.CRC$Gender)
+```
+
+```
+## [1] Female Male  
+## Levels: Female Male
+```
+
+```r
+class(TCGA.CRC$Gender)
+```
+
+```
+## [1] "factor"
+```
+
+> **Challenge**
+> 
+> * Get unique information and class for `Cancer` information
+> * Get unique information and class for `BRAF.mutation` information
+> * Get unique information and class for `history_of_colon_polyps` information
 
 
-## Chi-squared test
 
-**Hypothesis** : 
+
+`table` function generates contingency table (or classification table with frequency of outcomes) at each combination.
+
+
+```r
+## check how many female and male are in the dataset
+table(TCGA.CRC$Gender)
+```
+
+```
+## 
+## Female   Male 
+##     34     44
+```
+
+```r
+## check unique information if paticipant ID
+unique(TCGA.CRC$TCGA.participant.ID)
+```
+
+```
+##  [1] TCGA-A6-3807 TCGA-A6-3808 TCGA-A6-3810 TCGA-AA-3518 TCGA-AA-3525
+##  [6] TCGA-AA-3526 TCGA-AA-3529 TCGA-AA-3531 TCGA-AA-3534 TCGA-AA-3552
+## [11] TCGA-AA-3554 TCGA-AA-3558 TCGA-AA-3561 TCGA-AA-3664 TCGA-AA-3666
+## [16] TCGA-AA-3672 TCGA-AA-3684 TCGA-AA-3695 TCGA-AA-3710 TCGA-AA-3715
+## [21] TCGA-AA-3818 TCGA-AA-3848 TCGA-AA-3986 TCGA-AA-3989 TCGA-AA-A004
+## [26] TCGA-AA-A00A TCGA-AA-A00F TCGA-AA-A00K TCGA-AA-A00N TCGA-AA-A00U
+## [31] TCGA-AA-A010 TCGA-AA-A01D TCGA-AA-A01F TCGA-AA-A01I TCGA-AA-A01K
+## [36] TCGA-AA-A01P TCGA-AA-A01R TCGA-AA-A01S TCGA-AA-A01T TCGA-AA-A01V
+## [41] TCGA-AA-A01X TCGA-AA-A01Z TCGA-AA-A022 TCGA-AA-A024 TCGA-AA-A029
+## [46] TCGA-AA-A02H TCGA-AA-A02O TCGA-AA-A02Y TCGA-AA-A03F TCGA-AA-A03J
+## [51] TCGA-AF-2691 TCGA-AF-2692 TCGA-AF-3400 TCGA-AF-3913 TCGA-AG-3574
+## [56] TCGA-AG-3580 TCGA-AG-3584 TCGA-AG-3593 TCGA-AG-A002 TCGA-AG-A008
+## [61] TCGA-AG-A00C TCGA-AG-A00H TCGA-AG-A00Y TCGA-AG-A011 TCGA-AG-A014
+## [66] TCGA-AG-A015 TCGA-AG-A01L TCGA-AG-A01W TCGA-AG-A01Y TCGA-AG-A020
+## [71] TCGA-AG-A026 TCGA-AG-A02N TCGA-AG-A02X TCGA-AG-A032
+## 74 Levels: TCGA-A6-3807 TCGA-A6-3808 TCGA-A6-3810 ... TCGA-AG-A032
+```
+
+```r
+length(unique(TCGA.CRC$TCGA.participant.ID))
+```
+
+```
+## [1] 74
+```
+
+There are 74 unique participant IDs. but there are total 78 rows. We can suspect that there are multiple rows for some IDs. Let's check. Get the count per participants ID
+
+```r
+countID <- table(TCGA.CRC$TCGA.participant.ID)
+countID
+```
+
+```
+## 
+## TCGA-A6-3807 TCGA-A6-3808 TCGA-A6-3810 TCGA-AA-3518 TCGA-AA-3525 
+##            1            1            1            1            1 
+## TCGA-AA-3526 TCGA-AA-3529 TCGA-AA-3531 TCGA-AA-3534 TCGA-AA-3552 
+##            1            1            1            1            1 
+## TCGA-AA-3554 TCGA-AA-3558 TCGA-AA-3561 TCGA-AA-3664 TCGA-AA-3666 
+##            1            1            1            1            1 
+## TCGA-AA-3672 TCGA-AA-3684 TCGA-AA-3695 TCGA-AA-3710 TCGA-AA-3715 
+##            1            1            1            1            1 
+## TCGA-AA-3818 TCGA-AA-3848 TCGA-AA-3986 TCGA-AA-3989 TCGA-AA-A004 
+##            1            1            1            1            1 
+## TCGA-AA-A00A TCGA-AA-A00F TCGA-AA-A00K TCGA-AA-A00N TCGA-AA-A00U 
+##            2            1            2            2            1 
+## TCGA-AA-A010 TCGA-AA-A01D TCGA-AA-A01F TCGA-AA-A01I TCGA-AA-A01K 
+##            1            1            1            1            1 
+## TCGA-AA-A01P TCGA-AA-A01R TCGA-AA-A01S TCGA-AA-A01T TCGA-AA-A01V 
+##            1            1            1            1            1 
+## TCGA-AA-A01X TCGA-AA-A01Z TCGA-AA-A022 TCGA-AA-A024 TCGA-AA-A029 
+##            1            1            1            1            1 
+## TCGA-AA-A02H TCGA-AA-A02O TCGA-AA-A02Y TCGA-AA-A03F TCGA-AA-A03J 
+##            1            1            1            1            1 
+## TCGA-AF-2691 TCGA-AF-2692 TCGA-AF-3400 TCGA-AF-3913 TCGA-AG-3574 
+##            1            1            1            1            1 
+## TCGA-AG-3580 TCGA-AG-3584 TCGA-AG-3593 TCGA-AG-A002 TCGA-AG-A008 
+##            1            1            1            1            1 
+## TCGA-AG-A00C TCGA-AG-A00H TCGA-AG-A00Y TCGA-AG-A011 TCGA-AG-A014 
+##            1            2            1            1            1 
+## TCGA-AG-A015 TCGA-AG-A01L TCGA-AG-A01W TCGA-AG-A01Y TCGA-AG-A020 
+##            1            1            1            1            1 
+## TCGA-AG-A026 TCGA-AG-A02N TCGA-AG-A02X TCGA-AG-A032 
+##            1            1            1            1
+```
+
+Some participant IDs has 2 rows. Let's get the subset that has more than one row.
+
+```r
+unique(countID)
+```
+
+```
+## [1] 1 2
+```
+
+```r
+countID[countID > 1]
+```
+
+```
+## 
+## TCGA-AA-A00A TCGA-AA-A00K TCGA-AA-A00N TCGA-AG-A00H 
+##            2            2            2            2
+```
+4 participants have two rows per each. Let's check the rows for `parcipant ID = TCGA-AA-A00A`
+
+
+```r
+TCGA.CRC[TCGA.CRC$TCGA.participant.ID == 'TCGA-AA-A00A', ]
+```
+
+```
+##    TCGA.participant.ID Gender Cancer BRAF.mutation history_of_colon_polyps
+## 26        TCGA-AA-A00A   Male  Colon             0                      NO
+## 27        TCGA-AA-A00A   Male  Colon             0                      NO
+```
+
+There are two rows with the same information. They are duplicated rows. Let's remove them.
+
+```r
+TCGA.CRC <- TCGA.CRC[!duplicated(TCGA.CRC), ]
+```
+
+> **Challenge**
+> 
+> * Check whether dimension and number of participants ID are changed after removing duplicated rows.
+
+
+
+
+
+## Generate 2-way contingency tables
+
+`table` function also can calculate 2-way contingency table, which is frequency outcomes of two categorical variables. Let's get the table and visualise the count data.
+
+
+```r
+cancer.polyps <- table(TCGA.CRC$history_of_colon_polyps, TCGA.CRC$Cancer)
+cancer.polyps
+```
+
+```
+##      
+##       Colon Rectum
+##   NO     29     19
+##   YES    21      5
+```
+
+```r
+dotchart(cancer.polyps, xlab = "Observed counts")
+```
+
+![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
+
+## Comparison of two proportions
+
+**Hypothesis in general** : 
 
 $H_0$ : each population has the same proportion of observations, $\pi_{j=1|i=1} = \pi_{j=1|i=2}$
 
-$H_a$ : different population have different proportion of observations
+$H_a$ : different population have different proportion of observations.
 
-
-$$\chi^2 =\sum_{i=1}^2 \sum_{j=1}^2 \frac{(O_{ij}-E_{ij})^2}{E_{ij}} \sim \chi^2_{(2-1)(2-1)}$$
-
-$O_{ij}$ : $n_{ij}$, which is the count within the cells
-
-$E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is the column count sum and n is the total count.
-
-
-**Hypothesis**: whether the proportion of patients who have history of
-colon polyps in the patients with colon cancer is different from that
-in the patients with rectal cancer
+**Hypothesis that we are interested with this example**: whether the proportion of patients who have history of colon polyps in the patients with colon cancer is different from that in the patients with rectal cancer.
 
 
 
 ```r
-pt <- prop.test(ov)
+polyps <- cancer.polyps[2, ]
+cancer <- apply(cancer.polyps, 2, sum)
+pt <- prop.test(polyps, cancer)
 pt
 ```
 
@@ -524,14 +708,14 @@ pt
 ## 	2-sample test for equality of proportions with continuity
 ## 	correction
 ## 
-## data:  ov
-## X-squared = 2.5871, df = 1, p-value = 0.1077
+## data:  polyps out of cancer
+## X-squared = 2.3268, df = 1, p-value = 0.1272
 ## alternative hypothesis: two.sided
 ## 95 percent confidence interval:
-##  -0.44991310  0.01972442
+##  -0.03156841  0.45490175
 ## sample estimates:
 ##    prop 1    prop 2 
-## 0.5849057 0.8000000
+## 0.4200000 0.2083333
 ```
 
 ```r
@@ -551,7 +735,7 @@ pt$estimate
 
 ```
 ##    prop 1    prop 2 
-## 0.5849057 0.8000000
+## 0.4200000 0.2083333
 ```
 
 ```r
@@ -561,7 +745,7 @@ pt$statistic
 
 ```
 ## X-squared 
-##  2.587111
+##   2.32678
 ```
 
 ```r
@@ -574,25 +758,99 @@ pt$parameter
 ##  1
 ```
 
-## Fisher's exact test
+## Test of independence
 
-The Fisher's exact test can be used with small sample sizes. It
-compares distributions of counts within the 4 cells.
+**Hypothesis in general** : 
+
+$H_0$ : the factors are independent.
+
+$H_a$ : the factors are not independent.
+
+**Hypothesis that we are interested with this example**: whether history of colon polyps and type of colon cancer are independent or not.
+
+
+### Pearson Chi-squared test
+
+$$\chi^2 =\sum_{i=1}^2 \sum_{j=1}^2 \frac{(O_{ij}-E_{ij})^2}{E_{ij}} \sim \chi^2_{(2-1)(2-1)}$$
+
+$O_{ij}$ : $n_{ij}$, which is the count within the cells
+
+$E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is the column count sum and n is the total count.
+
+!! assumption : the distribution of the test statistic is approximately chi-square if the expected counts are large enough. Use this test only if the expected count for each cell is greater than 5.
+
+
+```r
+chisq.test(cancer.polyps)
+```
+
+```
+## 
+## 	Pearson's Chi-squared test with Yates' continuity correction
+## 
+## data:  cancer.polyps
+## X-squared = 2.3268, df = 1, p-value = 0.1272
+```
+
+!! Mathematically, two tests above are equivalent. `prop.test()` uses `chisq.test()` internally and print output differently.
+
+
+### Fisher's exact test
+
+Fisher's exact test is a non-parametric test for independence.
+It compares the distributions of counts within 4 cells. p-value for Fisher's exact test is the probability of obtaining more extreme data by chance than the data observed if the row and column totals are held fixed.
+
+There are no assumptions on distributions or sample sizes for this test.
+Therefore, the Fisher's exact test can be used with small sample sizes. However, if the sample sizes are very small, then the power of the test will be very low.
+
+Apply the Fisher's exact test using the `fisher.test` function and extract the odds ratio.
+
+
+```r
+ft <- fisher.test(cancer.polyps)
+ft
+```
+
+```
+## 
+## 	Fisher's Exact Test for Count Data
+## 
+## data:  cancer.polyps
+## p-value = 0.1177
+## alternative hypothesis: true odds ratio is not equal to 1
+## 95 percent confidence interval:
+##  0.09234132 1.24084405
+## sample estimates:
+## odds ratio 
+##  0.3681978
+```
+
+and extract the odds ratio.
+
+```r
+ft$estimate 
+```
+
+```
+## odds ratio 
+##  0.3681978
+```
+
 
 > **Challenge**
->
-> Apply the Fisher's exact test using the `fisher.test` function and
-> extract the odds ratio.
+> 
+> * Compare the proportion of male patients in the patients with colon cancer is different from that in the patients with rectal cancer.
 
 
 
-## Z-test
 
-Finally, we could also apply a z-test, defined as
+### Optional practice :  Large-sample Z-test
 
-$$Z=\frac{\widehat{\pi}_1-\widehat{\pi}_2}{\sqrt{\frac{\widehat{\pi}_1(1 - \widehat{\pi}_1)}{n_1}+\frac{\widehat{\pi_2}(1 - \widehat{\pi_2})}{n_2}}}$$
+We could also apply a z-test for comparison of two proportions, defined as
 
-where $\widehat{\pi}_1 = \frac{y_{1}}{n_1}$ and $\widehat{\pi}_2 = \frac{y_{2}}{n_2}$.
+$$Z=\frac{\widehat{p}_1-\widehat{p}_2}{\sqrt{\widehat{p} (1- \widehat{p}) (\frac{1}{n_1} + \frac{1}{n_2})}}$$
+
+where $\widehat{\pi}_1 = \frac{y_{1}}{n_1}$, $\widehat{\pi}_2 = \frac{y_{2}}{n_2}$ and $\widehat{p}=\frac{x_1 + x_2}{n_1 + n_2}$.
 
 We are going to use this test to illustrate how to write functions in
 R. 
@@ -615,40 +873,20 @@ z.prop.p <- function(x1, x2, n1, n2) {
     pi_1 <- x1/n1
     pi_2 <- x2/n2
     numerator <- pi_1 - pi_2
-    denominator <- sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
+    p_common <- (x1+x2)/(n1+n2)
+    denominator <- sqrt(p_common * (1-p_common) * (1/n1 + 1/n2))
     stat <- numerator/denominator
     pvalue <- 2 * (1 - pnorm(abs(stat)))
     return(pvalue)
 }
 
-z.prop.p(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
+z.prop.p(cancer.polyps[2,1], cancer.polyps[2,2], sum(cancer.polyps[,1]), sum(cancer.polyps[,2]))
 ```
 
 ```
-## [1] 0.04010935
+## [1] 0.07418571
 ```
 
-Same as above, for the confidence interval at a given alpha level.
-
-
-```r
-z.prop.ci <- function(x1, x2, n1, n2, alpha = 0.05){
-  pi_1 <- x1/n1
-  pi_2 <- x2/n2
-  numerator <- pi_1 - pi_2
-  denominator <- sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
-  cri_value <- qnorm(1-alpha/2)
-  prop.ci <- c(numerator + cri_value * denominator,
-               numerator - cri_value * denominator)
-  return(prop.ci)
-}
-
-z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
-```
-
-```
-## [1] -0.009709539 -0.420479141
-```
 
 > **Challenge**
 >
@@ -656,6 +894,8 @@ z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
 > from Fahrenheit to Celsium (Celsium to Fahrenheit) using the
 > following formula $F = C \times 1.8 + 32$ ($C = \frac{F - 32}{1.8}$).
 
+
+***
 
 # Part 6: Linear models and correlation
 
@@ -760,7 +1000,7 @@ head(x)
 pairs(x)
 ```
 
-![plot of chunk unnamed-chunk-26](figure/unnamed-chunk-26-1.png)
+![plot of chunk unnamed-chunk-36](figure/unnamed-chunk-36-1.png)
 
 We can use the `cor` function to calculate the Pearson correlation
 between two vectors of the same length (making sure the order is
@@ -831,7 +1071,7 @@ suppressPackageStartupMessages(library("affy"))
 affy::ma.plot(A, M)
 ```
 
-![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
+![plot of chunk unnamed-chunk-39](figure/unnamed-chunk-39-1.png)
 
 See also this
 [post](http://simplystatistics.org/2015/08/12/correlation-is-not-a-measure-of-reproducibility/)
@@ -880,7 +1120,7 @@ plot(r1, r2)
 abline(lmod, col = "red")
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+![plot of chunk unnamed-chunk-41](figure/unnamed-chunk-41-1.png)
 
 As we have seen in the beginning of this section, it is essential not
 to rely solely on the correlation value, but look at the data. This
@@ -893,7 +1133,7 @@ par(mfrow = c(2, 2))
 plot(lmod)
 ```
 
-![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
+![plot of chunk unnamed-chunk-42](figure/unnamed-chunk-42-1.png)
 
 * *Cook's distance* is a commonly used estimate of the influence of a
   data point when performing a least-squares regression analysis and
@@ -928,7 +1168,7 @@ p + geom_smooth(method = "lm") +
     geom_quantile(colour = "red")
 ```
 
-![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
+![plot of chunk unnamed-chunk-43](figure/unnamed-chunk-43-1.png)
 
 > **Challenge**
 >
