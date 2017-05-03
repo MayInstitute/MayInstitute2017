@@ -453,32 +453,15 @@ cancer.polyps
 dotchart(cancer.polyps, xlab = "Observed counts")
 ```
 
-## Test of independence
-$H_0$ : the factors are independent.
-
-$H_a$ : the factors are not independent.
-
-
-### Pearson Chi-squared test
+## Comparison of two proportions
 
 **Hypothesis in general** : 
 
 $H_0$ : each population has the same proportion of observations, $\pi_{j=1|i=1} = \pi_{j=1|i=2}$
 
-$H_a$ : different population have different proportion of observations
+$H_a$ : different population have different proportion of observations.
 
-
-$$\chi^2 =\sum_{i=1}^2 \sum_{j=1}^2 \frac{(O_{ij}-E_{ij})^2}{E_{ij}} \sim \chi^2_{(2-1)(2-1)}$$
-
-$O_{ij}$ : $n_{ij}$, which is the count within the cells
-
-$E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is the column count sum and n is the total count.
-
-!! assumption : the distribution of the test statistic is approximately chi-square if the expected counts are large enough. Use this test only if the expected count for each cell is greater than 5.
-
-
-**Hypothesis that we are interested with this example**: whether the proportion of patients who have history of colon polyps in the patients with colon cancer is different from that
-in the patients with rectal cancer.
+**Hypothesis that we are interested with this example**: whether the proportion of patients who have history of colon polyps in the patients with colon cancer is different from that in the patients with rectal cancer.
 
 
 ```{r}
@@ -500,11 +483,41 @@ pt$statistic
 pt$parameter
 ```
 
+## Test of independence
 
-## Fisher's exact test
+**Hypothesis in general** : 
+
+$H_0$ : the factors are independent.
+
+$H_a$ : the factors are not independent.
+
+**Hypothesis that we are interested with this example**: whether history of colon polyps and type of colon cancer are independent or not.
+
+
+### Pearson Chi-squared test
+
+$$\chi^2 =\sum_{i=1}^2 \sum_{j=1}^2 \frac{(O_{ij}-E_{ij})^2}{E_{ij}} \sim \chi^2_{(2-1)(2-1)}$$
+
+$O_{ij}$ : $n_{ij}$, which is the count within the cells
+
+$E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is the column count sum and n is the total count.
+
+!! assumption : the distribution of the test statistic is approximately chi-square if the expected counts are large enough. Use this test only if the expected count for each cell is greater than 5.
+
+```{r}
+chisq.test(cancer.polyps)
+```
+
+!! Mathematically, two tests above are equivalent. `prop.test()` uses `chisq.test()` internally and print output differently.
+
+
+### Fisher's exact test
 
 Fisher's exact test is a non-parametric test for independence.
-The null hypothesis is the independence of rows and columns in a contingency table with fixed marginals. It compares the distributions of counts within 4 cells. The null hypothesis is specified in terms of odd ratio=1. It produces confidence interval for the odd ratio. The Fisher's exact test can be used with small sample sizes.
+It compares the distributions of counts within 4 cells. p-value for Fisher's exact test is the probability of obtaining more extreme data by chance than the data observed if the row and column totals are held fixed.
+
+There are no assumptions on distributions or sample sizes for this test.
+Therefore, the Fisher's exact test can be used with small sample sizes. However, if the sample sizes are very small, then the power of the test will be very low.
 
 Apply the Fisher's exact test using the `fisher.test` function and extract the odds ratio.
 
@@ -534,13 +547,13 @@ pt
 ```
 
 
-## Z-test
+### Optional practice :  Large-sample Z-test
 
-Finally, we could also apply a z-test, defined as
+We could also apply a z-test for comparison of two proportions, defined as
 
-$$Z=\frac{\widehat{\pi}_1-\widehat{\pi}_2}{\sqrt{\frac{\widehat{\pi}_1(1 - \widehat{\pi}_1)}{n_1}+\frac{\widehat{\pi_2}(1 - \widehat{\pi_2})}{n_2}}}$$
+$$Z=\frac{\widehat{p}_1-\widehat{p}_2}{\sqrt{\widehat{p} (1- \widehat{p}) (\frac{1}{n_1} + \frac{1}{n_2})}}$$
 
-where $\widehat{\pi}_1 = \frac{y_{1}}{n_1}$ and $\widehat{\pi}_2 = \frac{y_{2}}{n_2}$.
+where $\widehat{\pi}_1 = \frac{y_{1}}{n_1}$, $\widehat{\pi}_2 = \frac{y_{2}}{n_2}$ and $\widehat{p}=\frac{x_1 + x_2}{n_1 + n_2}$.
 
 We are going to use this test to illustrate how to write functions in
 R. 
@@ -562,31 +575,16 @@ z.prop.p <- function(x1, x2, n1, n2) {
     pi_1 <- x1/n1
     pi_2 <- x2/n2
     numerator <- pi_1 - pi_2
-    denominator <- sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
+    p_common <- (x1+x2)/(n1+n2)
+    denominator <- sqrt(p_common * (1-p_common) * (1/n1 + 1/n2))
     stat <- numerator/denominator
     pvalue <- 2 * (1 - pnorm(abs(stat)))
     return(pvalue)
 }
 
-z.prop.p(cancer.polyps[1,1], cancer.polyps[2,1], sum(cancer.polyps[1,]), sum(cancer.polyps[2,]))
+z.prop.p(cancer.polyps[2,1], cancer.polyps[2,2], sum(cancer.polyps[,1]), sum(cancer.polyps[,2]))
 ```
 
-Same as above, for the confidence interval at a given alpha level.
-
-```{r}
-z.prop.ci <- function(x1, x2, n1, n2, alpha = 0.05){
-  pi_1 <- x1/n1
-  pi_2 <- x2/n2
-  numerator <- pi_1 - pi_2
-  denominator <- sqrt(((pi_1*(1-pi_1))/n1 + (pi_2*(1-pi_2))/n2))
-  cri_value <- qnorm(1-alpha/2)
-  prop.ci <- c(numerator + cri_value * denominator,
-               numerator - cri_value * denominator)
-  return(prop.ci)
-}
-
-z.prop.ci(cancer.polyps[1,1], cancer.polyps[2,1], sum(cancer.polyps[1,]), sum(cancer.polyps[2,]))
-```
 
 > **Challenge**
 >
