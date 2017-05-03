@@ -1,0 +1,146 @@
+---
+title: "Notes on how to use R Markdown"
+author: "Sara Taheri"
+date: "5/1/2017"
+output:
+  html_document: default
+  pdf_document: default
+fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Markdown
+
+Markdown is a text-to-HTML conversion tool for web writers. Markdown allows you to write using an easy-to-read, easy-to-write plain text format, then convert it to structurally valid XHTML (or HTML)\footnote{from : http://daringfireball.net/projects/markdown/}.
+
+## R Markdown
+
+R-Markdown is a flavor of markdown which allows R-users to embed R code into a markdown document\footnote{https://www.r-bloggers.com/r-markdown-and-knitr-tutorial-part-1/}. With R Markdown you can  create HTML, PDF, and MS Word documents.
+
+## How to create a R Markdown file
+
+Click on the (+) sign on above left side of RStudio and choose "R Markdown ..."
+
+```{r, fig.height=4, fig.width = 4, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/createRMarkdown.png")
+grid.raster(img)
+```
+
+Write down the title of your document and choose one of the default output formats.
+
+```{r, fig.height=4, fig.width = 4, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/initial_Setup.png")
+grid.raster(img)
+```
+
+A template R Markdown document will be created. Save it on your computer and then click on **"Knit"** to generate your pdf (or html or MS Word). 
+
+```{r, fig.height=4, fig.width = 4, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/Knit.png")
+grid.raster(img)
+```
+
+When you click the Knit button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. In order to create an R chunk, click on "Code" and then select "insert chunk".
+
+```{r, fig.height=4, fig.width = 4, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/insertChunk.png")
+grid.raster(img)
+```
+
+You can also create R chunk by writting your code between two lines that consist of three backtick in each line, like this: 
+
+```{r, fig.height=4, fig.width = 6, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/rChunk.png")
+grid.raster(img)
+```
+
+For example if I want to see the summary of an existing data set in R called "cars", I have to simply type:
+
+```{r, fig.height=4, fig.width = 6, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/summaryCars.png")
+grid.raster(img)
+```
+
+And the result is as follows:
+
+```{r cars}
+summary(cars)
+```
+
+## Only display the result and hide codes
+
+If you do not want to include the codes in the output of the file but you want to show the results of running the code, set `echo = FALSE`. This will prevent printing of the R code that generated the plot. You can also set the width and height of your plot like this:
+
+```{r, fig.height=4, fig.width = 6, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/simplePlot.png")
+grid.raster(img)
+```
+
+The result of this is as follows:
+
+```{r pressure, echo=FALSE, fig.width= 4, fig.height= 4}
+plot(x = c(1,2,3,5,3,6), y = c(1,4,2,6,3,5), main = " This is my plot",
+     xlab = "pressure", ylab = "temperature")
+```
+
+As you can see, in the result, no code is shown.
+
+
+## Only display the codes and hide the results
+
+If you want to hide the results and only show the code, you can write it like this:
+
+```{r, fig.height=4, fig.width = 6, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/hideResults.png")
+grid.raster(img)
+```
+
+Here is the result of this:
+
+```{r correlation, results="hide"}
+x <- rnorm(100)
+y <- 2*x + rnorm(100)
+cor(x, y)
+```
+
+You can see that the result of cor(x,y) is not produced.
+
+## Add caption to your plot
+
+If you want your plot to has a caption, you can add fig.cap="my caption" to the arguments of your chunk, like this:
+
+```{r, fig.height=4, fig.width = 6, echo=FALSE,fig.align='center'}
+library(png)
+library(grid)
+img <- readPNG("./fig/plotCaption.png")
+grid.raster(img)
+```
+
+The result is in figure 1:
+
+```{r pressure1, echo=FALSE, fig.width= 4, fig.height= 4, fig.cap= "This plot shows the relationship between the pressure of a room and the temperature of it."}
+plot(x = c(1,2,3,5,3,6), y = c(1,4,2,6,3,5), main = " This is my plot",
+     xlab = "pressure", ylab = "temperature")
+```
+
+For more details on using R Markdown see [here](http://rmarkdown.rstudio.com). [Here](http://commonmark.org/help/tutorial/) is a step by step turorial that introduces single Makdown concepts at each step.
+
+You can also create your posters with RMarkdown easily. [Here](https://github.com/odeleongt/flexdashboard-poster) you can find more information about it.
