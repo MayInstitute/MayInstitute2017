@@ -213,7 +213,7 @@ And the p-value for a two-sided test is
 
 which is the same as the one calculated by the t-test.
 
-
+***
 
 # Part 5a: Sample size calculation
 
@@ -311,8 +311,28 @@ ggplot(data=samsize, aes(x=desiredlog2FC, y=samplesize, group = variability, col
         axis.text.x = element_text(size=13)) 
 ```
 
+***
+# Part 5b: Choosing a model
 
-# Part 5b: Analysis of categorical data
+The decision of which statistical model is appropriate for a given set of observations depends on the type of data that have been collected.
+
+* Quantitative response with quantitative predictors : regression model
+
+* Categorical response with quantitative predictors : logistic regression model for bivariate categorical response (e.g., Yes/No, dead/alive), multivariate logistic regression model when the response variable has more than two possible values.
+
+* Quantitative response with categorical predictors : ANOVA model (quantitative response across several populations defined by one or more categorical predictor variables)
+
+* Categorical response with categorical predictors : contingency table that can be used to draw conclusions about the relationships between variables.
+
+
+Part 5b are adapted from *Bremer & Doerge*,
+[Using R at the Bench : Step-by-Step Data Analytics for Biologists](https://www.amazon.com/dp/1621821129/ref=olp_product_details?_encoding=UTF8&me=)
+, cold Spring Harbor LaboratoryPress, 2015.
+
+
+***
+
+# Part 5c: Analysis of categorical data
 
 For this part, we are going to use a new dataset, which contains the
 patient information from TCGA colorectal cohort. This data is from
@@ -370,7 +390,7 @@ class(TCGA.CRC$history_of_colon_polyps)
 ```
 
 
-`table` function generates contingency table of the counts at each combination.
+`table` function generates contingency table (or classification table with frequency of outcomes) at each combination.
 
 ```{r}
 ## check how many female and male are in the dataset
@@ -422,23 +442,26 @@ unique(countID)
 ```
 
 
-## Comparison of two proportions
-goal!!
 
-### Generate 2-way contingency tables
+## Generate 2-way contingency tables
 
-`table` function also can calculate 2-way contingency table. Let's get the table and visualise the count data.
+`table` function also can calculate 2-way contingency table, which is frequency outcomes of two categorical variables. Let's get the table and visualise the count data.
 
 ```{r}
-ov <- table(TCGA.CRC$Cancer, TCGA.CRC$history_of_colon_polyps)
-ov
-dotchart(t(ov), xlab = "Observed counts")
+cancer.polyps <- table(TCGA.CRC$history_of_colon_polyps, TCGA.CRC$Cancer)
+cancer.polyps
+dotchart(cancer.polyps, xlab = "Observed counts")
 ```
 
+## Test of independence
+$H_0$ : the factors are independent.
 
-### Chi-squared test
+$H_a$ : the factors are not independent.
 
-**Hypothesis** : 
+
+### Pearson Chi-squared test
+
+**Hypothesis in general** : 
 
 $H_0$ : each population has the same proportion of observations, $\pi_{j=1|i=1} = \pi_{j=1|i=2}$
 
@@ -451,14 +474,17 @@ $O_{ij}$ : $n_{ij}$, which is the count within the cells
 
 $E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is the column count sum and n is the total count.
 
+!! assumption : the distribution of the test statistic is approximately chi-square if the expected counts are large enough. Use this test only if the expected count for each cell is greater than 5.
 
-**Hypothesis**: whether the proportion of patients who have history of
-colon polyps in the patients with colon cancer is different from that
-in the patients with rectal cancer
+
+**Hypothesis that we are interested with this example**: whether the proportion of patients who have history of colon polyps in the patients with colon cancer is different from that
+in the patients with rectal cancer.
 
 
 ```{r}
-pt <- prop.test(ov)
+polyps <- cancer.polyps[2, ]
+cancer <- apply(cancer.polyps, 2, sum)
+pt <- prop.test(polyps, cancer)
 pt
 
 # name of output
@@ -474,22 +500,39 @@ pt$statistic
 pt$parameter
 ```
 
+
 ## Fisher's exact test
 
-The Fisher's exact test can be used with small sample sizes. It
-compares distributions of counts within the 4 cells.
+Fisher's exact test is a non-parametric test for independence.
+The null hypothesis is the independence of rows and columns in a contingency table with fixed marginals. It compares the distributions of counts within 4 cells. The null hypothesis is specified in terms of odd ratio=1. It produces confidence interval for the odd ratio. The Fisher's exact test can be used with small sample sizes.
 
-> **Challenge**
->
-> Apply the Fisher's exact test using the `fisher.test` function and
-> extract the odds ratio.
+Apply the Fisher's exact test using the `fisher.test` function and extract the odds ratio.
 
-```{r, echo=FALSE, eval=FALSE}
-#Fisher's Exact Test
-ft <- fisher.test(ov) 
-# odds ratio
+```{r}
+ft <- fisher.test(cancer.polyps)
+ft
+```
+
+and extract the odds ratio.
+```{r}
 ft$estimate 
 ```
+
+
+> **Challenge**
+> 
+> * Compare the proportion of male patients in the patients with colon cancer is different from that in the patients with rectal cancer.
+
+```{r, echo=FALSE, include=FALSE}
+cancer.gender <- table(TCGA.CRC$Gender, TCGA.CRC$Cancer)
+cancer.gender
+dotchart(cancer.gender, xlab = "Observed counts")
+male <- cancer.gender[2, ]
+cancer <- apply(cancer.gender, 2, sum)
+pt <- prop.test(male, cancer)
+pt
+```
+
 
 ## Z-test
 
@@ -525,7 +568,7 @@ z.prop.p <- function(x1, x2, n1, n2) {
     return(pvalue)
 }
 
-z.prop.p(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
+z.prop.p(cancer.polyps[1,1], cancer.polyps[2,1], sum(cancer.polyps[1,]), sum(cancer.polyps[2,]))
 ```
 
 Same as above, for the confidence interval at a given alpha level.
@@ -542,7 +585,7 @@ z.prop.ci <- function(x1, x2, n1, n2, alpha = 0.05){
   return(prop.ci)
 }
 
-z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
+z.prop.ci(cancer.polyps[1,1], cancer.polyps[2,1], sum(cancer.polyps[1,]), sum(cancer.polyps[2,]))
 ```
 
 > **Challenge**
@@ -551,6 +594,8 @@ z.prop.ci(ov[1,1], ov[2,1], sum(ov[1,]), sum(ov[2,]))
 > from Fahrenheit to Celsium (Celsium to Fahrenheit) using the
 > following formula $F = C \times 1.8 + 32$ ($C = \frac{F - 32}{1.8}$).
 
+
+***
 
 # Part 6: Linear models and correlation
 
