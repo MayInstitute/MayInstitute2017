@@ -1,0 +1,633 @@
+---
+title: "A Tour of (advanced) R in Sixty Minutes"
+author: "Advanced R"
+date: "Wednesday May 3, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+"Any sufficiently advanced technology is indistinguishable from magic." -- Arthur C. Clarke
+
+This lecture should be interactive; participants should form pairs for solving the exercises. 
+
+The learning goal is to arrive at a mental model of how R programs are evaluated and a better understanding how abstractions can be implemented.
+
+# Origins
+
+The R programming language has its roots in S, a language created forty years ago at ATT Bell Labs by Chambers, Becker and Wilks.
+
+The motivation for S was to simplify the task of calling statistical routines written in FORTRAN (this involved writing code to read in, format and write out the data).
+
+The goal of S was to free users of the drudgery of writing that interface code and speed up the data analyst's workflow.  The key linguistic design principle was to design a language that could be extended and that was devoid of arbitrary limitations.
+
+The S language was such a success that users started writing statistical routines in S.
+
+The R programming language was designed by Ross Ihaka and Robert Gentleman at the University of Auckland around 1992.  
+
+R departed from S in number of ways, it was an open source language released under a GPL license to ensure that everything related to R remains in the public domain, R cleaned up some corners of S and improve the performance of programs written in the language.
+
+# Status
+
+R is growing in [popularity](https://www.r-bloggers.com/r-moves-up-to-5th-place-in-ieee-language-rankings) thanks to its rich ecosystem.  The IEEE ranks R as the fifth most popular language:
+
+*"Another language that has continued to move up the rankings since '14 is R, now in fifth place. R has been lifted in our rankings by racking up more questions on Stack Overflow—about 46% more since 2014. But even more important to R’s rise is that it is increasingly mentioned in scholarly research papers. [...] In our '15 ranking there were a mere 39 papers talking about the language, whereas this year we logged 244 papers."*
+
+While the RedMonk language rating puts it in 12th place:
+
+*"... R has shown the most consistent upwards movement over time. From its position of 17 in '12, it has made steady gains over time ... R took over #12 from Perl which in turn dropped to #13. There’s still an enormous amount of Perl in circulation, but the fact that the more specialized R has unseated the language once considered the glue of the web says as much about Perl as it does about R."*
+
+
+#  R from first principles
+
+The basic building blocks of the language are surprisingly simple and elegant.
+
+## Functions
+
+The building block for creating abstractions in R is the *function declaration*.  These abstractions are used in *function calls*.
+
+```{r, eval=FALSE}
+f <- function( y ) {  y + 1 }
+f( 1 )
+```
+
+Function definitions in R consist of an argument list and a body. The argument list is a sequence of variable names (with optional default values) and possibly one occurrence of the tripe dot symbol (`...`).  The body of the function can be a single expression or a block (`{...}`).
+
+```{r, eval=FALSE}
+# the shortest function in the book
+function() 1    
+# multiple expressions in the body
+function( x ) { y <- x * x;  y + 1 }
+# default values, optional arguments
+function( x = 0, ..., y = 2)   if(length(z <- list(...) == 0)) x * y  else x * y * z[[1]] 
+```
+
+A function call consists of an expression that evaluates to a function followed by a (possibly empty) list of (possible named) arguments.
+
+```{r, eval=FALSE}
+f()
+# the shortest call of them all
+f(1,2)
+# positional calls pass arguments in order
+f(x = 1, y = 2)
+f(y = 2, x = 1)
+# named calls pass argument by name without a prescribed order
+(x[42])(x=1)
+# an expression that yields a function can be called
+```
+
+Some functions have inline syntax, `+` for example does not require parentheses and `if else` is  function which takes two arguments.  The assignment operators are functions `<-` and `[]<-, so are parenthese `(`.  All functions can be redefined.
+
+```{r}
+`+` <- function(a,b) paste(a,b)
+`(` <- function(a) print("(" + a + ")")
+(1 + 1)
+```
+
+**Exercise 1:** write a definition of a function `f` that will return `0`, `-1`, `1`, `1` for the four calls to `f` above and a variable `x` such that the last call returns `-1`.
+
+
+Let's clean up the environment. 
+
+```{r}
+rm(`+`)
+rm(`(`)
+```
+
+
+```{r, eval=F}
+f <- function(y = 0, x = 0) x - y
+f()
+f(1,2)
+f(x = 1, y = 2)
+f(y = 2, x = 1)
+```
+
+The optional arguments have somewhat interesting semantics. In a function, any argument occurring after the three dots must be passed by name.  In the function body they can be passed as argument to a further call.
+
+```{r, eval=F}
+f <- function( x, ..., y) {  # y can only be passed by name
+   l1 <- c(...)  # the tree dots become an argument list
+   l2 <- c(x,...)
+   l3 <- c(y,...,x)
+   l1[1] + l2[2] + l3[3]
+}
+f(1,2,y=3)
+```
+
+**Exercise 2:** guess what value the call to `f` will return.
+
+The rationale for having arguments after the three dots is to specify optional arguments rarely overridden.
+
+Function evaluation is complete when the last expression in the body is evaluated. The `return()` call can break evaluation in the middle.  The `stop()` call can raise an exception that can only be caught in a `tryCatch()` statement. 
+
+```{r, eval=F}
+f <- function(x,acc) {
+  if (x == 0) tryCatch( stop(simpleException("done")), 
+                        simpleException = function(err) acc)
+  else f(x-1, acc+1) 
+}  
+```
+
+
+**Exercise 3:** what will happen if we evaluate `f(-1)`.
+
+Each call to a function adds the argument to function on a data structure referred to as the *stack*. When a function returns the arguments are removed from the stack.
+
+# Environments
+
+An environment binds names to values. 
+
+```{r}
+e <- new.env()
+e$a <- FALSE
+e$b <- "a"
+e$c <- 2.3
+e$d <- 1:3
+```
+
+![An environment refers to values in memory.](http://adv-r.had.co.nz/diagrams/environments.png/bindings.png)
+
+Environments can be chained by assigning to their *parent environment*.  Looking up names using `get("x", env=e)` will find the first binding for `x` in the sequence of environments starting at `e` and following the `parent` chain.
+
+
+```{r}
+f <- new.env()
+parent.env(f) <- e
+get("c", env=f)
+```
+
+Environments are used to hold the variables and parameters of a function.  The chaining is used to implement lexical scoping.
+
+```{r}
+f <- function() {
+   x <- 42
+   function() x
+}
+x <- -42
+```
+
+**Exercise 4:** what will the value of the expression `f()()`?  
+
+Environment are also used to implement the namespaces that are exported by packages.
+
+Consider the `sd` function, it is provided by the `stats` package.
+
+```{r, eval=F}
+environment(sd)
+#> <environment: namespace:stats>
+where("sd")
+#> <environment: package:stats>
+```
+
+The definition of `sd()` uses function `var()`, but if we make our own version of `var()` it doesn't affect `sd()`:
+
+```{r,eval=F}
+x <- 1:10
+sd(x)
+## [1] 3.02765
+var <- function(x, na.rm = TRUE) 100
+sd(x)
+## [1] 3.02765
+```
+
+![](http://adv-r.had.co.nz/diagrams/environments.png/namespace.png)
+
+When we type `var` into the console, it’s found first in the global environment. When `sd()` looks for `var()` it finds it first in its namespace environment so never looks in the `globalenv()`.
+
+
+The assignment operator `<-` updates variables in the current environment. If the variable is not present in the current scope, that variable will be created.
+
+```{r,eval=F}
+rm(x)
+x <- 1
+(function(){ x <- x + 1;  x})()
+```
+
+*Exercise 5:* what does the above print and what is the value of `x` in the `globalenv()`.
+
+The super assignment operator `<<-` updates variables defined in the enclosing scope.
+
+
+```{r}
+rm(x)
+x <- 1
+(function(){ 
+   x <- x + 1
+   x <<- x + 1
+   x})()
+```
+
+*Exercise 6:* what does the above print and what is the value of `x` in the `globalenv()`.
+
+## Data structures
+
+R offers a variety of built-in data structures.
+
+### Base types
+
+The base types include `double`, `integer`, `characater` and `logical`.  Values can be tested as belonging to one of those types.
+
+```{r, eval=F}
+typeof(1)
+## [1] "double"
+typeof(1L)
+## [1] "integer"
+is.numeric(1.1)
+## [1] TRUE
+is.logical(TRUE)
+is.character("Hello")
+```
+Every base type has a sentinel value used to represent missing observations.
+
+```{r,eval=F}
+x <- 1
+x[2] <- NA
+typeof(x[2])
+## "double"
+typeof(NA)
+## logical
+typeof(NA + 1L)
+```
+
+**Exercise 7:** what is the type of expression `NA + 1L`.
+
+In practice, the difference between integers and doubles is one of space, range and accuracy.  Integers are encoded in 32 bits, they can represent values up to 2 billion operations on integers are accurate.  Doubles are floating point values stored in 64 bits which can loose precision in certain situations.
+
+R programs do not manipulate basic types, all operations in R are vectorized.
+
+### Vectors
+
+R provides several kinds of compound data structures commonly referred to as *vectors*.  All operations in R are *vectorized*, this means that they take vectors as arguments and they will operate on the individual values (basic types) of these vectors.
+
+```{r}
+x <- c(1,2,2)
+y <- c(2,2,1)
+( x + y ) * x
+```
+
+All vectors can be accessed used subsetting operators `[` and `[[`, and can be used with functions `typeof()` (to find out what basic type is in the vector),
+`length()` (how many elements are in it), `attributes()` (query the vector's meta data).
+
+#### Atomic vectors
+
+Atomic vectors are homogeneous (possibly multi-dimensional) data structures.
+
+```{r}
+c(1,2,3)
+c("one","two","three")
+```
+
+Element of vectors can be accessed individually.
+
+```{r}
+x <- c(1L, 2L, 3L)
+x[1] <- 45
+x[1]
+```
+
+The operator `[<-` is the assignment function.
+
+A two dimensional atomic vector is called a *matrix* and higher-dimensional vector is called an *array*.
+
+```{r}
+a <- matrix(1:6, ncol = 3, nrow = 2)
+b <- array(1:12, c(2,3,4))
+a
+b
+```
+
+Matrices and array, like vectors, are homogeneous, but it is possible to assign values of different basic types into any one of them. This causes a *coercion* of the entire data structure.
+
+```{r}
+x[[1]] <-1.1
+x
+a[[2,1]] <- "one"
+a
+```
+
+Coercions go from least to most flexible:  logical, integer, double and character.
+
+**Exercise 8:** what should `a[2,1] <- 1` do?
+
+
+R has a powerful set of subsetting operations that apply to all vectors uniformly. R allows, to subset ranges, rows, columns of vectors.
+
+```{r}
+a[1,]
+a[1:2,]
+a[1:2,2:3]
+aa <- as.integer(a)
+dim(aa) <- c(2,3)
+a[1, a[1,] > 1]
+aa[1, aa[1,] > 1]
+```
+
+When using a predicate such as `a[1,] > 1` for subsetting, behind the scenes R generates a vector of logical values. True indicates a position that should be extracted.  So this is:
+
+```{r}
+aa[1,]>1
+```
+
+We can use logical arrays to subset as follows:
+
+```{r}
+aa[1, c(FALSE, TRUE, TRUE)]
+```
+
+Subsetting can be used in assignment operations as well.
+
+```{r}
+a[1:3] <- a[4:6]
+```
+
+
+#### Lists
+
+Lists are heterogeneous vectors. The elements of list can be of any kind, including lists and vectors.
+
+```{r}
+list(1, "hi", c(1,2))
+```
+
+The `typeof()` a list is `list`. You can test for a list with `is.list()` and coerce to a list with `as.list()`. You can turn a list into an atomic vector with `unlist()`. If the elements of a list have different types, `unlist()` will coerce.
+
+### Referential transparency
+
+To facilitate equational reasoning, R attempts to provide *referential transparency* for function calls. Referential transparency means that arguments are not changed by the function being called. So the following function `f(x)` does not modify the vector passed in.
+
+```{r}
+x
+f <- function(x) { x[1] <- 1 }
+f(x)
+x
+```
+
+But then what does it change in the body?
+
+The `pryr` package provides function `object_size` to estimate the size of several data structures.
+
+```{r}
+X <- 1:(10*1000*1000)
+if (!require("pryr",character.only = TRUE)) install.packages("pryr")
+pryr::object_size(X)
+Y <- X
+pryr::object_size(X,Y)
+Y[1] <- 11
+pryr::object_size(X,Y)
+```
+
+**Exercise 9:** Explain the two surprising things about the above results.
+
+## Attributes
+
+Any vector in R can have attributes. Attributes are a named `list`. Attributes can be accessed individually with `attr()` or all at once (as a list) with `attributes()`.
+
+```{r}
+y <- 1:10
+attr(y, "my_att") <- "This is a vector"
+```
+
+Attributes can be set and queried.
+
+```{r}
+attr(y, "my_att")
+```
+
+The `str()` function clearly shows that attributes are implemented by a `list`.
+
+```{r}
+str(attributes(y))
+```
+
+Some attributes such as `dim`, `name`, `class` are understood by many R functions.  For instance, setting the `names` attribute allows to name positions in a vector (and row/column in matrices).
+
+```{r}
+x <- c(1,2,3)
+attr(x,"names") <- c("a","b","c")
+x["a"]
+```
+
+## Delayed Evaluation
+
+**Exercise 10:** Consider the following code, what will it print?
+
+```{r}
+print(1)   # outputs "1" on the terminal
+f<-function(a,b) { invisible(0) }  # a helper, nevermind
+f( print(1) , print(2) )   # what would this do in Java or in C
+temp <-print(1);temp2 <- print(2); f(temp, temp2)  # same thing?
+```
+
+**Exercise 11:** What will this print?
+
+```{r}
+f1 <- function( a, b, c ) { # Consider the following, not very useful function
+ x <- f(b,b)
+ x <- c
+ x <- c
+ a
+}
+
+f1( print(1), print(2), print(3) ) # What do you recon this will print?
+```
+
+**Exercise 12:** What will this print?
+
+```{r}
+f2 <- function( a, b, c ) { # here is another function
+  x <- b
+  x <- c
+  f3(a)
+}
+
+f3 <- function( a) { } # with a silly helper function
+
+f2( print(1), print(2), print(3) ) # what will we print?
+```
+
+In R, arguments to a functions are not evaluated, they are packaged into *promises*. A promise is only evaluated if it is accessed (and only the first time it is accessed).  
+
+Every expression is passed as a promise, except constants.
+
+The following is an obscure corner of R.   Enjoy.
+
+```{r}
+FU <- function(b="") print(paste("FU",b))                # A function
+BAR <- function( FU = print("BAR"))  FU("bar")   # Another function with a default argument
+BAR()   # call bar will print ?
+BAR( function(n) print("YO") )  # and now?
+```
+
+
+# Building Abstractions
+
+We have now reviewed the basic building blocks of the language. Using these building blocks it is possible to construct powerful abstractions.
+
+## Building a factor abstraction
+
+First, lets look at how to implement factors using attributes.
+ 
+```{r}
+simple_factor <- function (x) {
+    levels <- as.character(unique(x))
+    f <- match(x, levels)
+    attr(f, "levels") <- levels
+    attr(f, "class") <- "simple_factor"
+    f
+}
+
+x <- c(42, 42, 2, 3, 4)
+simple_factor(x)
+```
+Printing is not very elegant. Let's add a dedicated print function.
+
+```{r}
+print.simple_factor <-  function (x, ...)  {
+   xx <- x  # copy x
+   class(xx) <- NULL  # delete its class
+   levels(xx) <- NULL # delete its levels
+   xx <- sapply(xx, function(y) attr(x,"levels")[y]) # replace levels with their values
+   print(xx, quote=FALSE)   # print without quotes
+   cat(paste("Levels: ", paste(levels(x),collapse=" ")))  #print the levels
+  invisible(x)  # return x without echoing it
+}
+
+print(simple_factor(x))
+```
+
+## Building a counter abstraction
+
+With referential transparency it is difficult to mutate non-local state.  What if we wanted to create a large number of counters and did not want anyone but us to be able to update them.
+
+
+
+```{r}
+remove(xPriv)
+counter <- function() { xPriv <- xPriv + 1; xPriv}
+#counter()             # oops, we need to define x
+xPriv<-0
+counter()
+counter()             # Hmm... not quite
+
+# Super assignment to the rescue
+counter <- function() { xPriv <<- xPriv + 1; xPriv}  # <<- assigns in the parent env
+counter()
+counter()             # now we have a counter
+```
+
+This only lets us have a single counter. What if we want a counter factory?
+
+
+```{r}
+mkC <- function () { 
+    xPriv <- 0
+    function() { xPriv <<- xPriv + 1; xPriv }
+  }
+
+count <- mkC()
+count()
+count()
+```
+
+The above uses the environment of the `mkC()` function to store the counter. Each time we call `mkC`, a new environment is created.
+
+
+## Building abstractions with Objects
+
+R has multiple object systems. They are constructed on top of attributes and reflective method invocation.
+
+The S3 system gives us single dispatch and simple structures.
+
+
+```{r}
+x<- 1
+attr(x, "class" ) <- "pen"      # class is just an attribute like any other
+x
+y<- 1
+class(y ) <- "cowboy"           # there is a dedicate function to set
+y
+class(y) <- c("cow?cboy","human") # one can be several things
+
+draw <- function( this )  UseMethod("draw", this)  # this introduces the generic method
+draw.cowboy <- function(this)  "Bang"      # different variants for different classes
+draw.pen <- function(this) "Scribble"
+draw.default <- function(this) "Huh?"     # default version when nothing else applies
+
+draw(x)
+draw(y)
+draw(1)
+```
+
+The S4 system is much richer.
+
+```{r}
+setClass("Person",   # Create an new class with two slots
+      slots = list(name = "character", age = "numeric"))
+
+setClass("Employee",  # Extends the Person class with another class
+      slots = list(boss = "Person"), 
+      contains = "Person") # declare an inheritance relationship
+
+# create a few people
+alice <- new("Person", name = "Alice", age = 40)
+john <- new("Employee", name = "John", age = 20, boss = alice) # john's got a boss
+jack <- new("Person", name = "Jack", age = 42)
+
+alice@age              # ask an impolite question
+slot(john, "boss")     # same
+
+# Let's define methods
+setGeneric("hire",  function(x,y) standardGeneric("hire") )
+# The first will work only for persons hiring employees
+setMethod("hire", 
+       c(x = "Person", y = "Employee"), 
+       function(x, y) {
+         print(paste(x@name," hired ",y@name)) 
+         return(setBoss(y)<-x)  # change the boss slot
+       }
+)
+
+# another method for setting fields
+setGeneric("setBoss<-",function(object,value){standardGeneric("setBoss<-")})
+setReplaceMethod(f="setBoss",
+              signature="Employee",
+              definition=function(object,value) return(object@boss <-value)
+              )
+
+hire(alice, john)   # this should work
+
+print(hire(jack, john))  # and this too, changing the boss
+
+hire(john, john)  # this should work as an employee is person
+#hire(alice, alice) # this should fails as an employee isn't a person
+```
+
+## Build abstraction with domain specific languages
+
+R allows to leverage delayed evaluation in order to implement domain specific languages.
+
+Here is the example of timer function that repeatedly run the expression passed in as argument and reports the timing of that expression.
+
+```{r}
+tm <- function( exp ) {
+ x<- deparse(substitute( exp ))   ## decompile the expression
+ t <- 1                           ## repetion counter (we run exp 10 * t)
+ time = 0;                        ## reset timer
+ while ( time < 1 ) {             ## continue looking until the code runs long enough
+  y <- x                          ## code
+  for( i in 1:9 ) y <- paste(y,";",x)  ## duplicate the code 10 times
+  y<- paste(" system.time ( for (i in 1:",t,") {", 
+            y,                    ## wrap the code with a loop that runs t times
+            "}, gcFirst= FALSE)")
+  r <- eval(parse(text=y))        ## execute
+  time <- r[3]                    ## grab the elasped time
+  t <- t * 10                     ## try with a bigger t
+ }
+ (time / (t * 10)) * 1000         ## return time in milliseconds (default is in s)
+}
+
+tm(1 + 1)
+```
