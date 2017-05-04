@@ -4,6 +4,10 @@
 * Etherpad: https://public.etherpad-mozilla.org/p/2017MayInstRstat
 * [May Institute page](http://computationalproteomics.ccis.northeastern.edu/programs/beginners-statistics-in-r/)
 
+### Suggested reading
+
+* [[https://www.nature.com/collections/qghhqm/pointsofsignificance][Points of Significance : Statistics for Biologists]]
+
 ### Schedule and material
 
 [Material day 1](https://htmlpreview.github.io/?https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/01-rstats.html)
