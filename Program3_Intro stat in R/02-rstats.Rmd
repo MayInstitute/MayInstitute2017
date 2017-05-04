@@ -227,7 +227,11 @@ of the autocompletion feature to get the full and correct column name.
 >
 > 1. Create a `data.frame` (`iprg_200`) containing only the observations from
 >    row 200 of the `iprg` dataset.
->
+
+```{r}
+iprg_200 <- iprg[200, ]
+```
+
 > 2. Notice how `nrow()` gave you the number of rows in a `data.frame`?
 >
 >      * Use that number to pull out just that last row in the data frame.
@@ -235,13 +239,26 @@ of the autocompletion feature to get the full and correct column name.
 >        sure it's meeting expectations.
 >      * Pull out that last row using `nrow()` instead of the row number.
 >      * Create a new data frame object (`iprg_last`) from that last row.
->
+
+```{r}
+iprg_last <- iprg[nrow(iprg), ]
+```
+
 > 3. Extract the row that is in the middle of the data frame. Store
 >    the content of this row in an object named `iprg_middle`.
->
+
+```{r}
+i <- floor(nrow(iprg)/2)
+iprg_middle <- iprg[i, ]
+```
+
 > 4. Combine `nrow()` with the `-` notation above to reproduce the behavior of
 >    `head(iprg)` keeping just the first through 6th rows of the `iprg`
 >    dataset.
+
+```{r}
+iprg[-(7:nrow(iprg)), ]
+```
 
 ## Factors
 
@@ -329,7 +346,7 @@ require this data type.
 > 
 > Compare the output of `str(surveys)` when setting `stringsAsFactors = TRUE` (default) and `stringsAsFactors = FALSE`:
 
-```{r, eval=FALSE, echo=FALSE}
+```{r}
 iprg <- read.csv("data/iPRG_example_runsummary.csv", stringsAsFactors = TRUE)
 str(iprg)
 iprg <- read.csv("data/iPRG_example_runsummary.csv", stringsAsFactors = FALSE)
@@ -401,10 +418,22 @@ unique(dfr)
 > **Challenge**
 >
 > * How many conditions are there?
+
+```{r}
+unique(iprg$Condition)
+length(unique(iprg$Condition))
+```
+
 > * How many biological replicates are there?
+
+```{r}
+unique(iprg$BioReplicate)
+length(unique(iprg$BioReplicate))
+```
+
 > * How many condition/technical replicates combinations are there?
 
-```{r, echo=FALSE, eval=FALSE}
+```{r}
 unique(iprg$Condition)
 unique(iprg$BioReplicate)
 unique(iprg[, c("Condition", "TechReplicate")])
@@ -424,18 +453,22 @@ more detailed data exploration using a smalle subset of the data.
 >
 > For each of there, how many measurements are there?
 
-```{r, echo=FALSE, eval=FALSE}
-iprg[iprg$Condition == "Condition1", ]
-sum(iprg$Condition == "Condition1")
+```{r}
+iprg_c1 <- iprg[iprg$Condition == "Condition1", ]
+head(iprg_c1)
+nrow(iprg_c1)
 
-iprg[iprg$Condition == "Condition1" & iprg$TechReplicate == "A", ]
-sum(iprg$Condition == "Condition1" & iprg$TechReplicate == "A")
+iprg_cA <- iprg[iprg$Condition == "Condition1" & iprg$TechReplicate == "A", ]
+head(iprg_cA)
+nrow(iprg_c1A)
 
-iprg[iprg$Run == "JD_06232014_sample1_B.raw", ]
-sum(iprg$Run == "JD_06232014_sample1_B.raw")
+iprg_r1 <- iprg[iprg$Run == "JD_06232014_sample1_B.raw", ]
+head(iprg_r1)
+nrow(iprg_r1)
 
-iprg[iprg$Condition %in% c("Condition1", "Condition2"), ]
-sum(iprg$Condition %in% c("Condition1", "Condition2"))
+iprg_c12 <- iprg[iprg$Condition %in% c("Condition1", "Condition2"), ]
+head(iprg_c12)
+nrow(iprg_c12)
 ```
 
 # Part 2: Data visualisation
@@ -489,6 +522,10 @@ summary(iprg$Log2Intensity)
 > Reproduce the histogram above but plotting the data on the log base
 > 10 scale, using the `log10` function. See also the more general
 > `log` function.
+
+```{r}
+hist(log10(iprg$Intensity))
+```
 
 ## Boxplot or box-and-whisker plot
 
@@ -640,6 +677,10 @@ Notes:
 > * Log-10 transform the raw intensities on the flight when plotting.
 
 
+```{r}
+ggplot(data = iprg, aes(x = Run, y = Intensity)) + geom_boxplot()
+ggplot(data = iprg, aes(x = Run, y = log10(Intensity))) + geom_boxplot()
+```
 ## Customising plots 
 
 First, let's colour the boxplot based on the condition:
@@ -697,6 +738,12 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 >   log-10 transformed intensities.
 > * Customise the plot as suggested above.
 
+```{r}
+## Note how the log10 transformation is applied to both geoms
+ggplot(data = iprg, aes(x = Run, y = log10(Intensity))) +
+    geom_jitter(alpha = 0.1) +
+    geom_boxplot()
+```
 
 Finally, a very useful feature of `ggplot2` is **facetting**, that
 defines how to subset the data into different *panels* (facets).

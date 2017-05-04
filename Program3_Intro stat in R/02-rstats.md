@@ -250,7 +250,12 @@ of the autocompletion feature to get the full and correct column name.
 >
 > 1. Create a `data.frame` (`iprg_200`) containing only the observations from
 >    row 200 of the `iprg` dataset.
->
+
+
+```r
+iprg_200 <- iprg[200, ]
+```
+
 > 2. Notice how `nrow()` gave you the number of rows in a `data.frame`?
 >
 >      * Use that number to pull out just that last row in the data frame.
@@ -258,13 +263,46 @@ of the autocompletion feature to get the full and correct column name.
 >        sure it's meeting expectations.
 >      * Pull out that last row using `nrow()` instead of the row number.
 >      * Create a new data frame object (`iprg_last`) from that last row.
->
+
+
+```r
+iprg_last <- iprg[nrow(iprg), ]
+```
+
 > 3. Extract the row that is in the middle of the data frame. Store
 >    the content of this row in an object named `iprg_middle`.
->
+
+
+```r
+i <- floor(nrow(iprg)/2)
+iprg_middle <- iprg[i, ]
+```
+
 > 4. Combine `nrow()` with the `-` notation above to reproduce the behavior of
 >    `head(iprg)` keeping just the first through 6th rows of the `iprg`
 >    dataset.
+
+
+```r
+iprg[-(7:nrow(iprg)), ]
+```
+
+```
+##                Protein Log2Intensity                       Run  Condition
+## 1 sp|D6VTK4|STE2_YEAST      26.81232 JD_06232014_sample1_B.raw Condition1
+## 2 sp|D6VTK4|STE2_YEAST      26.60786 JD_06232014_sample1_C.raw Condition1
+## 3 sp|D6VTK4|STE2_YEAST      26.58301 JD_06232014_sample1-A.raw Condition1
+## 4 sp|D6VTK4|STE2_YEAST      26.83563 JD_06232014_sample2_A.raw Condition2
+## 5 sp|D6VTK4|STE2_YEAST      26.79430 JD_06232014_sample2_B.raw Condition2
+## 6 sp|D6VTK4|STE2_YEAST      26.60863 JD_06232014_sample2_C.raw Condition2
+##   BioReplicate Intensity TechReplicate
+## 1            1 117845016             B
+## 2            1 102273602             C
+## 3            1 100526837             A
+## 4            2 119765106             A
+## 5            2 116382798             B
+## 6            2 102328260             C
+```
 
 ## Factors
 
@@ -383,6 +421,37 @@ require this data type.
 > Compare the output of `str(surveys)` when setting `stringsAsFactors = TRUE` (default) and `stringsAsFactors = FALSE`:
 
 
+```r
+iprg <- read.csv("data/iPRG_example_runsummary.csv", stringsAsFactors = TRUE)
+str(iprg)
+```
+
+```
+## 'data.frame':	36321 obs. of  7 variables:
+##  $ Protein      : Factor w/ 3027 levels "sp|D6VTK4|STE2_YEAST",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ Log2Intensity: num  26.8 26.6 26.6 26.8 26.8 ...
+##  $ Run          : Factor w/ 12 levels "JD_06232014_sample1-A.raw",..: 2 3 1 4 5 6 7 8 9 11 ...
+##  $ Condition    : Factor w/ 4 levels "Condition1","Condition2",..: 1 1 1 2 2 2 3 3 3 4 ...
+##  $ BioReplicate : int  1 1 1 2 2 2 3 3 3 4 ...
+##  $ Intensity    : num  1.18e+08 1.02e+08 1.01e+08 1.20e+08 1.16e+08 ...
+##  $ TechReplicate: Factor w/ 3 levels "A","B","C": 2 3 1 1 2 3 1 2 3 2 ...
+```
+
+```r
+iprg <- read.csv("data/iPRG_example_runsummary.csv", stringsAsFactors = FALSE)
+str(iprg)
+```
+
+```
+## 'data.frame':	36321 obs. of  7 variables:
+##  $ Protein      : chr  "sp|D6VTK4|STE2_YEAST" "sp|D6VTK4|STE2_YEAST" "sp|D6VTK4|STE2_YEAST" "sp|D6VTK4|STE2_YEAST" ...
+##  $ Log2Intensity: num  26.8 26.6 26.6 26.8 26.8 ...
+##  $ Run          : chr  "JD_06232014_sample1_B.raw" "JD_06232014_sample1_C.raw" "JD_06232014_sample1-A.raw" "JD_06232014_sample2_A.raw" ...
+##  $ Condition    : chr  "Condition1" "Condition1" "Condition1" "Condition2" ...
+##  $ BioReplicate : int  1 1 1 2 2 2 3 3 3 4 ...
+##  $ Intensity    : num  1.18e+08 1.02e+08 1.01e+08 1.20e+08 1.16e+08 ...
+##  $ TechReplicate: chr  "B" "C" "A" "A" ...
+```
 
 ## Other data structures
 
@@ -478,10 +547,81 @@ unique(dfr)
 > **Challenge**
 >
 > * How many conditions are there?
+
+
+```r
+unique(iprg$Condition)
+```
+
+```
+## [1] "Condition1" "Condition2" "Condition3" "Condition4"
+```
+
+```r
+length(unique(iprg$Condition))
+```
+
+```
+## [1] 4
+```
+
 > * How many biological replicates are there?
+
+
+```r
+unique(iprg$BioReplicate)
+```
+
+```
+## [1] 1 2 3 4
+```
+
+```r
+length(unique(iprg$BioReplicate))
+```
+
+```
+## [1] 4
+```
+
 > * How many condition/technical replicates combinations are there?
 
 
+```r
+unique(iprg$Condition)
+```
+
+```
+## [1] "Condition1" "Condition2" "Condition3" "Condition4"
+```
+
+```r
+unique(iprg$BioReplicate)
+```
+
+```
+## [1] 1 2 3 4
+```
+
+```r
+unique(iprg[, c("Condition", "TechReplicate")])
+```
+
+```
+##     Condition TechReplicate
+## 1  Condition1             B
+## 2  Condition1             C
+## 3  Condition1             A
+## 4  Condition2             A
+## 5  Condition2             B
+## 6  Condition2             C
+## 7  Condition3             A
+## 8  Condition3             B
+## 9  Condition3             C
+## 10 Condition4             B
+## 11 Condition4             C
+## 12 Condition4             A
+```
 
 It is often useful to start a preliminary analysis, or proceed with a
 more detailed data exploration using a smalle subset of the data.
@@ -498,6 +638,125 @@ more detailed data exploration using a smalle subset of the data.
 > For each of there, how many measurements are there?
 
 
+```r
+iprg_c1 <- iprg[iprg$Condition == "Condition1", ]
+head(iprg_c1)
+```
+
+```
+##                 Protein Log2Intensity                       Run  Condition
+## 1  sp|D6VTK4|STE2_YEAST      26.81232 JD_06232014_sample1_B.raw Condition1
+## 2  sp|D6VTK4|STE2_YEAST      26.60786 JD_06232014_sample1_C.raw Condition1
+## 3  sp|D6VTK4|STE2_YEAST      26.58301 JD_06232014_sample1-A.raw Condition1
+## 13 sp|O13297|CET1_YEAST      24.71912 JD_06232014_sample1_B.raw Condition1
+## 14 sp|O13297|CET1_YEAST      24.67437 JD_06232014_sample1_C.raw Condition1
+## 15 sp|O13297|CET1_YEAST      24.71809 JD_06232014_sample1-A.raw Condition1
+##    BioReplicate Intensity TechReplicate
+## 1             1 117845016             B
+## 2             1 102273602             C
+## 3             1 100526837             A
+## 13            1  27618234             B
+## 14            1  26774670             C
+## 15            1  27598550             A
+```
+
+```r
+nrow(iprg_c1)
+```
+
+```
+## [1] 9079
+```
+
+```r
+iprg_cA <- iprg[iprg$Condition == "Condition1" & iprg$TechReplicate == "A", ]
+head(iprg_cA)
+```
+
+```
+##                  Protein Log2Intensity                       Run
+## 3   sp|D6VTK4|STE2_YEAST      26.58301 JD_06232014_sample1-A.raw
+## 15  sp|O13297|CET1_YEAST      24.71809 JD_06232014_sample1-A.raw
+## 27  sp|O13329|FOB1_YEAST      23.47075 JD_06232014_sample1-A.raw
+## 39  sp|O13539|THP2_YEAST      24.29661 JD_06232014_sample1-A.raw
+## 51 sp|O13547|CCW14_YEAST      27.11638 JD_06232014_sample1-A.raw
+## 63 sp|O13563|RPN13_YEAST      26.17056 JD_06232014_sample1-A.raw
+##     Condition BioReplicate Intensity TechReplicate
+## 3  Condition1            1 100526837             A
+## 15 Condition1            1  27598550             A
+## 27 Condition1            1  11625198             A
+## 39 Condition1            1  20606703             A
+## 51 Condition1            1 145493943             A
+## 63 Condition1            1  75530595             A
+```
+
+```r
+nrow(iprg_c1A)
+```
+
+```
+## Error in nrow(iprg_c1A): object 'iprg_c1A' not found
+```
+
+```r
+iprg_r1 <- iprg[iprg$Run == "JD_06232014_sample1_B.raw", ]
+head(iprg_r1)
+```
+
+```
+##                  Protein Log2Intensity                       Run
+## 1   sp|D6VTK4|STE2_YEAST      26.81232 JD_06232014_sample1_B.raw
+## 13  sp|O13297|CET1_YEAST      24.71912 JD_06232014_sample1_B.raw
+## 25  sp|O13329|FOB1_YEAST      23.37678 JD_06232014_sample1_B.raw
+## 37  sp|O13539|THP2_YEAST      27.52021 JD_06232014_sample1_B.raw
+## 49 sp|O13547|CCW14_YEAST      27.22234 JD_06232014_sample1_B.raw
+## 61 sp|O13563|RPN13_YEAST      26.09476 JD_06232014_sample1_B.raw
+##     Condition BioReplicate Intensity TechReplicate
+## 1  Condition1            1 117845016             B
+## 13 Condition1            1  27618234             B
+## 25 Condition1            1  10892143             B
+## 37 Condition1            1 192490784             B
+## 49 Condition1            1 156581624             B
+## 61 Condition1            1  71664672             B
+```
+
+```r
+nrow(iprg_r1)
+```
+
+```
+## [1] 3026
+```
+
+```r
+iprg_c12 <- iprg[iprg$Condition %in% c("Condition1", "Condition2"), ]
+head(iprg_c12)
+```
+
+```
+##                Protein Log2Intensity                       Run  Condition
+## 1 sp|D6VTK4|STE2_YEAST      26.81232 JD_06232014_sample1_B.raw Condition1
+## 2 sp|D6VTK4|STE2_YEAST      26.60786 JD_06232014_sample1_C.raw Condition1
+## 3 sp|D6VTK4|STE2_YEAST      26.58301 JD_06232014_sample1-A.raw Condition1
+## 4 sp|D6VTK4|STE2_YEAST      26.83563 JD_06232014_sample2_A.raw Condition2
+## 5 sp|D6VTK4|STE2_YEAST      26.79430 JD_06232014_sample2_B.raw Condition2
+## 6 sp|D6VTK4|STE2_YEAST      26.60863 JD_06232014_sample2_C.raw Condition2
+##   BioReplicate Intensity TechReplicate
+## 1            1 117845016             B
+## 2            1 102273602             C
+## 3            1 100526837             A
+## 4            2 119765106             A
+## 5            2 116382798             B
+## 6            2 102328260             C
+```
+
+```r
+nrow(iprg_c12)
+```
+
+```
+## [1] 18160
+```
 
 # Part 2: Data visualisation
 
@@ -511,7 +770,7 @@ for `iPRG_example`.
 hist(iprg$Intensity)
 ```
 
-![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
+![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
 
 Our histogram looks quite skewed. How does this look on log-scale? 
 
@@ -530,7 +789,7 @@ hist(iprg$Log2Intensity,
      main = "Histogram of iPRG data")
 ```
 
-![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
+![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
 
 In this case, we have duplicated information in our data, we have the
 raw and log-transformed data. This is not necessary (and not advised),
@@ -544,7 +803,7 @@ hist(log2(iprg$Intensity),
      main = "Histogram of iPRG data")
 ```
 
-![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
+![plot of chunk unnamed-chunk-26](figure/unnamed-chunk-26-1.png)
 
 We look at the summary for the log2-transformed values including the
 value for the mean. Let's fix that first.
@@ -566,6 +825,13 @@ summary(iprg$Log2Intensity)
 > 10 scale, using the `log10` function. See also the more general
 > `log` function.
 
+
+```r
+hist(log10(iprg$Intensity))
+```
+
+![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+
 ## Boxplot or box-and-whisker plot
 
 Boxplots are extremely useful because they allow us to quickly
@@ -579,7 +845,7 @@ files.
 boxplot(iprg$Log2Intensity)
 ```
 
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
+![plot of chunk unnamed-chunk-29](figure/unnamed-chunk-29-1.png)
 
 The boxplot, however, shows us the intensities for all conditions and
 replicates. If we want to display the data for, we have multile
@@ -593,7 +859,7 @@ int_by_run <- by(iprg$Log2Intensity, iprg$Run, c)
 boxplot(int_by_run)
 ```
 
-![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23-1.png)
+![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
 
 * We can use the formula syntax
 
@@ -602,7 +868,7 @@ boxplot(int_by_run)
 boxplot(Log2Intensity ~ Run, data = iprg)
 ```
 
-![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
+![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
 
 * We can use the `ggplot2` package that is very flexible to visualise
   data under different angles.
@@ -690,7 +956,7 @@ ggplot(data = iprg, aes(x = Run, y = Log2Intensity)) +
   geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+![plot of chunk unnamed-chunk-35](figure/unnamed-chunk-35-1.png)
 
 See the [documentation page](http://ggplot2.tidyverse.org/reference/)
 to explore the many available `geoms`.
@@ -732,6 +998,18 @@ Notes:
 > * Log-10 transform the raw intensities on the flight when plotting.
 
 
+
+```r
+ggplot(data = iprg, aes(x = Run, y = Intensity)) + geom_boxplot()
+```
+
+![plot of chunk unnamed-chunk-37](figure/unnamed-chunk-37-1.png)
+
+```r
+ggplot(data = iprg, aes(x = Run, y = log10(Intensity))) + geom_boxplot()
+```
+
+![plot of chunk unnamed-chunk-37](figure/unnamed-chunk-37-2.png)
 ## Customising plots 
 
 First, let's colour the boxplot based on the condition:
@@ -744,7 +1022,7 @@ ggplot(data = iprg,
   geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
+![plot of chunk unnamed-chunk-38](figure/unnamed-chunk-38-1.png)
 
 Now let's rename all axis labels and title, and rotate the x-axis
 labels 90 degrees. We can add those specifications using the `labs`
@@ -761,7 +1039,7 @@ ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
     theme(axis.text.x = element_text(angle = 90))    
 ```
 
-![plot of chunk unnamed-chunk-31](figure/unnamed-chunk-31-1.png)
+![plot of chunk unnamed-chunk-39](figure/unnamed-chunk-39-1.png)
 
 
 And easily switch from a boxplot to a violin plot representation by
@@ -778,7 +1056,7 @@ ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
     theme(axis.text.x = element_text(angle = 90))
 ```
 
-![plot of chunk unnamed-chunk-32](figure/unnamed-chunk-32-1.png)
+![plot of chunk unnamed-chunk-40](figure/unnamed-chunk-40-1.png)
 
 Finally, we can also overlay multiple geoms by simply *adding* them
 one after the other.
@@ -790,25 +1068,25 @@ p <- ggplot(aes(x = Run, y = Log2Intensity, fill = Condition),
 p + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-1.png)
+![plot of chunk unnamed-chunk-41](figure/unnamed-chunk-41-1.png)
 
 ```r
 p + geom_boxplot() + geom_jitter() ## not very usefull
 ```
 
-![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-2.png)
+![plot of chunk unnamed-chunk-41](figure/unnamed-chunk-41-2.png)
 
 ```r
 p + geom_jitter() + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-3.png)
+![plot of chunk unnamed-chunk-41](figure/unnamed-chunk-41-3.png)
 
 ```r
 p + geom_jitter(alpha = 0.1) + geom_boxplot()
 ```
 
-![plot of chunk unnamed-chunk-33](figure/unnamed-chunk-33-4.png)
+![plot of chunk unnamed-chunk-41](figure/unnamed-chunk-41-4.png)
 
 > **Challenge**
 > 
@@ -816,6 +1094,15 @@ p + geom_jitter(alpha = 0.1) + geom_boxplot()
 >   log-10 transformed intensities.
 > * Customise the plot as suggested above.
 
+
+```r
+## Note how the log10 transformation is applied to both geoms
+ggplot(data = iprg, aes(x = Run, y = log10(Intensity))) +
+    geom_jitter(alpha = 0.1) +
+    geom_boxplot()
+```
+
+![plot of chunk unnamed-chunk-42](figure/unnamed-chunk-42-1.png)
 
 Finally, a very useful feature of `ggplot2` is **facetting**, that
 defines how to subset the data into different *panels* (facets).
@@ -838,7 +1125,7 @@ ggplot(data = iprg,
     facet_grid(~ Condition)
 ```
 
-![plot of chunk unnamed-chunk-34](figure/unnamed-chunk-34-1.png)
+![plot of chunk unnamed-chunk-43](figure/unnamed-chunk-43-1.png)
 
 ## Saving your work
 
@@ -899,7 +1186,7 @@ sample(10, 3)
 ```
 
 ```
-## [1]  1 10  7
+## [1] 3 4 7
 ```
 
 ```r
@@ -907,7 +1194,7 @@ sample(10, 3)
 ```
 
 ```
-## [1] 7 9 3
+## [1] 10  7  3
 ```
 
 Now suppose we would like to select the same randomly selected samples
@@ -958,13 +1245,12 @@ msrun
 ```
 
 ```
-##  [1] JD_06232014_sample1_B.raw JD_06232014_sample1_C.raw
-##  [3] JD_06232014_sample1-A.raw JD_06232014_sample2_A.raw
-##  [5] JD_06232014_sample2_B.raw JD_06232014_sample2_C.raw
-##  [7] JD_06232014_sample3_A.raw JD_06232014_sample3_B.raw
-##  [9] JD_06232014_sample3_C.raw JD_06232014_sample4_B.raw
-## [11] JD_06232014_sample4_C.raw JD_06232014_sample4-A.raw
-## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
+##  [1] "JD_06232014_sample1_B.raw" "JD_06232014_sample1_C.raw"
+##  [3] "JD_06232014_sample1-A.raw" "JD_06232014_sample2_A.raw"
+##  [5] "JD_06232014_sample2_B.raw" "JD_06232014_sample2_C.raw"
+##  [7] "JD_06232014_sample3_A.raw" "JD_06232014_sample3_B.raw"
+##  [9] "JD_06232014_sample3_C.raw" "JD_06232014_sample4_B.raw"
+## [11] "JD_06232014_sample4_C.raw" "JD_06232014_sample4-A.raw"
 ```
 
 ```r
@@ -973,13 +1259,12 @@ sample(msrun, length(msrun))
 ```
 
 ```
-##  [1] JD_06232014_sample1_B.raw JD_06232014_sample3_C.raw
-##  [3] JD_06232014_sample4_B.raw JD_06232014_sample1_C.raw
-##  [5] JD_06232014_sample3_B.raw JD_06232014_sample4_C.raw
-##  [7] JD_06232014_sample3_A.raw JD_06232014_sample2_B.raw
-##  [9] JD_06232014_sample1-A.raw JD_06232014_sample2_C.raw
-## [11] JD_06232014_sample4-A.raw JD_06232014_sample2_A.raw
-## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
+##  [1] "JD_06232014_sample1_B.raw" "JD_06232014_sample3_C.raw"
+##  [3] "JD_06232014_sample4_B.raw" "JD_06232014_sample1_C.raw"
+##  [5] "JD_06232014_sample3_B.raw" "JD_06232014_sample4_C.raw"
+##  [7] "JD_06232014_sample3_A.raw" "JD_06232014_sample2_B.raw"
+##  [9] "JD_06232014_sample1-A.raw" "JD_06232014_sample2_C.raw"
+## [11] "JD_06232014_sample4-A.raw" "JD_06232014_sample2_A.raw"
 ```
 
 ```r
@@ -988,13 +1273,12 @@ sample(msrun, length(msrun))
 ```
 
 ```
-##  [1] JD_06232014_sample3_B.raw JD_06232014_sample2_A.raw
-##  [3] JD_06232014_sample3_A.raw JD_06232014_sample2_B.raw
-##  [5] JD_06232014_sample2_C.raw JD_06232014_sample3_C.raw
-##  [7] JD_06232014_sample4-A.raw JD_06232014_sample1-A.raw
-##  [9] JD_06232014_sample4_B.raw JD_06232014_sample1_C.raw
-## [11] JD_06232014_sample1_B.raw JD_06232014_sample4_C.raw
-## 12 Levels: JD_06232014_sample1-A.raw ... JD_06232014_sample4_C.raw
+##  [1] "JD_06232014_sample3_B.raw" "JD_06232014_sample2_A.raw"
+##  [3] "JD_06232014_sample3_A.raw" "JD_06232014_sample2_B.raw"
+##  [5] "JD_06232014_sample2_C.raw" "JD_06232014_sample3_C.raw"
+##  [7] "JD_06232014_sample4-A.raw" "JD_06232014_sample1-A.raw"
+##  [9] "JD_06232014_sample4_B.raw" "JD_06232014_sample1_C.raw"
+## [11] "JD_06232014_sample1_B.raw" "JD_06232014_sample4_C.raw"
 ```
 
 ### Randomized block design
@@ -1096,9 +1380,8 @@ head(unique(iprg$Protein))
 ```
 
 ```
-## [1] sp|D6VTK4|STE2_YEAST  sp|O13297|CET1_YEAST  sp|O13329|FOB1_YEAST 
-## [4] sp|O13539|THP2_YEAST  sp|O13547|CCW14_YEAST sp|O13563|RPN13_YEAST
-## 3027 Levels: sp|D6VTK4|STE2_YEAST ... sp|Q9URQ5|HTL1_YEAST
+## [1] "sp|D6VTK4|STE2_YEAST"  "sp|O13297|CET1_YEAST"  "sp|O13329|FOB1_YEAST" 
+## [4] "sp|O13539|THP2_YEAST"  "sp|O13547|CCW14_YEAST" "sp|O13563|RPN13_YEAST"
 ```
 
 
@@ -1277,7 +1560,7 @@ p <- ggplot(aes(x = Group, y = mean, colour = Group),
 p
 ```
 
-![plot of chunk unnamed-chunk-51](figure/unnamed-chunk-51-1.png)
+![plot of chunk unnamed-chunk-60](figure/unnamed-chunk-60-1.png)
 
 Let's change a number of visual properties to make the plot more attractive.
  
@@ -1304,7 +1587,7 @@ p2 <- p + labs(title = "Mean", x = "Group", y = 'Log2(Intensity)') +
 p2
 ```
 
-![plot of chunk unnamed-chunk-52](figure/unnamed-chunk-52-1.png)
+![plot of chunk unnamed-chunk-61](figure/unnamed-chunk-61-1.png)
 
 Let's now add the **standard deviation**:
 
@@ -1315,7 +1598,7 @@ p2 + geom_errorbar(aes(ymax = mean + sd, ymin = mean - sd), width = 0.1) +
       labs(title="Mean with SD")
 ```
 
-![plot of chunk unnamed-chunk-53](figure/unnamed-chunk-53-1.png)
+![plot of chunk unnamed-chunk-62](figure/unnamed-chunk-62-1.png)
 
 > **Challenge**
 > 
@@ -1356,7 +1639,7 @@ rug(xn)
 lines(density(xn), lwd = 2)
 ```
 
-![plot of chunk unnamed-chunk-56](figure/unnamed-chunk-56-1.png)
+![plot of chunk unnamed-chunk-65](figure/unnamed-chunk-65-1.png)
 
 By definition, the area under the density curve is 1. The area at the
 left of 0, 1, and 2 are respectively:
@@ -1427,7 +1710,7 @@ points(1, dnorm(1), pch = 1, col = "blue")
 points(2, dnorm(2), pch = 4, col = "orange")
 ```
 
-![plot of chunk unnamed-chunk-59](figure/unnamed-chunk-59-1.png)
+![plot of chunk unnamed-chunk-68](figure/unnamed-chunk-68-1.png)
 
 ## Calculate the confidence interval
 
@@ -1488,7 +1771,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
           legend.key = element_rect(colour='white'))
 ```
 
-![plot of chunk unnamed-chunk-61](figure/unnamed-chunk-61-1.png)
+![plot of chunk unnamed-chunk-70](figure/unnamed-chunk-70-1.png)
 
 > **Challenges**
 > 
