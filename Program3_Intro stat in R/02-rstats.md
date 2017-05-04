@@ -1460,6 +1460,13 @@ $$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
 
 
 
+```r
+## The same as mean calculation above. 'FUN' is changed to 'sd'.
+sub.median <- aggregate(Log2Intensity ~ Condition,
+                    data = oneproteindata, FUN = median)
+sub.median
+```
+
 ```
 ##    Condition Log2Intensity
 ## 1 Condition1      26.29089
@@ -1471,6 +1478,13 @@ $$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
 > Using the `aggregate` function above, calculate the standard
 > deviation, by applying the `sd` function.
 
+
+```r
+## The same as mean calculation above. 'FUN' is changed to 'sd'.
+sub.sd <- aggregate(Log2Intensity ~ Condition,
+                    data = oneproteindata, FUN = sd)
+sub.sd
+```
 
 ```
 ##    Condition Log2Intensity
@@ -1488,6 +1502,14 @@ $$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
 > Using the `aggregate` function above, count the number of
 > observations per group with the `length` function.
 
+
+```r
+## The same as mean calculation. 'FUN' is changed 'length'.
+sub.len <- aggregate(Log2Intensity ~ Condition,
+                     data = oneproteindata,
+                     FUN = length)
+sub.len
+```
 
 ```
 ##    Condition Log2Intensity
@@ -1606,12 +1628,30 @@ p2 + geom_errorbar(aes(ymax = mean + sd, ymin = mean - sd), width = 0.1) +
 
 
 
+```r
+# mean with SE
+p2 + geom_errorbar(aes(ymax = mean + se, ymin=mean - se), width = 0.1) +
+    labs(title="Mean with SE")
+```
+
+![plot of chunk unnamed-chunk-63](figure/unnamed-chunk-63-1.png)
+
+```r
+## The SE is narrow than the SD!
+```
 
 > **Challenge**
 > 
 > Add the **standard error of the mean** with black color. 
 
 
+```r
+# mean with SE
+p2 + geom_errorbar(aes(ymax = mean + se, ymin=mean - se), width = 0.1, color='black') +
+    labs(title="Mean with SE")
+```
+
+![plot of chunk unnamed-chunk-64](figure/unnamed-chunk-64-1.png)
 
 ## Working with statistical distributions
 
@@ -1778,6 +1818,43 @@ ggplot(aes(x = Group, y = mean, colour = Group),
 > Replicate the above for the 99% two-sided confidence interval. 
 
 
+```r
+# mean with 99% two-sided confidence interval
+summaryresult$ciw.lower.99 <- summaryresult$mean - qt(0.995,summaryresult$len-1) * summaryresult$se
+summaryresult$ciw.upper.99 <- summaryresult$mean + qt(0.995,summaryresult$len-1) * summaryresult$se
+summaryresult
+```
+
+```
+##        Group     mean         sd         se length ciw.lower.95
+## 1 Condition1 26.23632 0.10396539 0.06002444      3     25.97805
+## 2 Condition2 26.00661 0.16268179 0.09392438      3     25.60248
+## 3 Condition3 23.25609 0.09467798 0.05466236      3     23.02090
+## 4 Condition4 20.97056 0.73140174 0.42227499      3     19.15366
+##   ciw.upper.95 ciw.lower.99 ciw.upper.99
+## 1     26.49458     25.64058     26.83205
+## 2     26.41073     25.07442     26.93879
+## 3     23.49128     22.71357     23.79860
+## 4     22.78746     16.77955     25.16157
+```
+
+```r
+ggplot(aes(x = Group, y = mean, colour = Group),
+       data = summaryresult) +
+    geom_point() +
+    geom_errorbar(aes(ymax = ciw.upper.99, ymin=ciw.lower.99), width=0.1) +
+    labs(title="Mean with 99% confidence interval", x="Condition", y='Log2(Intensity)') +
+    theme_bw()+
+    theme(plot.title = element_text(size=25, colour="darkblue"),
+          axis.title.x = element_text(size=15),
+          axis.title.y = element_text(size=15),
+          axis.text.x = element_text(size=13),
+          legend.position = 'bottom',
+          legend.background = element_rect(colour='black'),
+          legend.key = element_rect(colour='white'))
+```
+
+![plot of chunk unnamed-chunk-71](figure/unnamed-chunk-71-1.png)
 
 ### Some comments
 

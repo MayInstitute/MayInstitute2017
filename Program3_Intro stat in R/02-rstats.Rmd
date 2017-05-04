@@ -928,7 +928,7 @@ $$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^n (x_i - \bar x)^2} $$
 > deviation, by applying the `median` function.
 
 
-```{r, echo=FALSE}
+```{r}
 ## The same as mean calculation above. 'FUN' is changed to 'sd'.
 sub.median <- aggregate(Log2Intensity ~ Condition,
                     data = oneproteindata, FUN = median)
@@ -938,7 +938,7 @@ sub.median
 > Using the `aggregate` function above, calculate the standard
 > deviation, by applying the `sd` function.
 
-```{r, echo=FALSE}
+```{r}
 ## The same as mean calculation above. 'FUN' is changed to 'sd'.
 sub.sd <- aggregate(Log2Intensity ~ Condition,
                     data = oneproteindata, FUN = sd)
@@ -953,7 +953,7 @@ sub.sd
 > Using the `aggregate` function above, count the number of
 > observations per group with the `length` function.
 
-```{r, echo=FALSE}
+```{r}
 ## The same as mean calculation. 'FUN' is changed 'length'.
 sub.len <- aggregate(Log2Intensity ~ Condition,
                      data = oneproteindata,
@@ -1039,7 +1039,7 @@ p2 + geom_errorbar(aes(ymax = mean + sd, ymin = mean - sd), width = 0.1) +
 > Add the **standard error of the mean**. Which one is smaller?
 
 
-```{r, eval=FALSE, echo=FALSE}
+```{r}
 # mean with SE
 p2 + geom_errorbar(aes(ymax = mean + se, ymin=mean - se), width = 0.1) +
     labs(title="Mean with SE")
@@ -1050,7 +1050,7 @@ p2 + geom_errorbar(aes(ymax = mean + se, ymin=mean - se), width = 0.1) +
 > 
 > Add the **standard error of the mean** with black color. 
 
-```{r, eval=FALSE, echo=FALSE}
+```{r}
 # mean with SE
 p2 + geom_errorbar(aes(ymax = mean + se, ymin=mean - se), width = 0.1, color='black') +
     labs(title="Mean with SE")
@@ -1159,7 +1159,7 @@ ggplot(aes(x = Group, y = mean, colour = Group),
 > 
 > Replicate the above for the 99% two-sided confidence interval. 
 
-```{r, eval=FALSE, echo=FALSE}
+```{r}
 # mean with 99% two-sided confidence interval
 summaryresult$ciw.lower.99 <- summaryresult$mean - qt(0.995,summaryresult$len-1) * summaryresult$se
 summaryresult$ciw.upper.99 <- summaryresult$mean + qt(0.995,summaryresult$len-1) * summaryresult$se
