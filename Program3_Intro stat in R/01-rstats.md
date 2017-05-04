@@ -907,7 +907,8 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 > * We’ve seen that atomic vectors can be of type character,
 >   numeric, integer, and logical. But what happens if we try to mix these types in
 >   a single vector?
-> <!-- * _Answer_: R implicitly converts them to all be the same type -->
+
+Answer: R implicitly converts them to all be the same type
 >
 > * What will happen in each of these examples? (hint: use `class()`
 >   to check the data type of your objects):
@@ -920,9 +921,10 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 >     ```
 >
 > * Why do you think it happens?
-> <!-- * _Answer_: Vectors can be of only one data type. R tries to convert (coerce)
->   the content of this vector to find a "common denominator". -->
->
+
+Answer: Vectors can be of only one data type. R tries to convert
+(coerce) the content of this vector to find a "common denominator".
+
 > * You've probably noticed that objects of different types get
 >   converted into a single, shared type within a vector. In R, we
 >   call converting objects from one class into another class
@@ -930,9 +932,63 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 >   whereby some types get preferentially coerced into other
 >   types. Can you draw a diagram that represents the hierarchy of how
 >   these data types are coerced?
-> <!-- * _Answer_: `logical -> numeric -> character <-- logical` -->
+
+Answer: `logical -> numeric -> character <-- logical`
 
 
+```r
+## We’ve seen that atomic vectors can be of type character, numeric, integer, and
+## logical. But what happens if we try to mix these types in a single
+## vector?
+
+## What will happen in each of these examples? (hint: use `class()` to
+## check the data type of your object)
+num_char <- c(1, 2, 3, "a")
+class(num_char)
+```
+
+```
+## [1] "character"
+```
+
+```r
+num_logical <- c(1, 2, 3, TRUE)
+class(num_logical)
+```
+
+```
+## [1] "numeric"
+```
+
+```r
+char_logical <- c("a", "b", "c", TRUE)
+class(char_logical)
+```
+
+```
+## [1] "character"
+```
+
+```r
+tricky <- c(1, 2, 3, "4")
+class(tricky)
+```
+
+```
+## [1] "character"
+```
+
+```r
+## Why do you think it happens?
+
+## You've probably noticed that objects of different types get
+## converted into a single, shared type within a vector. In R, we call
+## converting objects from one class into another class
+## _coercion_. These conversions happen according to a hierarchy,
+## whereby some types get preferentially coerced into other types. Can
+## you draw a diagram that represents the hierarchy of how these data
+## types are coerced?
+```
 
 
 ## Subsetting vectors
@@ -1166,6 +1222,31 @@ heights[complete.cases(heights)]
 > 2. Use the function `median()` to calculate the median of the `lengths` vector.
 
 
+```r
+lengths <- c(10, 24, NA, 18, NA, 20)
+median(lenghts) ## NA
+```
+
+```
+## Error in median(lenghts): object 'lenghts' not found
+```
+
+```r
+lengths2 <- na.omit(lengths)
+median(lengths2)
+```
+
+```
+## [1] 19
+```
+
+```r
+median(lenghts, na.rm = TRUE)
+```
+
+```
+## Error in median(lenghts, na.rm = TRUE): object 'lenghts' not found
+```
 
 Now that we have learned how to write scripts, and the basics of R's
 data structures, we are ready to start working with the Portal dataset
@@ -1196,6 +1277,13 @@ whole process is made relatively easy with RStudio and available
 
 We are going to walk through the creation of such a document.
 
+> **Challenge**
+> 
+> * Create a new R markdown document in RStudio, and compile it to
+>   html or pdf.
+> * An important aspect of reproducible research is the record the
+>   version of software used. Add a code chunk at the end of the R
+>   markdown document and call `sessionInfo`.
 
 --- 
 

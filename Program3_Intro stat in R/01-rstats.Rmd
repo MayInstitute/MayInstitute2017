@@ -751,7 +751,8 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 > * We’ve seen that atomic vectors can be of type character,
 >   numeric, integer, and logical. But what happens if we try to mix these types in
 >   a single vector?
-> <!-- * _Answer_: R implicitly converts them to all be the same type -->
+
+Answer: R implicitly converts them to all be the same type
 >
 > * What will happen in each of these examples? (hint: use `class()`
 >   to check the data type of your objects):
@@ -764,9 +765,10 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 >     ```
 >
 > * Why do you think it happens?
-> <!-- * _Answer_: Vectors can be of only one data type. R tries to convert (coerce)
->   the content of this vector to find a "common denominator". -->
->
+
+Answer: Vectors can be of only one data type. R tries to convert
+(coerce) the content of this vector to find a "common denominator".
+
 > * You've probably noticed that objects of different types get
 >   converted into a single, shared type within a vector. In R, we
 >   call converting objects from one class into another class
@@ -774,9 +776,10 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 >   whereby some types get preferentially coerced into other
 >   types. Can you draw a diagram that represents the hierarchy of how
 >   these data types are coerced?
-> <!-- * _Answer_: `logical -> numeric -> character <-- logical` -->
 
-```{r, echo=FALSE, eval=FALSE, purl=TRUE}
+Answer: `logical -> numeric -> character <-- logical`
+
+```{r}
 ## We’ve seen that atomic vectors can be of type character, numeric, integer, and
 ## logical. But what happens if we try to mix these types in a single
 ## vector?
@@ -784,12 +787,16 @@ important ones are lists (`list`), matrices (`matrix`), data frames
 ## What will happen in each of these examples? (hint: use `class()` to
 ## check the data type of your object)
 num_char <- c(1, 2, 3, "a")
+class(num_char)
 
 num_logical <- c(1, 2, 3, TRUE)
+class(num_logical)
 
 char_logical <- c("a", "b", "c", TRUE)
+class(char_logical)
 
 tricky <- c(1, 2, 3, "4")
+class(tricky)
 
 ## Why do you think it happens?
 
@@ -808,7 +815,7 @@ tricky <- c(1, 2, 3, "4")
 If we want to extract one or several values from a vector, we must
 provide one or several indices in square brackets. For instance:
 
-```{r, results='show', purl=FALSE}
+```{r}
 peps <- c("VESITARHGEVLQLRPK", "IDGQWVTHQWLK", "LVILLFR", "ARHGILPK")
 peps[2]
 peps[c(3, 2)]
@@ -817,7 +824,7 @@ peps[c(3, 2)]
 We can also repeat the indices to create an object with more elements than the
 original one:
 
-```{r, results='show', purl=FALSE}
+```{r}
 more_peps <- peps[c(1, 2, 3, 2, 1, 4)]
 more_peps
 ```
@@ -832,7 +839,7 @@ count from 0 because that's simpler for computers to do.
 Another common way of subsetting is by using a logical vector. `TRUE` will
 select the element with the same index, while `FALSE` will not:
 
-```{r, results='show', purl=FALSE}
+```{r}
 pep_lens <- c(17, 12, 7, 8)
 pep_lens[c(TRUE, FALSE, TRUE, FALSE)]
 ```
@@ -841,7 +848,7 @@ Typically, these logical vectors are not typed by hand, but are the
 output of other functions or logical tests. For instance, if you
 wanted to select only the values above 50:
 
-```{r, results='show', purl=FALSE}
+```{r}
 pep_lens > 10   # will return logicals with TRUE for the indices that meet the condition
 ## so we can use this to select only the values above 10
 pep_lens[pep_lens > 10]
@@ -850,7 +857,7 @@ pep_lens[pep_lens > 10]
 You can combine multiple tests using `&` (both conditions are true,
 AND) or `|` (at least one of the conditions is true, OR):
 
-```{r, results='show', purl=FALSE}
+```{r}
 pep_lens[pep_lens < 8 | pep_lens > 15]
 pep_lens[pep_lens <= 12 & pep_lens == 10]
 ```
@@ -866,8 +873,7 @@ A common task is to search for certain strings in a vector.  One could use the
 become tedious. The function `%in%` allows you to test if any of the elements of
 a search vector are found:
 
-```{r, results='show', purl=FALSE}
-
+```{r}
 peps <- c("VESITARHGEVLQLRPK", "IDGQWVTHQWLK", "LVILLFR", "ARHGILPK")
 peps[peps == "IDGQWVTHQWLK" | peps == "LVILLFR"] # returns both peptides
 peps %in% c("IDGQWVTHQWLK", "LVILLFR", "SITARH", "VESITA", "ARHGILGHIIHKKP")
@@ -886,7 +892,7 @@ makes it harder to overlook the cases where you are dealing with missing data.
 You can add the argument `na.rm=TRUE` to calculate the result while ignoring
 the missing values.
 
-```{r, purl=FALSE}
+```{r}
 heights <- c(2, 4, 4, NA, 6)
 mean(heights)
 max(heights)
@@ -899,7 +905,7 @@ functions `is.na()`, `na.omit()`, and `complete.cases()`. See below for
 examples.
 
 
-```{r, purl=FALSE}
+```{r}
 ## Extract those elements which are not missing values.
 heights[!is.na(heights)]
 
@@ -921,13 +927,14 @@ heights[complete.cases(heights)]
 >
 > 2. Use the function `median()` to calculate the median of the `lengths` vector.
 
-```{r,echo=FALSE, purl=TRUE}
-## 1. Using this vector of length measurements, create a new vector with the NAs
-## removed.
-##
-##    lengths <- c(10,24,NA,18,NA,20)
-##
-## 2. Use the function `median()` to calculate the median of the `lengths` vector.
+```{r}
+lengths <- c(10, 24, NA, 18, NA, 20)
+median(lenghts) ## NA
+
+lengths2 <- na.omit(lengths)
+median(lengths2)
+
+median(lenghts, na.rm = TRUE)
 ```
 
 Now that we have learned how to write scripts, and the basics of R's
@@ -959,6 +966,13 @@ whole process is made relatively easy with RStudio and available
 
 We are going to walk through the creation of such a document.
 
+> **Challenge**
+> 
+> * Create a new R markdown document in RStudio, and compile it to
+>   html or pdf.
+> * An important aspect of reproducible research is the record the
+>   version of software used. Add a code chunk at the end of the R
+>   markdown document and call `sessionInfo`.
 
 --- 
 

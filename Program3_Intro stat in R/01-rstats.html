@@ -554,17 +554,44 @@ pep_lens</code></pre>
 <blockquote>
 <p><strong>Challenge</strong></p>
 <ul>
-<li><p>We’ve seen that atomic vectors can be of type character, numeric, integer, and logical. But what happens if we try to mix these types in a single vector? <!-- * _Answer_: R implicitly converts them to all be the same type --></p></li>
-<li><p>What will happen in each of these examples? (hint: use <code>class()</code> to check the data type of your objects):</p>
-<pre class="r"><code>num_char &lt;- c(1, 2, 3, 'a')
-num_logical &lt;- c(1, 2, 3, TRUE)
-char_logical &lt;- c('a', 'b', 'c', TRUE)
-tricky &lt;- c(1, 2, 3, '4')</code></pre></li>
-<li><p>Why do you think it happens? <!-- * _Answer_: Vectors can be of only one data type. R tries to convert (coerce)
-  the content of this vector to find a "common denominator". --></p></li>
-<li><p>You’ve probably noticed that objects of different types get converted into a single, shared type within a vector. In R, we call converting objects from one class into another class <em>coercion</em>. These conversions happen according to a hierarchy, whereby some types get preferentially coerced into other types. Can you draw a diagram that represents the hierarchy of how these data types are coerced? <!-- * _Answer_: `logical -> numeric -> character <-- logical` --></p></li>
+<li>We’ve seen that atomic vectors can be of type character, numeric, integer, and logical. But what happens if we try to mix these types in a single vector?</li>
 </ul>
 </blockquote>
+<p>Answer: R implicitly converts them to all be the same type &gt; &gt; * What will happen in each of these examples? (hint: use <code>class()</code> &gt; to check the data type of your objects): &gt; &gt; <code>r &gt;     num_char &lt;- c(1, 2, 3, 'a') &gt;     num_logical &lt;- c(1, 2, 3, TRUE) &gt;     char_logical &lt;- c('a', 'b', 'c', TRUE) &gt;     tricky &lt;- c(1, 2, 3, '4') &gt;</code> &gt; &gt; * Why do you think it happens?</p>
+<p>Answer: Vectors can be of only one data type. R tries to convert (coerce) the content of this vector to find a “common denominator”.</p>
+<blockquote>
+<ul>
+<li>You’ve probably noticed that objects of different types get converted into a single, shared type within a vector. In R, we call converting objects from one class into another class <em>coercion</em>. These conversions happen according to a hierarchy, whereby some types get preferentially coerced into other types. Can you draw a diagram that represents the hierarchy of how these data types are coerced?</li>
+</ul>
+</blockquote>
+<p>Answer: <code>logical -&gt; numeric -&gt; character &lt;-- logical</code></p>
+<pre class="r"><code>## We’ve seen that atomic vectors can be of type character, numeric, integer, and
+## logical. But what happens if we try to mix these types in a single
+## vector?
+
+## What will happen in each of these examples? (hint: use `class()` to
+## check the data type of your object)
+num_char &lt;- c(1, 2, 3, &quot;a&quot;)
+class(num_char)</code></pre>
+<pre><code>## [1] &quot;character&quot;</code></pre>
+<pre class="r"><code>num_logical &lt;- c(1, 2, 3, TRUE)
+class(num_logical)</code></pre>
+<pre><code>## [1] &quot;numeric&quot;</code></pre>
+<pre class="r"><code>char_logical &lt;- c(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, TRUE)
+class(char_logical)</code></pre>
+<pre><code>## [1] &quot;character&quot;</code></pre>
+<pre class="r"><code>tricky &lt;- c(1, 2, 3, &quot;4&quot;)
+class(tricky)</code></pre>
+<pre><code>## [1] &quot;character&quot;</code></pre>
+<pre class="r"><code>## Why do you think it happens?
+
+## You've probably noticed that objects of different types get
+## converted into a single, shared type within a vector. In R, we call
+## converting objects from one class into another class
+## _coercion_. These conversions happen according to a hierarchy,
+## whereby some types get preferentially coerced into other types. Can
+## you draw a diagram that represents the hierarchy of how these data
+## types are coerced?</code></pre>
 </div>
 <div id="subsetting-vectors" class="section level2">
 <h2>Subsetting vectors</h2>
@@ -643,6 +670,14 @@ heights[complete.cases(heights)]</code></pre>
 <li><p>Use the function <code>median()</code> to calculate the median of the <code>lengths</code> vector.</p></li>
 </ol>
 </blockquote>
+<pre class="r"><code>lengths &lt;- c(10, 24, NA, 18, NA, 20)
+median(lenghts) ## NA</code></pre>
+<pre><code>## Error in median(lenghts): object 'lenghts' not found</code></pre>
+<pre class="r"><code>lengths2 &lt;- na.omit(lengths)
+median(lengths2)</code></pre>
+<pre><code>## [1] 19</code></pre>
+<pre class="r"><code>median(lenghts, na.rm = TRUE)</code></pre>
+<pre><code>## Error in median(lenghts, na.rm = TRUE): object 'lenghts' not found</code></pre>
 <p>Now that we have learned how to write scripts, and the basics of R’s data structures, we are ready to start working with the Portal dataset we have been using in the other lessons, and learn about data frames.</p>
 </div>
 </div>
@@ -652,6 +687,13 @@ heights[complete.cases(heights)]</code></pre>
 <p>It is also possible to interleave R code into markdown documents, producing so called R mardown documents (extension <code>.Rmd</code>). Before generating the final html of pdf output, the <code>Rmd</code> files are first <em>knit</em> (or <em>weaved</em>), i.e. the R code chunks are extracted, exectuted and replaced by their output, be it text, tables or figures.</p>
 <p>Rmarkdown is a fantastic tool to implement <strong>reproducible research</strong>, as we have the guarantee that code results and figures, displayed in the final document, accurately represent the analysis restults. They provide a relatively easly way to generate high quality and reproducible analysis reports for any arbitrary input data that is submitted to an established analysis routine. The R package that supports this is <a href="http://rmarkdown.rstudio.com/"><code>rmarkdown</code></a>, and the whole process is made relatively easy with RStudio and available <a href="http://rmarkdown.rstudio.com/lesson-1.html">documentation</a>.</p>
 <p>We are going to walk through the creation of such a document.</p>
+<blockquote>
+<p><strong>Challenge</strong></p>
+<ul>
+<li>Create a new R markdown document in RStudio, and compile it to html or pdf.</li>
+<li>An important aspect of reproducible research is the record the version of software used. Add a code chunk at the end of the R markdown document and call <code>sessionInfo</code>.</li>
+</ul>
+</blockquote>
 <hr />
 <p>In the next sections, we are going to learn how to read data sets into R, how to explore and visualise the data, and how to perform basic statistical analyses.</p>
 <hr />
