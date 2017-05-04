@@ -1,0 +1,690 @@
+---
+title: "Scalability in R"
+author: "Advanced R"
+date: "Friday May 5, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
+
+## Learning goals
+
+1. How to scale CPU performance in R.
+
+2. How to scale memory performance in R.
+
+4. How to write C/C++ code for R.
+
+## Scaling CPU performance in R
+
+In many situations, it is desireable to improve performance while still writing code in R. Parallelization is often an easy way to do this.
+
+There are several options for parallelization in R. These work best for problems which are *embarrasingly parallel*. Examples of such problems are:
+
+- Fitting the many statistical models at once
+
+- Fitting a Bayesian model by running multiple MCMC chains
+
+- Bootstrapping
+
+- Cross-validation
+
+Some of the easiest parallelization methods to use work by creating multiple R processes for executing your R code in parallel.
+
+- `parallel` package integrates two older packages
+    + `multicore` package (creates processes with UNIX forks)
+    + `SNOW` package (simple network of workstations)
+
+- `foreach` package can be integrated with multiple backends
+    + Write code using `foreach` function instead of `for` or `lapply`
+    + `doParallel` package implements parallel `foreach` backend using `parallel` package
+
+#### Using __parallel__ 
+
+Earlier, we fit a linear model for each protein in the `twin_dia` example dataset. Since this dataset is relatively small, this did not take too long, but for a larger dataset, it may be more efficient to do this in parallel.
+
+We will do this using the __parallel__ package.
+
+```{r}
+library(parallel)
+detectCores()
+```
+
+First, we set up the dataset.
+
+```{r}
+library(ProtExp)
+library(tidyverse)
+library(broom)
+
+data(twin)
+
+twin_dia2 <- twin_dia %>%
+  rename(heavy = intensity_h, light = intensity_l) %>% 
+  gather(label, intensity, heavy, light)
+
+twin_dia3 <- ProtExp(protein=twin_dia2$protein,
+                               feature=twin_dia2$feature,
+                               run=twin_dia2$run,
+                               intensity=twin_dia2$intensity,
+                               label=twin_dia2$label)
+twin_dia3 <- normalize(twin_dia3, by="heavy")
+
+twin_dia3 <- twin_dia3 %>% filter(label == "light")
+```
+
+First, let's create a simple function that fits a linear model for a single protein.
+
+```{r}
+lmFit <- function(data) {
+  lm(intensity ~ 0 + run + feature, data=data)
+}
+```
+
+Now we group the data by protein and create a nested data.frame.
+
+```{r}
+fit_dia <- twin_dia3 %>% 
+    group_by(protein) %>% 
+    nest()
+```
+
+We try fitting the model to all proteins sequentially using `lapply` first.
+
+```{r}
+system.time(fit_dia$fit1 <- lapply(fit_dia$data, lmFit))
+head(tidy(fit_dia$fit1[[1]]))
+```
+
+The above fitting takes about ~5 seconds on my laptop.
+
+Now we try fitting the models in parallel. The easiest way to do this is by using `mclapply` from the __parallel__ package. This creates additional R processes by forking the host R process.
+
+```{r}
+system.time(fit_dia$fit2 <- mclapply(fit_dia$data, lmFit))
+head(tidy(fit_dia$fit2[[1]]))
+```
+
+Fitting the models in parallel using `mclapply` takes only about ~4 seconds on my laptop.
+
+*Note: Because it does not take very long to fit these models, the speedup by fitting them in parallel is not very dramatic. Forking the R process and transferring the results back to the host process is a significant proportion of the total execution time. However, if there were many more proteins, or each model took a longer time to fit, the speedup from parallelization would be more dramatic.*
+
+Although `mclapply` is simple, a drawback to it is that it is not available on Windows, since it uses UNIX forking.
+
+We can delve deeper into the __parallel__ package and create a PSOCK cluster on our machine, which works on all systems.
+
+```{r}
+cl <- makePSOCKcluster(detectCores())
+system.time(fit_dia$fit3 <- parLapply(cl, fit_dia$data, lmFit))
+stopCluster(cl)
+head(tidy(fit_dia$fit3[[1]]))
+```
+
+Fitting the models in parallel using `parLapply` takes only about ~2 seconds on my laptop. It appears that the cost of setting up and tearing down the cluster (which we did manually this time, and did not include in the timing) also has a significant overhead.
+
+#### Using __foreach__ with a registered backend
+
+A drawback of using functions like `mclapply` and `parLapply` from the __paralell__ package is that -- while the opportunity cost is very low -- you must still use a different function whenever you want to run code in parallel. This means deciding when and where to use `lapply` versus `parLapply`, for example. If you're writing a package, you cannot count on users always having multiple cores, or always wanting to pass a cluster object to functions like `parLapply`.
+
+The __foreach__ package offers a flexible framework for writing code that can run either sequentially or in parallel without making any changes to it.
+
+```{r}
+library(foreach)
+```
+
+How does this work? We start by rewriting our model fitting to use `foreach` instead of `lapply`. This is simply, because `foreach` behaves very similarly to `lapply`.
+
+```{r}
+system.time({
+  fit_dia$fit4 <- foreach(data = fit_dia$data) %do% lmFit(data)
+})
+```
+
+This is run sequentially, and takes about ~5 seconds on my laptop, just like `lapply`.
+
+To allow it to run in parallel, we make only one small change:
+
+```{r}
+system.time({
+  fit_dia$fit4 <- foreach(data = fit_dia$data) %dopar% lmFit(data)
+})
+```
+
+This still runs in ~5 seconds, and gives a warning that it found no parallel backend registered, so `foreach` fell back to running it sequentially.
+
+We can register a backend using the __doParallel__ package, which uses the clusters from the __parallel__ package. There are other packages which provide backends for other implementations of parallelization as well.
+
+```{r}
+library(doParallel)
+registerDoParallel(detectCores())
+system.time({
+  fit_dia$fit4 <- foreach(data = fit_dia$data) %dopar% lmFit(data)
+})
+head(tidy(fit_dia$fit4[[1]]))
+```
+
+This runs in about ~2 seconds on my laptop, just like `parLapply`.
+
+Using `foreach` allows writing code that can be run either sequentially or in parallel, but leaves it up to the user to register a parallel backend. A user may register whatever parallel backend they like, without you having to code for it specifically.
+
+
+## Scaling memory performance in R
+
+Another common problem in R is that it typically requires a dataset be fully loaded into memory. When a dataset is very large, this can make it difficult to work with it in R. When the dataset is larger than memory, it is often impossible to work with it at all.
+
+Compounding this difficulty, the frequency with which R makes copies of objects means that it is very easy to run out of memory when programming with large objects in R.
+
+However, there are a growing number of packages dedicated to working with large datasets in R, both in-memory and on-disk.
+
+- __bigmemory__ on CRAN
+    + Uses shared memory to allow sharing of in-memory objects between R sessions
+    + Also supports file-backed matrices in flat files
+    + Extended by __bigalgebra__ and __biganalytics__ packages
+
+- __ff__ on CRAN
+    + Uses on-disk flat files for data storage
+    + Extended by __ffbase__
+
+- __matter__ on Bioconductor
+    + Uses on-disk files for data storage
+    + Supports custom data formats
+
+#### Linear regression example
+
+Suppose we want to run linear regression on a large dataset.
+
+```{r}
+n <- 1e6
+p <- 9
+
+b <- runif(p)
+names(b) <- paste0("x", 1:p)
+
+data <- vector("list", length=p + 1)
+
+data[[p + 1]] <- rnorm(n)
+
+for ( i in 1:p ) {
+  xi <- rnorm(n)
+  data[[i]] <- xi
+  data[[p + 1]] <- data[[p + 1]] + xi * b[i]
+}
+
+data <- as.data.frame(data)
+names(data) <- c(names(b), "y")
+
+library(pryr)
+object_size(data)
+```
+
+To save time later, we store the formula for `lm` now:
+
+```{r}
+fm <- as.formula(paste0("y ~ ", paste(names(b), collapse=" + ")))
+```
+
+To see how much memory is takes to run linear regression on this dataset, let's get our `mem_overhead` function from earlier.
+
+```{r, eval=FALSE}
+mem_max <- function() {
+  pryr:::show_bytes(sum(gc()[,5] * c(pryr:::node_size(), 8)))
+}
+
+mem_overhead <- function(code) {
+  gc(reset=TRUE)
+  expr <- substitute(code)
+  eval(expr, parent.frame())
+  rm(code, expr)
+  finish <- mem_used()
+  pryr:::show_bytes(mem_max() - finish)
+}
+```
+
+Now:
+
+```{r, eval=FALSE}
+mem_overhead(fit <- lm(fm, data=data))
+```
+
+We can see that using `lm` with a large dataset uses quite a lot of memory overhead.
+
+We could do bootstrapping in parallel:
+
+```{r, eval=FALSE}
+library(parallel)
+cl <- makePSOCKcluster(detectCores())
+seeds <- seq_len(1000)
+clusterExport(cl, c("data", "fm"))
+system.time(boot.out <- parLapply(cl, seeds, function(s) {
+  set.seed(s)
+  subdata <- data[sample(1000, replace=TRUE),]
+  coef(lm(fm, data=subdata))
+}))
+stopCluster(cl)
+```
+
+However, it takes significant overhead to export the data to each additional R session, especially if the data is very large. It would be great if the same dataset could be shared across R sessions.
+
+#### Using __bigmemory__
+
+```{r}
+library(bigmemory)
+
+data.bm <- big.matrix(nrow=nrow(data), ncol=ncol(data),
+                   dimnames=list(NULL, colnames(data)))
+
+for ( nm in names(data) )
+  data.bm[,nm] <- data[[nm]]
+
+data.bm
+head(data.bm)
+```
+
+This creates `big.matrix` in shared memory.
+
+Note that in this case, `object_size` would be inaccurate, since the matrix is fully loaded in memory, but it resides in shared memory not managed by R.
+
+Because `big.matrix` uses an external pointer to point to its data, it cannot be serialized across connections to other R sessions. Therefore, we use the `describe` and `attach.big.matrix` functions when using the dataset on our worker processes.
+
+```{r, eval=FALSE}
+cl <- makePSOCKcluster(detectCores())
+desc.bm <- describe(data.bm)
+clusterExport(cl, c("desc.bm", "fm"))
+system.time(boot.out <- parLapply(cl, seeds, function(s) {
+  set.seed(s)
+  require(bigmemory)
+  data.bm.remote <- attach.big.matrix(desc.bm)
+  subdata <- as.data.frame(data.bm.remote[sample(1000, replace=TRUE),])
+  coef(lm(fm, data=subdata))
+}))
+stopCluster(cl)
+```
+
+*Note: Ordinarily, this should work, but `attach.big.matrix` is currently broken for shared-memory matrices for me. Maybe you will have better luck.*
+
+A file-backed matrix can also be used.
+
+```{r}
+tmpdir <- tempdir()
+tmpfile <- "tmp.bin"
+data.fbm <- filebacked.big.matrix(nrow=nrow(data), 
+                                  ncol=ncol(data),
+                   dimnames=list(NULL, colnames(data)),
+                   backingpath=tmpdir,
+                   backingfile=tmpfile,
+                   descriptorfile=paste0(tmpfile, ".desc"))
+
+for ( i in 1:ncol(data) )
+  data.fbm[,i] <- data.bm[,i]
+
+data.fbm
+head(data.fbm)
+object_size(data.fbm)
+```
+
+```{r, eval=FALSE}
+cl <- makePSOCKcluster(detectCores())
+desc.fbm <- describe(data.fbm)
+clusterExport(cl, c("desc.fbm", "tmpdir", "fm"))
+system.time(boot.out <- parLapply(cl, seeds, function(s) {
+  set.seed(s)
+  require(bigmemory)
+  data.fbm.remote <- attach.big.matrix(desc.fbm, path=tmpdir)
+  subdata <- as.data.frame(data.fbm.remote[sample(1000, replace=TRUE),])
+  coef(lm(fm, data=subdata))
+}))
+stopCluster(cl)
+```
+
+*Note: This one works for me.*
+
+#### Using __ff__
+
+With __ff__, we can take advantage of our `filebacked.big.matrix` and attach the same data with `ff`, which simply uses flat files for its data storage and access.
+
+```{r}
+library(ff)
+
+data.ff <- ff(vmode="double",
+              dim=dim(data.fbm),
+              dimnames=dimnames(data.fbm),
+              filename=paste0(tmpdir, "/", tmpfile))
+
+data.ff
+head(data.ff)
+object_size(data.ff)
+```
+
+Because __ff__ simply needs to know the filename and its other metadata (such as `dim` and `dimnames`) are stored in R, it can be serialized to other R sessions easily.
+
+```{r, eval=FALSE}
+cl <- makePSOCKcluster(detectCores())
+clusterExport(cl, c("data.ff", "fm"))
+system.time(boot.out <- parLapply(cl, seeds, function(s) {
+  set.seed(s)
+  require(ff)
+  subdata <- as.data.frame(data.ff[sample(1000, replace=TRUE),])
+  coef(lm(fm, data=subdata))
+}))
+stopCluster(cl)
+```
+
+#### Using __matter__
+
+Like __ff__, __matter__ can re-use the files we've already created, so we simply attach the existing backing file.
+
+A major advantage of __matter__ as opposed to __ff__ is that we could create a single matrix from multiple files, which is not possible with __ff__, and is only possible with __bigmemory__ with certain limitations (each column must be its own file).
+
+```{r}
+library(matter)
+
+data.mat <- matter(paths=filename(data.ff),
+                   nrow=nrow(data.ff), ncol=ncol(data.ff),
+                   dimnames=dimnames(data.ff))
+
+data.mat
+head(data.mat)
+object_size(data.mat)
+```
+
+__matter__ also stores its metadata in R, so `matter` objects can be serialized to other R sessions.
+
+```{r, eval=FALSE}
+cl <- makePSOCKcluster(detectCores())
+clusterExport(cl, c("data.mat", "fm"))
+system.time(boot.out <- parLapply(cl, seeds, function(s) {
+  set.seed(s)
+  require(matter)
+  subdata <- as.data.frame(data.mat[sample(1000, replace=TRUE),])
+  coef(lm(fm, data=subdata))
+}))
+stopCluster(cl)
+```
+
+## Writing C and C++ code for R
+
+Despite the usefulness of writing code in R, sometimes it can be useful to rewrite long-running functions in a more efficient language such as C or C++ to be called from R.
+
+Often, the best candidates for being rewritten in C or C++ are functions which involve many long-running `for` loops but which cannot be vectorized or further improved to reduce unnecessary duplication of objects.
+
+There are three common ways to write C or C++ code for R:
+
+- `.C` framework
+
+- `.Call` framework
+
+- `Rcpp` package
+
+We will explore these frameworks using a custom function for finding the median of a numeric vector.
+
+```{r}
+my_median <- function(x, na.rm = FALSE) {
+  med <- numeric(0)
+  for ( i in seq_along(x) ) {
+    if ( is.na(x[i]) ) {
+      if ( na.rm ) {
+        next
+      } else {
+        return(NA)
+      }
+    }
+    lesser <- 0
+    greater <- 0
+    for ( j in seq_along(x) ) {
+      if ( is.na(x[j]) )
+        next
+      if ( x[j] < x[i] ) {
+        lesser <- lesser + 1 
+      } else if ( x[j] > x[i] ) {
+        greater <- greater + 1
+      }
+    }
+    if ( lesser == greater || abs(lesser - greater) == 1 )
+      med <- c(med, x[i])
+  }
+  if ( length(med) > 1 ) {
+    (med[1] + med[2]) / 2 
+  } else {
+    med
+  }
+}
+```
+
+This function is a good candidate for possibly rewriting in a more efficient language like C or C++ because it is reliant on multiple `for` loops that cannot be easily vectorized.
+
+```{r}
+library(microbenchmark)
+x <- sample(100)
+microbenchmark(median(x), my_median(x))
+```
+
+We can see that our pure-R version is significantly slower than the one provided by the __stats__ package, which uses C code. If the __stats__ package version of `median` didn't exist, how could we make our own version faster?
+
+#### Using the `.C` framework
+
+- Simple and easy to use (if you like C)
+
+- Only allows basic C types (`int`, `double`, etc.)
+
+- Only out parameters, no return values
+
+- All arguments are duplicated
+
+```{}
+#include <R.h>
+#include <stdlib.h>
+
+void C_median(double * x, int * n, double * med) {
+  int lesser, greater, found = 0;
+  for ( int i = 0; i < *n; i++ ) {
+    lesser = 0;
+    greater = 0;
+    for ( int j = 0; j < *n; j++ ) {
+      if ( x[j] < x[i] )
+        lesser++;
+      else if ( x[j] > x[i] )
+        greater++;
+    }
+    if ( lesser == greater || abs(lesser - greater) == 1 ) {
+      if ( *n % 2 != 0 ) {
+        *med = x[i];
+        break;
+      }
+      else {
+        if ( found == 0 ) {
+          found++;
+          *med = x[i];
+        } else {
+          *med += x[i];
+          *med /= 2.0;
+          break;
+        }
+      }
+    }
+  }
+}
+```
+
+`.C` returns a list the same length as the number of arguments passed to out. `.C` cannot return values, so out parameters must be used.
+
+This is saved as `src/C_median.c`. We can compile it using `R CMD SHLIB`, load it using `dyn.load`, and call it using `.C`.
+
+We must provide a third argument as the out-parameter.
+
+```{r}
+system("R CMD SHLIB src/C_median.c")
+dyn.load("src/C_median.so")
+.C("C_median", as.double(x), length(x), numeric(1))[[3]]
+```
+
+`.C` is useful for small utility functions such as our `C_median` function, but these limitations make it impractical for many applications. Another major limitation is that `.C` cannot handle missing and special values (NA/NaN/Inf).
+
+#### Using the .Call framework
+
+- More difficult to use, requires some knowledge of R internals
+
+- Allows any R object
+
+- Can return R objects
+
+- More control over allocation of memory
+
+```{}
+#include <R.h>
+#include <Rdefines.h>
+#include <stdlib.h>
+
+SEXP Call_median(SEXP x) {
+  int lesser, greater, found = 0;
+  int n = LENGTH(x);
+  SEXP med;
+  PROTECT(med = NEW_NUMERIC(1));
+  double * pmed = REAL(med);
+  double * px = REAL(x);
+  for ( int i = 0; i < n; i++ ) {
+    lesser = 0;
+    greater = 0;
+    for ( int j = 0; j < n; j++ ) {
+      if ( px[j] < px[i] )
+        lesser++;
+      else if ( px[j] > px[i] )
+        greater++;
+    }
+    if ( lesser == greater || abs(lesser - greater) == 1 ) {
+      if ( n % 2 != 0 ) {
+        *pmed = px[i];
+        break;
+      }
+      else {
+        if ( found == 0 ) {
+          found++;
+          *pmed = px[i];
+        } else {
+          *pmed += px[i];
+          *pmed /= 2.0;
+          break;
+        }
+      }
+    }
+  }
+  UNPROTECT(1);
+  return med;
+}
+```
+
+In the `.Call` framework, we work directly with R objects. These are all represented as the type `SEXP` in C. All arguments passed to `.Call` will be a `SEXP`. We can manipulate `SEXP` objects using R internal functions and macros. These are documented in the R internals manual (https://cran.r-project.org/doc/manuals/r-release/R-ints.html).
+
+If you download the source code for R 3.4.0 ("You Stupid Darkness"), it is very helpful to look at the files `R-3.4.0/src/include/Rdefines.h` and `R-3.4.0/src/include/Rinternals.h`.
+
+In the above code, we use `REAL()` to get a pointer to a numeric vector's data. To get a pointer to the data of an integer vector, we would use the `INTEGER()` macro.
+
+We create a new length-1 numeric vector to return by doing `NEW_NUMERIC`. Whenever we create a new R object in the `.Call` framework, we must `PROTECT` it from R's garbage collector, and remember to `UNPROTECT` it later.
+
+This code is saved as `src/Call_median.c`. Again, we compile it using `R CMD SHLIB`, load it using `dyn.load`, and call it using `.Call`.
+
+```{r}
+system("R CMD SHLIB src/Call_median.c")
+dyn.load("src/Call_median.so")
+.Call("Call_median", as.numeric(x))
+```
+
+In this case, we still have to coerce `x` to a numeric (double) vector, because `x` is an integer vector, and we assumed `x` is a double in our `Call_median` C function. If `x` were already a numeric vector, we could simply pass `x` to `.Call`.
+
+The `.Call` framework offers much more power than the `.C` framework, but the required familiarity with R internals can make it difficult and clunky to use.
+
+#### Using the __Rcpp__ package
+
+- Easiest to use
+
+- Allows most R object
+
+- Can return R objects
+
+- All the power of C++ and the STL
+
+```{}
+#include <Rcpp.h>
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+double Rcpp_median(NumericVector x) {
+  int lesser, greater, found = 0;
+  int n = x.size();
+  double med;
+  for ( int i = 0; i < n; i++ ) {
+    lesser = 0;
+    greater = 0;
+    for ( int j = 0; j < n; j++ ) {
+      if ( x[j] < x[i] )
+        lesser++;
+      else if ( x[j] > x[i] )
+        greater++;
+    }
+    if ( lesser == greater || abs(lesser - greater) == 1 ) {
+      if ( n % 2 != 0 ) {
+        med = x[i];
+        break;
+      }
+      else {
+        if ( found == 0 ) {
+          found++;
+          med = x[i];
+        } else {
+          med += x[i];
+          med /= 2.0;
+          break;
+        }
+      }
+    }
+  }
+  return med;
+}
+```
+
+__Rcpp__ provides easy-to-use C++ wrappers for most R data types (such as `NumericVector`) which behave similarly to familiar STL containers like `std::vector<T>`.
+
+Using __Rcpp__ means we can write standard C++ code without having to worry about R internals and `PROTECT`-ing our objects, because __Rcpp__ takes care of these things for us.
+
+This code is saved as `src/Rcpp_median.cpp`. We compile it using the __Rcpp__ function `sourceCpp` and can call it directly using the same name as the C++ function.
+
+```{r}
+library(Rcpp)
+sourceCpp("src/Rcpp_median.cpp")
+Rcpp_median(x)
+```
+
+Note that we don't even have to worry about whether `x` is an integer or double here!
+
+#### Putting it all together
+
+__Rcpp__ provides us with an R function with the same name as our C++ function, but `.C` and `.Call` must be wrapped in `.C` or `.Call`. Therefore, when using these, it is good form to provide an R wrapper function.
+
+```{r}
+C_median <- function(x) {
+  .C("C_median", as.double(x), length(x), numeric(1))
+}
+
+Call_median <- function(x) {
+  .Call("Call_median", as.numeric(x))
+}
+```
+
+Now we can compare the performance of all of these functions.
+
+```{r}
+microbenchmark(median(x),
+               my_median(x),
+               C_median(x),
+               Call_median(x),
+               Rcpp_median(x))
+```
+
+All of our versions using C or C++ are much faster than our pure-R version (the built-in `median` from the __stats__ package uses C code).
+
+Note that `Call_median` and `Rcpp_median` are likely faster than `C_median` because the arguments don't get duplicated. Note that `Rcpp_median` is likely only faster than R's own `median` function because we do less error checking and exception handling. For example, our own C/C++ functions do not handle NAs.
+
+

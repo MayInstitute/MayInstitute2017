@@ -278,7 +278,7 @@ class(od) # class 'ordered' inherits from 'factor'</code></pre>
 <pre class="r"><code>print # its body uses 'UseMethod', so it's a generic function</code></pre>
 <pre><code>## function (x, ...) 
 ## UseMethod(&quot;print&quot;)
-## &lt;bytecode: 0x7fbeed9e4078&gt;
+## &lt;bytecode: 0x7fd83b5e6078&gt;
 ## &lt;environment: namespace:base&gt;</code></pre>
 <pre class="r"><code>head(methods(&quot;print&quot;)) # there are a lot of 'print' methods</code></pre>
 <pre><code>## [1] &quot;print.acf&quot;     &quot;print.AES&quot;     &quot;print.anova&quot;   &quot;print.aov&quot;    
@@ -286,7 +286,7 @@ class(od) # class 'ordered' inherits from 'factor'</code></pre>
 <pre class="r"><code>plot # plot is also a generic function with UseMethod(&quot;plot&quot;)</code></pre>
 <pre><code>## function (x, y, ...) 
 ## UseMethod(&quot;plot&quot;)
-## &lt;bytecode: 0x7fbeec1468b0&gt;
+## &lt;bytecode: 0x7fd83c8300b0&gt;
 ## &lt;environment: namespace:graphics&gt;</code></pre>
 <pre class="r"><code>head(methods(&quot;plot&quot;)) # 'plot' has a lot of methods too</code></pre>
 <pre><code>## [1] &quot;plot.acf&quot;           &quot;plot.data.frame&quot;    &quot;plot.decomposed.ts&quot;
@@ -294,7 +294,7 @@ class(od) # class 'ordered' inherits from 'factor'</code></pre>
 <pre class="r"><code>summary # summary is a generic function with UseMethod(&quot;summary&quot;)</code></pre>
 <pre><code>## function (object, ...) 
 ## UseMethod(&quot;summary&quot;)
-## &lt;bytecode: 0x7fbeecb93a60&gt;
+## &lt;bytecode: 0x7fd83cc5e710&gt;
 ## &lt;environment: namespace:base&gt;</code></pre>
 <pre class="r"><code>head(methods(&quot;summary&quot;)) # 'summary' also has many methods</code></pre>
 <pre><code>## [1] &quot;summary.aov&quot;                   &quot;summary.aovlist&quot;              
@@ -531,7 +531,7 @@ head(twin_dia4)</code></pre>
 ## 
 ## function (object, ...) 
 ## standardGeneric(&quot;normalize&quot;)
-## &lt;environment: 0x7fbeef9743c0&gt;
+## &lt;environment: 0x7fd83f8ee3c0&gt;
 ## Methods may be defined for arguments: object
 ## Use  showMethods(&quot;normalize&quot;)  for currently available ones.</code></pre>
 <pre class="r"><code>getGeneric(&quot;summary&quot;)</code></pre>
@@ -539,7 +539,7 @@ head(twin_dia4)</code></pre>
 ## 
 ## function (object, ...) 
 ## standardGeneric(&quot;summary&quot;)
-## &lt;environment: 0x7fbeee1c3400&gt;
+## &lt;environment: 0x7fd83d529a08&gt;
 ## Methods may be defined for arguments: object
 ## Use  showMethods(&quot;summary&quot;)  for currently available ones.</code></pre>
 <pre class="r"><code>getGeneric(&quot;plot&quot;)</code></pre>
@@ -547,7 +547,7 @@ head(twin_dia4)</code></pre>
 ## 
 ## function (x, y, ...) 
 ## standardGeneric(&quot;plot&quot;)
-## &lt;environment: 0x7fbeed941e98&gt;
+## &lt;environment: 0x7fd83d28cf48&gt;
 ## Methods may be defined for arguments: x, y
 ## Use  showMethods(&quot;plot&quot;)  for currently available ones.</code></pre>
 <p>We can use <code>showMethods()</code> and <code>selectMethod()</code> to find the available S4 methods for an S4 generic funciton.</p>
@@ -576,7 +576,7 @@ head(twin_dia4)</code></pre>
 ## 
 ## function (x, y, ...) 
 ## standardGeneric(&quot;plot&quot;)
-## &lt;environment: 0x7fbeed941e98&gt;
+## &lt;environment: 0x7fd83d28cf48&gt;
 ## Methods may be defined for arguments: x, y
 ## Use  showMethods(&quot;plot&quot;)  for currently available ones.</code></pre>
 <p>While the S3 <code>plot</code> methods only depend on the class of <code>x</code>, S4 methods can depend on the class of both <code>x</code> <em>and</em> <code>y</code>. While not all developers will take advantage of this, it is one way that S4 methods are more powerful and more complex than S3 methods.</p>
