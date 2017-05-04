@@ -634,8 +634,8 @@ head(iprg_c1)</code></pre>
 ## 15            1  27598550             A</code></pre>
 <pre class="r"><code>nrow(iprg_c1)</code></pre>
 <pre><code>## [1] 9079</code></pre>
-<pre class="r"><code>iprg_cA &lt;- iprg[iprg$Condition == &quot;Condition1&quot; &amp; iprg$TechReplicate == &quot;A&quot;, ]
-head(iprg_cA)</code></pre>
+<pre class="r"><code>iprg_c1A &lt;- iprg[iprg$Condition == &quot;Condition1&quot; &amp; iprg$TechReplicate == &quot;A&quot;, ]
+head(iprg_c1A)</code></pre>
 <pre><code>##                  Protein Log2Intensity                       Run
 ## 3   sp|D6VTK4|STE2_YEAST      26.58301 JD_06232014_sample1-A.raw
 ## 15  sp|O13297|CET1_YEAST      24.71809 JD_06232014_sample1-A.raw
@@ -651,7 +651,7 @@ head(iprg_cA)</code></pre>
 ## 51 Condition1            1 145493943             A
 ## 63 Condition1            1  75530595             A</code></pre>
 <pre class="r"><code>nrow(iprg_c1A)</code></pre>
-<pre><code>## Error in nrow(iprg_c1A): object 'iprg_c1A' not found</code></pre>
+<pre><code>## [1] 3026</code></pre>
 <pre class="r"><code>iprg_r1 &lt;- iprg[iprg$Run == &quot;JD_06232014_sample1_B.raw&quot;, ]
 head(iprg_r1)</code></pre>
 <pre><code>##                  Protein Log2Intensity                       Run

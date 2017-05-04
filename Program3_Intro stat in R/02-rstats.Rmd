@@ -458,8 +458,8 @@ iprg_c1 <- iprg[iprg$Condition == "Condition1", ]
 head(iprg_c1)
 nrow(iprg_c1)
 
-iprg_cA <- iprg[iprg$Condition == "Condition1" & iprg$TechReplicate == "A", ]
-head(iprg_cA)
+iprg_c1A <- iprg[iprg$Condition == "Condition1" & iprg$TechReplicate == "A", ]
+head(iprg_c1A)
 nrow(iprg_c1A)
 
 iprg_r1 <- iprg[iprg$Run == "JD_06232014_sample1_B.raw", ]

@@ -669,8 +669,8 @@ nrow(iprg_c1)
 ```
 
 ```r
-iprg_cA <- iprg[iprg$Condition == "Condition1" & iprg$TechReplicate == "A", ]
-head(iprg_cA)
+iprg_c1A <- iprg[iprg$Condition == "Condition1" & iprg$TechReplicate == "A", ]
+head(iprg_c1A)
 ```
 
 ```
@@ -695,7 +695,7 @@ nrow(iprg_c1A)
 ```
 
 ```
-## Error in nrow(iprg_c1A): object 'iprg_c1A' not found
+## [1] 3026
 ```
 
 ```r
