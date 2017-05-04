@@ -1,0 +1,359 @@
+---
+title: "Performance, profiling, and debugging in R"
+author: "Advanced R"
+date: "Friday May 5, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
+## Learning goals
+
+1. What are common pitfalls in R performance?
+
+2. How to identify and measure bottlenecks in CPU performance.
+
+3. How to identify and measure bottlenecks in memory performance.
+
+4. How to debug problem code in R.
+
+## Common pitfalls in R performance
+
+*The most common problem leading to slow code is unnecessary duplication of objects.*
+
+Often `for` loops are cited as a reason for slow performance in R. 
+While vectorization usually leads to increased performance, the primary culprit is typically the creation of extra copies of an object in memory.
+
+Much of this section will be about learning how to identify when objects will get copied and how to avoid it.
+
+We will investigate this using the three different ways we learned to normalize data earlier in our case study.
+
+**Note that many of the functions presented in this section don't play well with __rmarkdown__, so they will not be evaluated inline. It is best to run them on your own. Some profiling functions should be run multiple times before their results are to be trusted, so that they are less affected by issues of garbage collection and lazy evaluation**
+
+```{r}
+library(ProtExp)
+
+data(twin)
+
+runs <- unique(twin_dia$run)
+twin_dia$log2inty_h <- log2(twin_dia$intensity_h)
+twin_dia$log2inty_l <- log2(twin_dia$intensity_l)
+
+# normalize function using a 'for' loop
+normalize_loop <- function(data) {
+  runs <- unique(data$run)
+  medians <- rep(0, length(runs))
+  names(medians) <- runs
+  for ( nm in names(medians) ) {
+      medians[nm] <- median(data$log2inty_h[data$run == nm],
+                                            na.rm = TRUE)
+  }
+  gbl_median <- median(medians, na.rm = TRUE)
+  for ( nm in names(medians) ) {
+    log2inty_h <- data$log2inty_h[data$run == nm]
+    log2inty_l <- data$log2inty_l[data$run == nm]
+    data$log2inty_h[data$run == nm] <- log2inty_h - medians[nm] + gbl_median
+    data$log2inty_l[data$run == nm] <- log2inty_l - medians[nm] + gbl_median
+  }
+  invisible(data)
+}
+
+# normalize function using a vectorized approach
+normalize_vectorized <- function(data) {
+  medians <- tapply(data$log2inty_h, data$run,
+                  median, na.rm = TRUE)
+  gbl_median <- median(medians, na.rm = TRUE)
+  data$log2inty_h <- data$log2inty_h - medians[data$run] + gbl_median
+  data$log2inty_l <- data$log2inty_l - medians[data$run] + gbl_median
+  invisible(data)
+}
+
+# normalize function using aggregate and merging data.frames
+normalize_merge <- function(data) {
+  df_median <- aggregate(data$log2inty_h,
+                         list(run = data$run),
+                         median, na.rm = TRUE)
+  colnames(df_median)[2] <- "run_median"
+  gbl_median <- median(df_median$run_median, na.rm = TRUE)
+  data <- merge(x = data, y = df_median)
+  data$log2inty_h <- data$log2inty_h - data$run_median + gbl_median
+  data$log2inty_l <- data$log2inty_l - data$run_median + gbl_median
+  invisible(data)
+}
+```
+
+## Tools for profiling CPU performance
+
+Identifying functions which are the source of slowdown is a good first step in making slow-running code more efficient. There are several ways to profile the speed of functions.
+
+- `microbenchmark()` from the __microbenchmark__ package
+    + Times performance of small functions which may be called often
+    + Sample many calls of the function, so should not be used to time long-running code
+    + More accurate than `system.time()`
+
+- `Rprof()` and `summaryRprof()` from the __utils__ package
+    + Shows times used by different functions during executiono of a script
+    + Can be used to determine functions which are major bottlenecks
+
+We can use `microbenchmark()` to time how long each of our normalization functions take to run.
+
+```{r}
+library(microbenchmark)
+
+microbenchmark(normalize_loop(twin_dia),
+               normalize_vectorized(twin_dia),
+               normalize_merge(twin_dia), times=10)
+
+```
+
+We can identify bottlenecks using `Rprof()` and `summaryRprof()`.
+
+```{r, eval=FALSE}
+Rprof(interval=1e-3)
+normalize_loop(twin_dia)
+Rprof(NULL)
+summaryRprof()$by.self
+```
+
+```{r, eval=FALSE}
+Rprof(interval=1e-3)
+normalize_vectorized(twin_dia)
+Rprof(NULL)
+summaryRprof()$by.self
+```
+
+```{r, eval=FALSE}
+Rprof(interval=1e-3)
+normalize_merge(twin_dia)
+Rprof(NULL)
+summaryRprof()$by.self
+```
+
+Another example:
+
+```{r, eval=FALSE}
+my_seq <- function(from, to) {
+  out <- from
+  curr <- from
+  while ( curr != to ) {
+    whynot <- mean(out)
+    out <- c(out, out[length(out)] + 1)
+    curr <- out[length(out)]
+  }
+  out
+}
+my_seq(1, 10)
+
+Rprof(interval=1e-3)
+invisible(my_seq(1, 10000))
+Rprof(NULL)
+summaryRprof()$by.self
+```
+
+In this example, even though we take the mean of the vector at each iteration of the loop, the run time is dominated by the `c` function. Most of the run time is spent concatenating new values to the end of the vector.
+
+## Tools for profiling memory performance
+
+- `gc` from __base__ R
+    + This manually triggers R's garbage collection
+    + Also prints memory information
+
+- `mem_used` and `mem_changed` from __pryr__ package
+    + Prints the memory used by an object or the change in memory during execution of code
+    + Easy-to-read wrapper of `gc()` garbage collector)
+
+- `tracemem()` and `untracemem()` from __base__ R
+    + Tracks whenever an object is duplicated by internal code
+    + Can be used to identify hard-to-predict memory use
+
+First, we show how to use `gc()` and `mem_used()` to get basic memory information.
+
+```{r, eval=FALSE}
+gc()
+```
+
+```{r, eval=FALSE}
+library(pryr)
+mem_used()
+```
+
+__pryr__'s `mem_used()` simply shows a simplified version of the first column of `gc()`. `mem_change()` shows the change in memory during the use of a function.
+
+```{r, eval=FALSE}
+mem_change(normalize_loop((twin_dia)))
+mem_change(normalize_vectorized((twin_dia)))
+mem_change(normalize_merge((twin_dia)))
+```
+
+It *appears* that each function uses the same amount of memory. However, let's investigate further by writing our own function that returns the maximum memory used rather than simply the change in memory.
+
+```{r, eval=FALSE}
+mem_max <- function() {
+  pryr:::show_bytes(sum(gc()[,5] * c(pryr:::node_size(), 8)))
+}
+
+mem_overhead <- function(code) {
+  gc(reset=TRUE)
+  expr <- substitute(code)
+  eval(expr, parent.frame())
+  rm(code, expr)
+  finish <- mem_used()
+  pryr:::show_bytes(mem_max() - finish)
+}
+```
+
+```{r, eval=FALSE}
+mem_overhead(normalize_loop((twin_dia)))
+mem_overhead(normalize_vectorized((twin_dia)))
+mem_overhead(normalize_merge((twin_dia)))
+```
+
+__*Warning:*__ Here, we use `pryr:::node_size` and `pryr:::show_bytes` to gain access to functions that __pryr__ doesn't export. __**Don't do this at home.**__ (Or, more specifically, don't do this in code that will be used by anyone but you. It's unreliable and subject to breaking easily.)
+
+Our `mem_overhead` function finds the difference between the maximum memory used during the execution of the function, and the amount of memory used at the end of executing the function. This is the amount of additional overhead used simply be executing the function.
+
+Why does `normalize_loop` use so much more memory than the other two functions?
+
+## What is going on with R and copying objects?
+
+- R is a *functional programming language*
+    + A common feature of functional languages is *immutable* data
+
+- Most objects in R are immutable
+    + Most attempts to *mutate* an object will create a *copy* of it and mutate the *copy*
+    
+- R tracks whether an object has multiple *references* to it; if it does, it will be copied
+    + View this with `refs` function from __pryr__ package
+
+For example:
+
+```{r, eval=FALSE}
+x <- 1:10
+c(address(x), refs(x))
+x[1] <- 10
+c(address(x), refs(x))
+y <- x
+c(address(x), refs(x))
+c(address(y), refs(y))
+y[1] <- 100
+c(address(x), refs(x))
+c(address(y), refs(y))
+x[1] <- 100
+c(address(x), refs(x))
+```
+
+*Note that `refs` will always return `2` in RStudio, because RStudio creates a reference to all objects in your global environment to make its environment browser work.*
+
+It is important to realize that R does not keep a true reference count. It only records whether an object has ever had more than one reference to it. For example, `refs` does not go back to 1 after the first time `y` is copied. The `refs` count does go back to 1 each time `x` is copied because it is a new object each time.
+
+When does `refs` get increased?
+
+```{r, eval=FALSE}
+z <- 1:16
+z
+c(address(z), refs(z))
+names(z) <- letters[1:16]
+dim(z) <- c(4,4)
+dimnames(z) <- list(letters[1:4], letters[5:8])
+z
+c(address(z), refs(z))
+```
+
+Here, we've modified `z` many times, but its `refs` count has not increased, and its `address` hasn't changed. This is because `names`, `dim`, and `dimnames` are all primitive functions. Primitive functions do not increase the `refs` count. However, any other function that "touches" an object increases its `refs` count.
+
+```{r, eval=FALSE}
+id <- function(x) x
+c(address(z), refs(z))
+id(z)
+c(address(z), refs(z))
+dim(z) <- NULL
+c(address(z), refs(z))
+```
+
+Here, `id()` is not a primitive function, so it increases the `refs` count, and modifying it (even with a primitive function like `dim`) now makes a copy of it.
+
+How does this apply to our normalization functions? We can use `tracemem` (and `untracemem`) to find out when datasets get copied.
+
+```{r, eval=FALSE}
+tracemem(twin_dia)
+normalize_loop(twin_dia)
+normalize_vectorized(twin_dia)
+normalize_merge(twin_dia)
+untracemem(twin_dia)
+```
+
+For `normalize_loop`, the dataset is copied at each iteration of the loop! No wonder the other versions (which still copy the dataset, but far fewer times) are much faster.
+
+
+## Debugging R code
+
+The problem with programming is you almost never do something correctly the first time.
+
+That's why debugging is important. R provides several tools for debugging.
+
+- `traceback()`
+    + Prints the stack at the time the error occurred
+
+- `browser()`
+    + Creates a pseudo-breakpoint that allows you to jump into code at a particular point
+
+- `options(error=recover)`
+    + Allows you to enter the `browser` anywhere on the stack after an error occurs
+
+- `debug()` and `undebug()`
+    + Enters `browser` at the beginning of a particular function call
+
+```{r, eval=FALSE}
+f <- function(a) g(a)
+g <- function(b) h(b)
+h <- function(c) i(c)
+i <- function(d) "a" + d
+f(10)
+traceback()
+```
+
+`traceback()` prints the functions that stack of frames at the moment the error occured. It can be very informative to see where the error occured, and the functions that were called before the error.
+
+If you are using RStudio, then you are also given the visual option to view the traceback whenever an error occurs, and to "Rerun with debug" to enter debugging mode. There several ways to "Rerun with debug" without RStudio, too.
+
+```{r, eval=FALSE}
+i <- function(d) {
+  browser()
+  "a" + d
+}
+f(10)
+```
+
+```{r, eval=FALSE}
+i <- function(d) "a" + d
+debug(i)
+f(10)
+undebug(i)
+```
+
+Either manually adding `browser()` or using `debug()` on a function will put you in a debugging mode. RStudio provides a visual interface for stepping through the functions. These are also available as commands outside RStudio.
+
+- `n` : Execute the next line
+
+- `s` : Execute the next line and step into it if it's a function
+
+- `f` : Finish execution of current loop or function
+
+- `c` : Continue execution, exiting interactive debugging mode
+
+- `Q` : Quit debugging mode without continuing execution
+
+Using `options(error=recover)` also allows you to enter debugging mode anywhere in the stack after an error has occured.
+
+```{r, eval=FALSE}
+options(error=recover)
+f(10)
+options(error=NULL)
+```
+
+Also note that if you need to debug warnings rather than errors, it is useful to convert them into errors using `options(warn = 2)`.
+
+Use `options(warn = 0)` to return to the default behavior.
