@@ -276,6 +276,12 @@ nested_dia <- twin_dia2 %>%
 nested_dia
 ```
 
+```{r, eval=FALSE}
+# Same as
+nested_dia %>% 
+    nest(-protein)
+```
+
 Nested data frame organizes the data in a structurally-informative format where: 
 
 * Each row forms a group (e.g., protein).
@@ -377,6 +383,43 @@ nested_dia %>% unnest(param) %>%
 ```
 
 Compared to the previous approaches, Approach 4 with nested data frame allows to explore the data in a principle way.
+
+
+# Hypothesis testing for all proteins
+
+```{r}
+# Run-level summarization
+run_dia <- nested_dia %>% unnest(param) %>% 
+    filter(grepl("run", term)) %>% 
+    mutate(term = gsub("run", "", term)) %>% 
+    select(protein, run = term, log2inty = estimate)
+run_dia
+
+# Design
+design <- twin_dia %>% select(run:visit) %>% distinct()
+
+(run_dia2 <- run_dia %>% left_join(design))
+
+nested_run <- run_dia2 %>% 
+    nest(-protein) %>% 
+    mutate(ttest = map(data, ~t.test(log2inty ~ zygosity, data = .))) %>% 
+    mutate(testsum = map(ttest, glance))
+nested_run
+
+# Results of hypothesis testing for all proteins
+nested_run %>% unnest(testsum)
+
+diff_zyg <- nested_run %>% 
+    unnest(testsum) %>% 
+    select(protein, estimate, statistic, p.value, conf.low, conf.high)
+```
+
+```{r}
+# Multiple testing correction
+diff_zyg %>% 
+    mutate(p_adj = p.adjust(p.value, method = "BH")) %>% 
+    arrange(p_adj)
+```
 
 
 # Resources
