@@ -509,6 +509,9 @@ nested_dia</code></pre>
 ## 9         C1QB &lt;tibble [2,552 × 12]&gt;
 ## 10        C1QC &lt;tibble [1,160 × 12]&gt;
 ## # ... with 23 more rows</code></pre>
+<pre class="r"><code># Same as
+nested_dia %&gt;% 
+    nest(-protein)</code></pre>
 <p>Nested data frame organizes the data in a structurally-informative format where:</p>
 <ul>
 <li>Each row forms a group (e.g., protein).</li>
@@ -683,6 +686,105 @@ nested_dia %&gt;% unnest(param) %&gt;%
 ## # ... with 7,646 more rows</code></pre>
 <p>Compared to the previous approaches, Approach 4 with nested data frame allows to explore the data in a principle way.</p>
 </div>
+</div>
+<div id="hypothesis-testing-for-all-proteins" class="section level1">
+<h1>Hypothesis testing for all proteins</h1>
+<pre class="r"><code># Run-level summarization
+run_dia &lt;- nested_dia %&gt;% unnest(param) %&gt;% 
+    filter(grepl(&quot;run&quot;, term)) %&gt;% 
+    mutate(term = gsub(&quot;run&quot;, &quot;&quot;, term)) %&gt;% 
+    select(protein, run = term, log2inty = estimate)
+run_dia</code></pre>
+<pre><code>## # A tibble: 7,656 × 3
+##        protein   run log2inty
+##          &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;
+## 1  A1AG_BOVINE  R001 14.23117
+## 2  A1AG_BOVINE  R002 14.72773
+## 3  A1AG_BOVINE  R003 15.04693
+## 4  A1AG_BOVINE  R004 15.27169
+## 5  A1AG_BOVINE  R005 14.13167
+## 6  A1AG_BOVINE  R006 14.95051
+## 7  A1AG_BOVINE  R007 14.17014
+## 8  A1AG_BOVINE  R008 14.86916
+## 9  A1AG_BOVINE  R009 14.97600
+## 10 A1AG_BOVINE  R010 14.18763
+## # ... with 7,646 more rows</code></pre>
+<pre class="r"><code># Design
+design &lt;- twin_dia %&gt;% select(run:visit) %&gt;% distinct()
+
+(run_dia2 &lt;- run_dia %&gt;% left_join(design))</code></pre>
+<pre><code>## # A tibble: 7,656 × 7
+##        protein   run log2inty  pair zygosity subject visit
+##          &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt; &lt;int&gt;   &lt;fctr&gt;   &lt;int&gt; &lt;int&gt;
+## 1  A1AG_BOVINE  R001 14.23117     1       MZ       1     1
+## 2  A1AG_BOVINE  R002 14.72773     1       MZ       1     2
+## 3  A1AG_BOVINE  R003 15.04693     1       MZ       2     1
+## 4  A1AG_BOVINE  R004 15.27169     1       MZ       2     2
+## 5  A1AG_BOVINE  R005 14.13167     2       MZ       3     1
+## 6  A1AG_BOVINE  R006 14.95051     2       MZ       3     2
+## 7  A1AG_BOVINE  R007 14.17014     2       MZ       4     1
+## 8  A1AG_BOVINE  R008 14.86916     2       MZ       4     2
+## 9  A1AG_BOVINE  R009 14.97600     3       MZ       5     1
+## 10 A1AG_BOVINE  R010 14.18763     3       MZ       5     2
+## # ... with 7,646 more rows</code></pre>
+<pre class="r"><code>nested_run &lt;- run_dia2 %&gt;% 
+    nest(-protein) %&gt;% 
+    mutate(ttest = map(data, ~t.test(log2inty ~ zygosity, data = .))) %&gt;% 
+    mutate(testsum = map(ttest, glance))
+nested_run</code></pre>
+<pre><code>## # A tibble: 33 × 4
+##        protein               data       ttest               testsum
+##          &lt;chr&gt;             &lt;list&gt;      &lt;list&gt;                &lt;list&gt;
+## 1  A1AG_BOVINE &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 2         A2MG &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 3         AACT &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 4         APOA &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 5        APOA1 &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 6         APOB &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 7         APOE &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 8         C1QA &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 9         C1QB &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## 10        C1QC &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; &lt;data.frame [1 × 10]&gt;
+## # ... with 23 more rows</code></pre>
+<pre class="r"><code># Results of hypothesis testing for all proteins
+nested_run %&gt;% unnest(testsum)</code></pre>
+<pre><code>## # A tibble: 33 × 13
+##        protein               data       ttest    estimate estimate1
+##          &lt;chr&gt;             &lt;list&gt;      &lt;list&gt;       &lt;dbl&gt;     &lt;dbl&gt;
+## 1  A1AG_BOVINE &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.13257675 14.667015
+## 2         A2MG &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.24573175  9.604997
+## 3         AACT &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.06355837 16.610120
+## 4         APOA &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.29233241  8.657020
+## 5        APOA1 &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.11396747 16.539520
+## 6         APOB &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.16242055 13.541448
+## 7         APOE &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.10446592  9.999662
+## 8         C1QA &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.32586527 11.706244
+## 9         C1QB &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.16535709 14.021180
+## 10        C1QC &lt;tibble [232 × 6]&gt; &lt;S3: htest&gt; -0.22086751 10.140152
+## # ... with 23 more rows, and 8 more variables: estimate2 &lt;dbl&gt;,
+## #   statistic &lt;dbl&gt;, p.value &lt;dbl&gt;, parameter &lt;dbl&gt;, conf.low &lt;dbl&gt;,
+## #   conf.high &lt;dbl&gt;, method &lt;fctr&gt;, alternative &lt;fctr&gt;</code></pre>
+<pre class="r"><code>diff_zyg &lt;- nested_run %&gt;% 
+    unnest(testsum) %&gt;% 
+    select(protein, estimate, statistic, p.value, conf.low, conf.high)</code></pre>
+<pre class="r"><code># Multiple testing correction
+diff_zyg %&gt;% 
+    mutate(p_adj = p.adjust(p.value, method = &quot;BH&quot;)) %&gt;% 
+    arrange(p_adj)</code></pre>
+<pre><code>## # A tibble: 33 × 7
+##        protein   estimate statistic      p.value   conf.low   conf.high
+##          &lt;chr&gt;      &lt;dbl&gt;     &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;
+## 1         C1QA -0.3258653 -4.320855 2.610172e-05 -0.4747166 -0.17701392
+## 2          PZP -0.2904613 -4.129934 5.629609e-05 -0.4292745 -0.15164814
+## 3        ITIH4 -0.2605205 -3.677164 3.026605e-04 -0.4002215 -0.12081947
+## 4         VTNC -0.2262007 -3.524178 5.408662e-04 -0.3528690 -0.09953246
+## 5          CO3 -0.2682347 -3.162740 1.863345e-03 -0.4357000 -0.10076948
+## 6         THBG -0.2714476 -3.136073 2.025786e-03 -0.4423412 -0.10055400
+## 7  A1AG_BOVINE -0.1325767 -2.966558 3.452664e-03 -0.2208065 -0.04434695
+## 8         GELS -0.1626346 -2.873091 4.636719e-03 -0.2744559 -0.05081319
+## 9         A2MG -0.2457318 -2.575796 1.097312e-02 -0.4342433 -0.05722025
+## 10        C1QC -0.2208675 -2.432639 1.603569e-02 -0.4001071 -0.04162789
+## # ... with 23 more rows, and 1 more variables: p_adj &lt;dbl&gt;</code></pre>
 </div>
 <div id="resources" class="section level1">
 <h1>Resources</h1>
