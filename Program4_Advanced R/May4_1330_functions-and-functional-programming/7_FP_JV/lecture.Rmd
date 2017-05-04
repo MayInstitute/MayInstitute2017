@@ -1,0 +1,308 @@
+---
+title: "Functional Programming"
+author: "Jan Vitek"
+date: "Wednesday May 3, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```
+- Functionals: `lapply` and family
+- Example: better solution to problem using `lapply`
+- More examples:
+    + `sapply`
+    + `tapply`
+    + `vapply`
+    + `apply`
+    + etc.
+- Anonymous functions
+- Closures
+- When to use a loop vs. functional
+````
+
+*The material in this lecture is based on Hadley Wickham's Advanced R book.*
+
+
+Looking back to a previous example.
+
+```{r}
+set.seed(1014)
+df <- data.frame(replicate(6, sample(c(1:10, -99), 6, rep = TRUE)))
+names(df) <- letters[1:6]
+fix_missing <- function(x) {
+  x[x == -99] <- NA
+  x
+}
+df$a <- fix_missing(df$a)
+df$b <- fix_missing(df$b)
+df$c <- fix_missing(df$c)
+df$d <- fix_missing(df$d)
+df$e <- fix_missing(df$e)
+df$f <- fix_missing(df$e)
+```
+
+`lapply()` takes three inputs: x, a list; f, a function; and ..., other arguments to pass to `f()`. It applies the function to each element of the list and returns a new list. `lapply(x, f, ...)` is equivalent to the following for loop:
+
+```
+out <- vector("list", length(x))
+for (i in seq_along(x)) 
+  out[[i]] <- f(x[[i]], ...)
+```
+
+`lapply()` is called a functional, because it takes a function as an argument. 
+
+Data frames are lists. We just need to make sure we get back a data frame, not a list. Instead of assigning the results of lapply() to df, we’ll assign them to df[]. R’s usual rules ensure that we get a data frame, not a list. 
+
+```{r}
+fix_missing <- function(x) {
+  x[x == -99] <- NA
+  x
+}
+df[] <- lapply(df, fix_missing)
+```
+
+And we can work on portions of the input
+
+```{r}
+df[1:5] <- lapply(df[1:5], fix_missing)
+```
+
+What if different columns used different codes for missing values? You might be tempted to copy-and-paste:
+
+```{r}
+fix_missing_99 <- function(x) {
+  x[x == -99] <- NA
+  x
+}
+fix_missing_999 <- function(x) {
+  x[x == -999] <- NA
+  x
+}
+fix_missing_9999 <- function(x) {
+  x[x == -999] <- NA
+  x
+}
+```
+
+As before, it’s easy to create bugs. Instead we could use closures, functions that make and return functions. 
+
+```{r}
+missing_fixer <- function(na_value) 
+  function(x) { x[x==na_value]<-NA; x }
+
+fix_missing_99 <- missing_fixer(-99)
+fix_missing_999 <- missing_fixer(-999)
+fix_missing_99(c(-99, -999))
+```
+
+# Functionals
+
+A higher-order function is a function that takes a function as an input or returns a function as output. 
+
+# My first functional: lapply()
+
+lapply rougly works like this:
+
+```{r}
+lapply2 <- function(x, f, ...) {
+  out <- vector("list", length(x))
+  for (i in seq_along(x)) 
+    out[[i]] <- f(x[[i]], ...)
+  out
+}
+```
+
+`lapply()` is a wrapper for a common for loop pattern: create a container for output, apply `f()` to each component of a list, and fill the container with the results.
+
+```{r,eval=F}
+# Create some random data
+l <- replicate(20, runif(sample(1:10, 1)), simplify = FALSE)
+
+# With a for loop
+out <- vector("list", length(l))
+for (i in seq_along(l)) out[[i]] <- length(l[[i]])
+unlist(out)
+##  [1]  3  9  1  5  6  9 10  3  3  1  8  3  3  4 10  8  6  8  7  3
+
+# With lapply
+unlist(lapply(l, length))
+##  [1]  3  9  1  5  6  9 10  3  3  1  8  3  3  4 10  8  6  8  7  3
+```
+
+`lapply()` is also useful when you want to do something to each column of a data frame:
+
+```{r}
+# What class is each column?
+unlist(lapply(mtcars, class))
+# Divide each column by the mean
+mtcars[] <- lapply(mtcars, function(x) x / mean(x))
+```
+
+There are three basic ways to use lapply():
+
+ * `lapply(xs, function(x) {})`
+ * `lapply(seq_along(xs), function(i) {})` 
+ * `lapply(names(xs), function(nm) {})`
+ 
+Typically you’d use the first form because `lapply()` takes care of saving the output for you.
+
+# Vector output: sapply and vapply
+
+`sapply()` and `vapply()` are similar to `lapply()` but produce an atomic vector. While sapply() guesses, vapply() takes an argument specifying the output type.
+
+```{r}
+sapply(mtcars, is.numeric)
+##  mpg  cyl disp   hp drat   wt qsec   vs   am gear carb 
+## TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+vapply(mtcars, is.numeric, logical(1))
+##  mpg  cyl disp   hp drat   wt qsec   vs   am gear carb 
+## TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+```
+
+If the function returns results of different types or lengths, `sapply()` will silently return a list, while `vapply()` will throw an error. 
+
+# Multiple inputs: Map (and mapply)
+
+With `lapply()`, only one argument to the function varies. This makes it poorly suited for some problems. For example, how would you find a weighted mean when you have two lists, one of observations and the other of weights?
+
+```{r}
+# Generate some sample data
+xs <- replicate(5, runif(10), simplify = FALSE)
+ws <- replicate(5, rpois(10, 5) + 1, simplify = FALSE)
+```
+
+It’s easy to use `lapply()` to compute the unweighted means:
+
+```{r}
+unlist(lapply(xs, mean))
+## [1] 0.5001362 0.5957105 0.5971894 0.5381643 0.5704373
+```
+
+But how could we supply the weights to `weighted.mean()`? `lapply(x, means, w)` won’t work because the additional arguments to `lapply()` are passed to every call. We could change looping forms:
+
+```{r}
+unlist(lapply(seq_along(xs), function(i) {
+  weighted.mean(xs[[i]], ws[[i]])
+}))
+## [1] 0.5096482 0.5621915 0.5599182 0.4842896 0.5773232
+```
+
+A cleaner alternative is to use Map:
+
+```{r}
+unlist(Map(weighted.mean, xs, ws))
+## [1] 0.5096482 0.5621915 0.5599182 0.4842896 0.5773232
+```
+
+This is equivalent to:
+
+```{r}
+stopifnot(length(xs) == length(ws))
+out <- vector("list", length(xs))
+for (i in seq_along(xs)) {
+  out[[i]] <- weighted.mean(xs[[i]], ws[[i]])
+}
+```
+
+
+Map is useful whenever you have multiple lists/df to process in parallel. E.g. to standardise columns one can compute the means and then divide by them. 
+
+```{r}
+mtmeans <- lapply(mtcars, mean)
+mtmeans[] <- Map(`/`, mtcars, mtmeans)
+```
+
+If some of the arguments should be fixed (e.g. na.rm), use an anonymous function:
+
+```
+Map(function(x, w) weighted.mean(x, w, na.rm = TRUE), xs, ws)
+```
+ 
+# Manipulating lists
+
+Another way of thinking about functionals is as a set of general tools for altering, subsetting, and collapsing lists. Every functional programming language has three tools for this: `Map()`, `Reduce()`, and `Filter()`. 
+
+## Reduce()
+
+`Reduce()` reduces a vector to a scalar by recursively calling a function, f, two arguments at a time. It combines the first two elements with f, then combines the result of that call with the third element, and so on. `Reduce(f, 1:3) == f(f(1, 2), 3)`. 
+
+```{r}
+Reduce(`+`, 1:3) # -> ((1 + 2) + 3)
+Reduce(sum, 1:3) # -> sum(sum(1, 2), 3)
+```
+
+The essence of `Reduce()` is:
+
+```
+Reduce2 <- function(f, x) {
+  out <- x[[1]]
+  for(i in seq(2, length(x)))
+    out <- f(out, x[[i]])
+  out
+}
+```
+
+`Reduce()` is useful for implementing many types of recursive operations, like merges and intersections. Imagine you have a list of numeric vectors, and you want to find the values that occur in every element:
+
+```{r}
+l <- replicate(5, sample(1:10, 15, replace = T), simplify = FALSE)
+str(l)
+## List of 5
+##  $ : int [1:15] 3 5 4 7 8 1 10 2 10 3 ...
+##  $ : int [1:15] 9 4 9 6 4 9 4 3 3 8 ...
+##  $ : int [1:15] 6 4 4 9 7 6 9 4 9 7 ...
+##  $ : int [1:15] 5 5 8 5 7 4 7 7 1 10 ...
+##  $ : int [1:15] 2 10 9 7 5 1 4 6 6 3 ...
+```
+
+You could do that by intersecting each element in turn:
+
+```{r}
+intersect(intersect(intersect(intersect(l[[1]], l[[2]]),
+  l[[3]]), l[[4]]), l[[5]])
+## [1] 3 4 7 8
+```
+That’s hard to read. With `Reduce()`, the equivalent is:
+
+```{r}
+Reduce(intersect, l)
+## [1] 3 4 7 8
+```
+
+## Predicate functionals
+
+A predicate is a function that returns a single TRUE or FALSE, like `is.character`, `all`, or `is.NULL`. A predicate functional applies a predicate to each element of a list or data frame. There are three useful predicate functionals in base R: `Filter()`, `Find()`, and `Position()`.
+
+`Filter()` selects only those elements which match the predicate.
+
+`Find()` returns the first element which matches the predicate.
+
+`Position()` returns the position of the first element that matches the predicate.
+
+Another useful predicate functional is `where()`, a custom functional that generates a logical vector from a list and a predicate:
+
+```{r}
+where <- function(f, x) 
+  vapply(x, f, logical(1))
+```
+
+
+
+```{r}
+df <- data.frame(x = 1:3, y = c("a", "b", "c"))
+where(is.factor, df)
+##     x     y 
+## FALSE  TRUE
+str(Filter(is.factor, df))
+## 'data.frame':    3 obs. of  1 variable:
+##  $ y: Factor w/ 3 levels "a","b","c": 1 2 3
+str(Find(is.factor, df))
+##  Factor w/ 3 levels "a","b","c": 1 2 3
+Position(is.factor, df)
+## [1] 2
+```
+
+

@@ -1,0 +1,318 @@
+---
+title: "Programming with Functions"
+author: "Jan Vitek"
+date: "Wednesday May 3, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{echo=F}
+Learning goals
+- Basics: what is a function and why would you write one?
+- How to write a function
+- Parts of a function
+    + Formals
+    + Body
+    + Environment
+- Example: writing a function
+    + Rewrite a previous example as a function
+- Function arguments
+    + Default and missing arguments
+    + Lazy evaluation
+- Returning values: implicit, `return()`, `invisible()`
+- John Chambers: "To understand computations in R, two slogans are helpful:"
+    + *Everything that exists is an object*
+    + *Everything that happens is a function call*
+- Example: `+` and `-`, etc., are also functions, can be redefined
+- Infix functions, creating a user-defined `%plus%`, etc.
+- How to write good functions
+```
+
+Code often grows organically without structure or discipline. Code often is the result of a sequence of cut-and-paste-with-replacement operations.
+
+```{r}
+x = matrix(1:9, nrow=3,ncol=3)
+r = 0
+r[1] = 10 + x[1,1] * 2 + x[1,2] / 2 + x[1,3] / 4
+r[1] = r[1]*r[1]
+if (is.na(x[2,3]) == FALSE) {
+  r[2] =  x[2,1] * 2 + x[2,2] / 2 + x[2,3] / 4 + 100
+} else {
+  r[2] = NA
+}
+r[3] = x[3,1] * 2 + x[3,2] / 2 + x[3,3] / 4 + 1000
+r[3] = r[3]*r[3]
+r[2] = r[2]* r[2]
+r[3] = as.integer(r[3])
+r[2] = as.integer(r[2])
+r[1] = as.integer(r[1])
+```
+  
+
+*Exercise* assume that the above code was something that needed to be reused. Design a functional abstraction to encapsulate it cleanly.
+
+
+Laws:
+  
+  - code is read more often than written: optimize for the readers
+
+  - avoid repetition: if two code snippets do the same thing, turn them into a function
+  
+  - untested code is wrong code
+  
+   - do not repeat yourself or DRY, principle.   -- from "pragmatic programmers", Dave Thomas and Andy Hunt:
+       "every piece of knowledge must have a single, unambiguous, authoritative representation within a system"
+  
+
+```{r}
+set.seed(1014)
+df <- data.frame(replicate(6, sample(c(1:10, -99), 6, rep = TRUE)))
+names(df) <- letters[1:6]
+df$a[df$a == -99] <- NA
+df$b[df$b == -99] <- NA
+df$c[df$c == -98] <- NA
+df$d[df$d == -99] <- NA
+df$e[df$e == -99] <- NA
+df$f[df$g == -99] <- NA
+```
+
+*Exercise* rewrite the above with a function to replace the missings.
+
+
+## Functions
+
+The building block for creating abstractions in R is the *function declaration*.  These abstractions are used in *function calls*.
+
+A function object is a value in the 
+
+```{r, eval=FALSE}
+f <- function( y ) {  y + 1 }
+f( 1 )
+```
+
+Function definitions in R consist of an argument list and a body. The argument list is a sequence of variable names (with optional default values) and possibly one occurrence of the tripe dot symbol (`...`).  The body of the function can be a single expression or a block (`{...}`).
+
+```{r, eval=FALSE}
+# the shortest function in the book
+function() 1    
+# multiple expressions in the body
+function( x ) { y <- x * x;  y + 1 }
+# default values, optional arguments
+function( x = 0, ..., y = 2)   if(length(z <- list(...) == 0)) x * y  else x * y * z[[1]] 
+```
+
+A function call consists of an expression that evaluates to a function followed by a (possibly empty) list of (possible named) arguments.
+
+Functions can be stored in lists, e.g. `list(f)`.
+
+```{r, eval=FALSE}
+f()
+# the shortest call of them all
+f(1,2)
+# positional calls pass arguments in order
+f(x = 1, y = 2)x`
+f(y = 2, x = 1)
+# named calls pass argument by name without a prescribed order
+(x[42])(x=1)
+# an expression that yields a function can be called
+```
+
+**Exercise** write a definition of a function `f` that will return `0`, `-1`, `1`, `1` for the four calls to `f` above and a variable `x` such that the last call returns `-1`.
+
+
+
+Some functions have inline syntax, `+` for example does not require parentheses and `if else` is  function which takes two arguments.  The assignment operators are functions `<-` and `[]<-, so are parenthese `(`.  All functions can be redefined.
+
+
+To define an inline operator, one can either redefine an existing operator like `+` or use the syntax `%+%` to define a new operator.
+
+```{r}
+"%+%" <- function(a,b) paste(a,b)
+
+"hi" %+% "ho"
+```
+
+This allows users to extend the set of operators but with the risk of collisions.
+
+
+
+```{r, eval=F}
+f <- function(y = 0, x = 0) x - y
+f()
+f(1,2)
+f(x = 1, y = 2)
+f(y = 2, x = 1)
+```
+
+The optional arguments have somewhat interesting semantics. In a function, any argument occurring after the three dots must be passed by name.  In the function body they can be passed as argument to a further call.
+
+Function evaluation is complete when the last expression in the body is evaluated. The `return()` call can break evaluation in the middle.  The `stop()` call can raise an exception that can only be caught in a `tryCatch()` statement. 
+
+```{r, eval=F}
+f <- function(x,acc) {
+  if (x == 0) tryCatch( stop(simpleException("done")), 
+                        simpleException = function(err) acc)
+  else f(x-1, acc+1) 
+}  
+```
+
+
+Each call to a function adds the argument to function on a data structure referred to as the *stack*. When a function returns the arguments are removed from the stack.
+
+### Referential transparency
+
+To facilitate equational reasoning, R attempts to provide *referential transparency* for function calls. Referential transparency means that arguments are not changed by the function being called. So the following function `f(x)` does not modify the vector passed in.
+
+```{r}
+x
+f <- function(x) { x[1] <- 1 }
+f(x)
+x
+```
+
+But then what does it change in the body?
+
+What are the statements that cause this happen?
+
+
+## Delayed Evaluation
+
+**Exercise** Consider the following code, what will it print?
+
+```{r}
+print(1)   # outputs "1" on the terminal
+f<-function(a,b) { invisible(0) }  # a helper, nevermind
+f( print(1) , print(2) )   # what would this do in Java or in C
+temp <-print(1);temp2 <- print(2); f(temp, temp2)  # same thing?
+```
+
+**Exercise** What will this print?
+
+```{r}
+f1 <- function( a, b, c ) { # Consider the following, not very useful function
+ x <- f(b,b)
+ x <- c
+ x <- c
+ a
+}
+
+f1( print(1), print(2), print(3) ) # What do you recon this will print?
+```
+
+**Exercise** What will this print?
+
+```{r}
+f2 <- function( a, b, c ) { # here is another function
+  x <- b
+  x <- c
+  f3(a)
+}
+
+f3 <- function( a) { } # with a silly helper function
+
+f2( print(1), print(2), print(3) ) # what will we print?
+```
+
+In R, arguments to a functions are not evaluated, they are packaged into *promises*. A promise is only evaluated if it is accessed (and only the first time it is accessed).  
+
+Every expression is passed as a promise, except constants.
+
+The following is an obscure corner of R.   Enjoy.
+
+```{r}
+FU <- function(b="") print(paste("FU",b))                # A function
+BAR <- function( FU = print("BAR"))  FU("bar")   # Another function with a default argument
+BAR()   # call bar will print ?
+BAR( function(n) print("YO") )  # and now?
+```
+
+
+## Building a counter abstraction
+
+With referential transparency it is difficult to mutate non-local state.  What if we wanted to create a large number of counters and did not want anyone but us to be able to update them.
+
+
+
+```{r}
+remove(xPriv)
+counter <- function() { xPriv <- xPriv + 1; xPriv}
+#counter()             # oops, we need to define x
+xPriv<-0
+counter()
+counter()             # Hmm... not quite
+
+# Super assignment to the rescue
+counter <- function() { xPriv <<- xPriv + 1; xPriv}  # <<- assigns in the parent env
+counter()
+counter()             # now we have a counter
+```
+
+This only lets us have a single counter. What if we want a counter factory?
+
+
+```{r}
+mkC <- function () { 
+    xPriv <- 0
+    function() { xPriv <<- xPriv + 1; xPriv }
+  }
+
+count <- mkC()
+count()
+count()
+```
+
+The above uses the environment of the `mkC()` function to store the counter. Each time we call `mkC`, a new environment is created.
+
+
+## Build abstraction with domain specific languages
+
+R allows to leverage delayed evaluation in order to implement domain specific languages.
+
+Here is the example of timer function that repeatedly run the expression passed in as argument and reports the timing of that expression.
+
+```{r}
+tm <- function( exp ) {
+ x<- deparse(substitute( exp ))   ## decompile the expression
+ t <- 1                           ## repetion counter (we run exp 10 * t)
+ time = 0;                        ## reset timer
+ while ( time < 1 ) {             ## continue looking until the code runs long enough
+  y<- paste(" system.time(for(i in 1:",t,"){",x,"})")
+  r <- eval(parse(text=y))        ## execute
+  time <- r[3]                    ## grab the elasped time
+  t <- t * 10                     ## try with a bigger t
+ }
+ (time / t) * 1000                ## return time in milliseconds (default is in s)
+}
+tm(1 + 1)
+```
+
+
+# Testing 
+
+```{r}
+#install.packages ("testthat")
+library(stringr)
+library(testthat)
+
+test_that("str_length is number of characters", {
+  expect_equal(str_length("a"), 1)
+  expect_equal(str_length("ab"), 2)
+  expect_equal(str_length("abc"), 3)
+})
+
+test_that("str_length of factor is length of level", {
+  expect_equal(str_length(factor("a")), 1)
+  expect_equal(str_length(factor("ab")), 2)
+  expect_equal(str_length(factor("abc")), 3)
+})
+
+test_that("str_length of missing is missing", {
+  expect_equal(str_length(NA), NA_integer_)
+  expect_equal(str_length(c(NA, 1)), c(NA, 1))
+  expect_equal(str_length("NA"), 2)
+})
+```
+
