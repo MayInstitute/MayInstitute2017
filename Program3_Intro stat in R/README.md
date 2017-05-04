@@ -6,7 +6,7 @@
 
 ### Suggested reading
 
-* [[https://www.nature.com/collections/qghhqm/pointsofsignificance][Points of Significance : Statistics for Biologists]]
+* [Points of Significance : Statistics for Biologists](https://www.nature.com/collections/qghhqm/pointsofsignificance)
 
 ### Schedule and material
 
