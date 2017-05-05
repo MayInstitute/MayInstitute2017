@@ -1077,10 +1077,9 @@ on the *Simply Statistics* blog.
 
 ## Linear modelling
 
-On the plots above, `abline(0, 1)` was used to add a line with
-intercept 0 and slop 1. It we want to add the line that models the
-data linearly, we can calculate the parameters using the `lm`
-function:
+`abline(0, 1)` can be used to add a line with intercept 0 and
+slop 1. It we want to add the line that models the data linearly, we
+can calculate the parameters using the `lm` function:
 
 
 ```r
