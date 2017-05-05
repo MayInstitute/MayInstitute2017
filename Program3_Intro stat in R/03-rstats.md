@@ -90,8 +90,6 @@ table(oneproteindata.condition12[, c("Condition", "BioReplicate")])
 ## Condition    1 2
 ##   Condition1 3 0
 ##   Condition2 0 3
-##   Condition3 0 0
-##   Condition4 0 0
 ```
 
 If we want to remove the levels that are not relevant anymore, we can
@@ -223,11 +221,11 @@ summaryresult
 ## 2 Condition2 26.00661 0.16268179 0.09392438      3     25.60248
 ## 3 Condition3 23.25609 0.09467798 0.05466236      3     23.02090
 ## 4 Condition4 20.97056 0.73140174 0.42227499      3     19.15366
-##   ciw.upper.95
-## 1     26.49458
-## 2     26.41073
-## 3     23.49128
-## 4     22.78746
+##   ciw.upper.95 ciw.lower.99 ciw.upper.99
+## 1     26.49458     25.64058     26.83205
+## 2     26.41073     25.07442     26.93879
+## 3     23.49128     22.71357     23.79860
+## 4     22.78746     16.77955     25.16157
 ```
 
 ```r
@@ -792,7 +790,7 @@ chisq.test(cancer.polyps)
 ## X-squared = 2.3268, df = 1, p-value = 0.1272
 ```
 
-!! Mathematically, two tests above are equivalent. `prop.test()` uses `chisq.test()` internally and print output differently.
+Mathematically, two tests above are equivalent. `prop.test()` uses `chisq.test()` internally and print output differently.
 
 
 ### Fisher's exact test

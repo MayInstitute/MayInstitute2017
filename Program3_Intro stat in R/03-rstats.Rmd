@@ -508,7 +508,7 @@ $E_{ij}$ : $n_{i+}n_{+j}/n$, where $n_{i+}$ is the row count sum, $n_{+j}$ is th
 chisq.test(cancer.polyps)
 ```
 
-!! Mathematically, two tests above are equivalent. `prop.test()` uses `chisq.test()` internally and print output differently.
+Mathematically, two tests above are equivalent. `prop.test()` uses `chisq.test()` internally and print output differently.
 
 
 ### Fisher's exact test
