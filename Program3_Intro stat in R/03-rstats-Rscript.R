@@ -25,8 +25,8 @@ table(oneproteindata.condition12[, c("Condition", "BioReplicate")])
 
 # t test for different abundance (log2Int) between Groups (Condition)
 result <- t.test(Log2Intensity ~ Condition,
-data = oneproteindata.condition12,
-var.equal = FALSE)
+                 data = oneproteindata.condition12,
+                 var.equal = FALSE)
 
 result
 
@@ -138,21 +138,9 @@ unique(TCGA.CRC$Gender)
 class(TCGA.CRC$Gender)
 
 ## **Challenge**
-* Get unique information and class for Cancer information
-* Get unique information and class for BRAF.mutation information
-* Get unique information and class for history_of_colon_polyps information
-
-## check unique information of Cancer column.
-unique(TCGA.CRC$Cancer)
-class(TCGA.CRC$Cancer)
-
-## check unique information of BRAF.mutation column.
-unique(TCGA.CRC$BRAF.mutation)
-class(TCGA.CRC$BRAF.mutation)
-
-## check unique information of history_of_colon_polyps column.
-unique(TCGA.CRC$history_of_colon_polyps)
-class(TCGA.CRC$history_of_colon_polyps)
+#* Get unique information and class for Cancer information
+#* Get unique information and class for BRAF.mutation information
+#* Get unique information and class for history_of_colon_polyps information
 
 ## check how many female and male are in the dataset
 table(TCGA.CRC$Gender)
@@ -219,13 +207,7 @@ ft$estimate
 
 ## **Challenge**
 ## * Compare the proportion of male patients in the patients with colon cancer is different from that in the patients with rectal cancer.
-cancer.gender <- table(TCGA.CRC$Gender, TCGA.CRC$Cancer)
-cancer.gender
-dotchart(cancer.gender, xlab = "Observed counts")
-male <- cancer.gender[2, ]
-cancer <- apply(cancer.gender, 2, sum)
-pt <- prop.test(male, cancer)
-pt
+
 
 ## **Challenge**
 # Write a function named f2c (c2f) that converts a temperature
