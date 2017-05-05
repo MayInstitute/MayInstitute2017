@@ -41,9 +41,9 @@
 | Day     | Time          | Content             |
 |---------|---------------|---------------------|
 | 5 May   | 8:00 - 9:00am | Bring your own data |
-|         | 9:00 - 10:30am| Statistical hypothesis testing  |
+|         | 9:00 - 10:30am| Lecture: sample size, linear regression, categorical data |
 |         | 10:30 - 11:00am| Refreshments       |
-|         | 11:00 - 12:30pm| Lecture: sample size, linear regression, categorical data |
+|         | 11:00 - 12:30pm| Statistical hypothesis testing  |
 |         | 12:30 - 13:30pm| Lunch break        |
 |         | 13:30 - 3:00pm | Sample size, categorical data hands-on |
 |         | 3:00 - 3:30pm  | Refreshments         |
