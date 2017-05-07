@@ -71,8 +71,26 @@ g1 + geom_bar(fill="#FF9999", colour="yellow")
 ```
 
 > **Challenge**
-> Plot the scatter plot of the abundance of protein ??AFM?? and ??AHSG?? and change the color of points to blue globally.
+> Plot the scatter plot of the abundance of protein AFM and AHSG and change the color of points to blue globally.
 
+$~$
+
+$~$
+$~$
+
+$~$
+$~$
+
+$~$
+$~$
+
+$~$
+$~$
+
+$~$
+$~$
+
+$~$
 
 ```{r}
 ggplot(CRC, aes(x = AFM, y = AHSG))+
@@ -130,7 +148,26 @@ g2 + geom_point(mapping = aes(color = Sub_group)) +
 
 
 > **Challenge**
-> Plot the scatter plot of the abundance of protein ??AFM?? and ??AHSG?? and specify the color by gender using "Paired?? palette.
+> Plot the scatter plot of the abundance of protein AFM and AHSG and specify the color by gender using "Paired" palette.
+
+$~$
+
+$~$
+$~$
+
+$~$
+$~$
+
+$~$
+$~$
+
+$~$
+$~$
+
+$~$
+$~$
+
+$~$
 
 
 

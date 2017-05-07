@@ -41,32 +41,47 @@ names(NCI60)
 
 # 2. Improve figure clarity
 
-```{r, eeval=T, echo=T, fig.width=5, fig.height=4}
 ## 2.1 Deal with overplotting
 
+Recall the basic scatter plot we made before
+```{r, eeval=T, echo=T, fig.width=5, fig.height=4}
 # Basic scatter plot
 p <- ggplot(CRC, aes(x = SERPINA3, y = TIMP1))
 p + geom_point()
+```
 
+`geom_jitter()` adds a small amount of random variation to the location of each point, and is a useful way of handling overplotting caused by discreteness in smaller datasets
+```{r}
 # moves each point by a small, random amount
 p + geom_jitter(width = 0.25)
+```
 
-# For larger datasets
+But `geom_jitter()` doesn't work well for larger datasets
+```{r}
 s <- ggplot(NCI60, aes(BR_BT549_a, BR_HS578T_a))
 s + geom_point()
+s + geom_jitter
+```
 
-# Change the shape from solid to hollow circles
+We can change the shape from solid to hollow circles
+```{r}
 s + geom_point(shape = 1) 
-# Pixel sized
+```
+Or change the point to pixel size
+```{r}
 s + geom_point(shape = ".") 
+```
 
-# use alpha blending (transparency) to make the points transparent
-# If you specify alpha as a ratio, the denominator gives the number of points that must be overplotted to give a solid colour.
+We can also use alpha blending (transparency) to make the points transparent. If we specify alpha as a ratio, the denominator gives the number of points that must be overplotted to give a solid colour.
+```{r}
 s + geom_point(alpha = 1 / 3)
 s + geom_point(alpha = 1 / 5)
 s + geom_point(alpha = 1 / 10)
+```
 
 ## 2.2 Order bar chart
+First, we have to calculate the height of each bar manually and sort the bar height. Then make bar plot with `stat="identity"`
+```{r}
 g <- ggplot(CRC, aes(Sub_group)) 
 g + geom_bar()
 
@@ -78,9 +93,11 @@ subgroup
 
 ggplot(subgroup, aes(x=Sub_group, y=n)) + 
   geom_bar(stat="identity")
+```
 
 ## 2.3 Zooming
-# Change the limit of x-axis and y-axis
+We can change the limit of x-axis and y-axis to see the plot details.
+```{r}
 h <- ggplot(CRC, aes(SERPINA3))
 
 # Change the bar width
@@ -90,8 +107,10 @@ h + geom_histogram(binwidth = 0.1)
 # Change the limit of x-axis and y-axis
 h + geom_histogram(binwidth = 0.1) +
   coord_cartesian(xlim = c(12.5, 16))
+```
 
-# Color specific point in scatter plot
+We can also color specific point in scatter plot to see how it looks like
+```{r}
 ggplot(data = CRC) +
   geom_point(mapping = aes(x = SERPINA3, y = TIMP1))
 

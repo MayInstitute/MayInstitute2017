@@ -1,6 +1,6 @@
 ---
 title: "May institute Data visualization module: Hands-on 1"
-author: "Ting Huang"
+author: "Ting Huang and Dan Guo"
 date: "May 8, 2017"
 output: 
   html_document:
@@ -174,7 +174,19 @@ g + geom_point()
 
 > **Challenge**
 > 
-> If you want to explore the relationship between the abundance of protein ??AFM?? and ??AHSG??,  what plot will you make?
+> If you want to explore the relationship between the abundance of protein AFM and AHSG,  what plot will you make?
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
 
 
 
@@ -246,9 +258,20 @@ save.image(file='Handson1.RData')
 ```
 
 > **Challenge**
-> If you want to explore the relationship between the abundance of protein ??AFM?? and ??AHSG?? and see the difference between male and female, what plot will you make?
+> If you want to explore the relationship between the abundance of protein AFM and AHSG and see the difference between male and female, what plot will you make?
 Save your plot!
 
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
 
 ```{r}
 ggplot(data = CRC) +

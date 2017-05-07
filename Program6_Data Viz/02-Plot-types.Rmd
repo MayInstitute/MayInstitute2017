@@ -22,7 +22,6 @@ knitr::opts_chunk$set(echo = TRUE)
     + Text plot
     + Boxplot and violin plot
     + Line chart
-    + Heatmap
 
 ---    
 
@@ -99,8 +98,22 @@ g3 + geom_freqpoly()
 
 
 > **Challenge**
-> If you want to know the density distribution of protein ??AFM?? among all the observations, what plot will you make? 
+> If you want to know the density distribution of protein AFM among all the observations, what plot will you make? 
 
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+$~$
 
 ```{r}
 g <- ggplot(CRC, aes(AFM))
@@ -128,8 +141,28 @@ smoothScatter(CRC$SERPINA3, CRC$TIMP1)
 
 
 > **Challenge**
-> If you want to the relationship of abundance between protein ??AFM?? and ??AHSG??, what plot will you make?
+> If you want to the relationship of abundance between protein AFM and AHSG, what plot will you make?
 
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+$~$
+
+```{r}
+ggplot(CRC, aes(x = AFM, y = AHSG))+
+  geom_point()+
+  geom_smooth()
+```
 
 ## 2.4 Text plot
 `geom_text` can add text to the plot
@@ -171,6 +204,13 @@ b <- ggplot(CRC, aes(Sub_group, SERPINA3))
 b + geom_boxplot()
 ```
 
+We can also overlay multiple geoms by simply adding them one after the other.
+```{r}
+b + geom_boxplot() + geom_jitter() 
+b + geom_jitter() + geom_boxplot()
+b + geom_jitter(alpha = 0.5) + geom_boxplot()
+```
+
 We want to consider another factor *gender*
 ```{r}
 b + geom_boxplot(aes(fill= factor(Gender)), position = "dodge")
@@ -181,7 +221,7 @@ A violin plot is a mirrored density plot displayed in the same way as a boxplot.
 b + geom_violin()
 ```
 
-### 3.5 Line chart
+## 2.6 Line chart
 We want to know how the protein abundance changes across different samples.
 ```{r}
 ggplot(CRC[1:100,],aes(Sample, SERPINA3, group = 1)) + 
@@ -191,14 +231,38 @@ ggplot(CRC[1:100,],aes(Sample, SERPINA3, group = 1)) +
 
 
 > **Challenge**
-> If you want to compare the abundance distribution of protein ??AFM?? among different groups, what plot will make?
+> If you want to compare the abundance distribution of protein AFM among different groups, what plot will make?
 > And you also want to see the difference between  male and female in each group, what change will make?
+> How to make the boxplot horizontal direction?
+> Add data points to the boxplot.
+$~$
 
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+
+$~$
+$~$
 
 
 ```{r}
-ggplot(CRC) + 
-  geom_boxplot(aes(Sub_group, AFM))
-ggplot(CRC) + 
-  geom_boxplot(aes(Sub_group, AFM, fill= factor(Gender)), position = "dodge")
+ggplot(CRC,aes(Sub_group, AFM)) + 
+  geom_boxplot()
+
+ggplot(CRC,aes(Sub_group, AFM, fill= factor(Gender))) + 
+  geom_boxplot(position = "dodge")
+
+ggplot(CRC,aes(Sub_group, AFM, fill= factor(Gender))) + 
+geom_boxplot(position = "dodge") +
+  coord_flip()
+
+ggplot(CRC,aes(Sub_group, AFM, fill= factor(Gender))) + 
+  geom_boxplot(position = "dodge")+
+  geom_jitter()
 ```
