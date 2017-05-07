@@ -1,0 +1,181 @@
+---
+title: "May institute Data visualization module: Hands-on 2"
+author: "Ting Huang"
+date: "May 8, 2017"
+output: 
+  html_document:
+    self_contained: true
+    toc: true
+    toc_float: true
+    fig_caption: no	
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Objectives
+
+* Deal with overplotting
+* Order bar chart
+* Zooming
+* Change labels, themes, and scales
+
+***
+
+
+
+## 1. Reading in data
+In this section we’ll continue using CRC dataset.
+```{r, echo=T, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+CRC <- read.csv("./data/CRC_train.csv")
+NCI60 <- read.csv("./data/NCI60.csv")
+names(NCI60)
+```
+
+***
+
+# 2. Improve figure clarity
+
+```{r, eeval=T, echo=T, fig.width=5, fig.height=4}
+## 2.1 Deal with overplotting
+
+# Basic scatter plot
+p <- ggplot(CRC, aes(x = SERPINA3, y = TIMP1))
+p + geom_point()
+
+# moves each point by a small, random amount
+p + geom_jitter(width = 0.25)
+
+# For larger datasets
+s <- ggplot(NCI60, aes(BR_BT549_a, BR_HS578T_a))
+s + geom_point()
+
+# Change the shape from solid to hollow circles
+s + geom_point(shape = 1) 
+# Pixel sized
+s + geom_point(shape = ".") 
+
+# use alpha blending (transparency) to make the points transparent
+# If you specify alpha as a ratio, the denominator gives the number of points that must be overplotted to give a solid colour.
+s + geom_point(alpha = 1 / 3)
+s + geom_point(alpha = 1 / 5)
+s + geom_point(alpha = 1 / 10)
+
+## 2.2 Order bar chart
+g <- ggplot(CRC, aes(Sub_group)) 
+g + geom_bar()
+
+subgroup <- CRC %>% group_by(Sub_group) %>% summarise(n = n()) # count the number of samples for each sub group
+subgroup
+subgroup <- subgroup[order(subgroup$n), ]  # sort
+subgroup$Sub_group <- factor(subgroup$Sub_group, levels = subgroup$Sub_group)  # to retain the order in plot.
+subgroup
+
+ggplot(subgroup, aes(x=Sub_group, y=n)) + 
+  geom_bar(stat="identity")
+
+## 2.3 Zooming
+# Change the limit of x-axis and y-axis
+h <- ggplot(CRC, aes(SERPINA3))
+
+# Change the bar width
+h + geom_histogram()
+h + geom_histogram(binwidth = 0.1)
+
+# Change the limit of x-axis and y-axis
+h + geom_histogram(binwidth = 0.1) +
+  coord_cartesian(xlim = c(12.5, 16))
+
+# Color specific point in scatter plot
+ggplot(data = CRC) +
+  geom_point(mapping = aes(x = SERPINA3, y = TIMP1))
+
+CRC2 <- CRC
+highlight.sample <- "P1D2"
+CRC2$highlight <- ifelse(CRC2$Sample == highlight.sample, "highlight", "normal")
+textdf <- CRC2[CRC2$Sample == highlight.sample, ]
+mycolours <- c("highlight" = "red", "normal" = "grey50")
+
+textdf
+
+ggplot(data = CRC2, aes(x = SERPINA3, y = TIMP1)) +
+  geom_point(size = 3, aes(colour = highlight)) +
+  scale_color_manual("Sample", values = mycolours) +
+  geom_text(data = textdf, aes(x = SERPINA3, y = TIMP1* 0.99, label = highlight.sample), colour = "red")
+
+
+## 2.4 Change labels, themes, and scales
+# 2.4.1 titles, subtitles and captions
+p1 <- ggplot(data = CRC) +
+  geom_point(mapping = aes(x = SERPINA3, y = TIMP1, color = Sub_group))
+p1 + labs(title = "Compare between sub groups",
+          subtitle = "Benign samples are mixed with the other two groups",
+          caption = "Data vis example")
+
+# Axis labels and legend titles
+p1 + labs(x = "Protein SERPINA3", y = "Protein TIMP1", color = "Sub groups")
+
+# 2.4.2 Theme: Change appearance of non-data elements
+p1 + theme_grey()
+p1 + theme_classic()
+p1 + theme_dark()
+p1 + theme_light()
+p1 + theme_void()
+p1 + theme(panel.background = element_rect(fill = "white", colour = "grey50"))
+           
+CRC.two.prot <- CRC[,c("SERPINA3","TIMP1","Sample")]
+plot.data <- CRC.two.prot[1:20,] %>% gather(Protein, Abundance, -Sample)
+
+p2 <- ggplot(plot.data) + 
+  geom_line(aes(x=Sample, y = Abundance, group = Protein, colour=Protein))
+
+#  Change the appearance and the orientation angle of axis labels
+#  Reference: http://ggplot2.tidyverse.org/reference/theme.html
+p2 + theme(axis.text.x = element_text(face="bold", color="blue", size=10, angle=45),
+          axis.title.x = element_text(face="bold", colour="#990000", size=20),
+          axis.text.y = element_text(face="bold", color="blue", size=14),
+          axis.title.y = element_text(face="bold", colour="#990000", size=20))
+
+# Hide x an y axis tick mark labels
+p2 + theme(
+  axis.text.x = element_blank(),
+  axis.title.x = element_blank(),
+  axis.text.y = element_blank(),
+  axis.title.y = element_blank())
+
+# Remove axis ticks and tick mark labels
+p2 + theme(
+  axis.ticks = element_blank())
+
+# Adjust Legend
+p2 + theme(legend.position = "right") # the default
+p2 + theme(legend.position = "bottom")
+p2 + theme(legend.position = "none")
+
+# Strips
+# Facetting creates tables of graphics by splitting the data into subsets and displaying the same graph for each subset
+p3 <- ggplot(CRC) + 
+  geom_point(aes(x = SERPINA3, y = TIMP1)) +
+  facet_grid(~ Group)
+p3
+ 
+p3 + theme(strip.background = element_rect(colour = "white", fill = "yellow"))
+
+# 2.4.3 Scales: control the appearance of data elements.
+# A scale function for each aesthetic.
+# change color themes
+p1 + scale_color_grey()
+p1 + scale_color_brewer(palette = "Set1")
+
+# change the axis scales
+p1 + scale_x_log10() 
+p1 + scale_y_log10()
+
+p1 + scale_x_continuous(name="Protein SERPINA3", limits=c(12, 16)) +
+  scale_y_continuous(name="Protein TIMP1")
+```

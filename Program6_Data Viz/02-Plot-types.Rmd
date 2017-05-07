@@ -1,0 +1,204 @@
+---
+title: "May institute Data visualization module: Hands-on 2"
+author: "Ting Huang and Dan Guo"
+date: "May 8, 2017"
+output: 
+  html_document:
+    self_contained: true
+    toc: true
+    toc_float: true
+    fig_caption: no	
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Objectives
+* Data Exploration
+* Plot types
+    + Bar plot and pie chart
+    + Histogram
+    + Scatter plot
+    + Text plot
+    + Boxplot and violin plot
+    + Line chart
+    + Heatmap
+
+---    
+
+# 1. Data Exploration
+In this section we’ll continue using the colonrectal cancer dataset. But besides sub group information, we'll explore other sample information.
+
+```{r, echo=T, warning=FALSE}
+CRC <- read.csv("./data/CRC_train.csv")
+str(CRC[,73:79])
+
+# Inspect the possible values for the annotation columns
+unique(CRC[, 'Cancer_stage'])
+unique(CRC[, 'Tumour_location'])
+unique(CRC[, 'Sub_group'])
+```
+
+---
+
+# 2. Plot types
+## 2.1 Bar plot and pie chart
+`geom_bar()` makes the height of the bar proportional to the number of cases in each group.
+```{r,warning=FALSE, message=F}
+library(ggplot2)
+# Investigate the number of each sub_group
+g1 <- ggplot(CRC, aes(Sub_group)) 
+g1 + geom_bar()
+# horizontal barplot
+g1 + geom_bar() + 
+  coord_flip()
+```
+
+We can also calculate the number of patients in each group manually and then make bar plot with `stat="identity"`
+```{r, warning=FALSE, message=F}
+library(dplyr)
+# count the number of samples in each sub group
+n_subgroup <- CRC %>% group_by(Sub_group) %>% summarise(N = n())
+n_subgroup
+ggplot(n_subgroup, aes(x=Sub_group, y=N)) + 
+  geom_bar(stat="identity")
+```
+
+
+We want to know the count of different gender patients in each sub group
+```{r}
+g2 <- ggplot(CRC, aes(Sub_group, fill=factor(Gender)))
+# Stacked barplot puts overlapping bars on top of each other
+g2 + geom_bar(position = "stack")
+# place overlapping bars side-by-side
+g2 + geom_bar(position = "dodge")
+#displays proportions
+g2 + geom_bar(position = "fill") 
+```
+
+Pie chart is changed from bar chart through `coord_polar()`
+```{r}
+ggplot(data = CRC) + 
+  geom_bar(mapping = aes(x = factor(1), fill = factor(Sub_group))) + 
+  coord_polar(theta = "y")
+```
+
+
+## 2.2 Histogram
+
+We want to Investigate the abundance distribution of one protein. `geom_histogram()` shows the distribution of a single variable
+```{r}
+g3 <- ggplot(CRC, aes(SERPINA3))
+g3 + geom_histogram()
+```
+
+`freqency polygons` show the distribution of a single variable with lines
+```{r}
+g3 + geom_freqpoly()
+```
+
+
+> **Challenge**
+> If you want to know the density distribution of protein ??AFM?? among all the observations, what plot will you make? 
+
+
+```{r}
+g <- ggplot(CRC, aes(AFM))
+g + geom_histogram()
+g + geom_freqpoly()
+```
+
+## 2.3 Scatter plot
+We want to investigate the relation between two proteins. `geom_point()` is used to create scatterplots. The scatterplot is most useful for displaying the relationship between two continuous variables.
+```{r}
+g <- ggplot(CRC, aes(x = SERPINA3, y = TIMP1))
+g + geom_point()
+```
+
+If you have a scatterplot with a lot of noise, it can be hard to see the dominant pattern. In this case it’s useful to add a smoothed line to the plot with `geom_smooth()`
+```{r}
+g + geom_point() + 
+  geom_smooth()
+```
+
+`smoothScatter()` produces a smoothed color density representation of a scatterplot
+```{r}
+smoothScatter(CRC$SERPINA3, CRC$TIMP1)
+```
+
+
+> **Challenge**
+> If you want to the relationship of abundance between protein ??AFM?? and ??AHSG??, what plot will you make?
+
+
+## 2.4 Text plot
+`geom_text` can add text to the plot
+```{r}
+g + geom_text(aes(label = Sub_group))
+```
+
+`check_overlap` can remove the overlapped texts
+```{r}
+g + geom_text(aes(label = Sub_group), check_overlap = TRUE)
+```
+
+We can aslo add points to the plot.
+```{r}
+g + geom_text(aes(label = Sub_group), check_overlap = TRUE) +
+  geom_point()
+```
+
+`nudge_x` and `nudge_y` can offset the text
+```{r}
+g + geom_text(aes(label = Sub_group), nudge_y = 0.05, check_overlap = TRUE) +
+  geom_point()
+```
+
+Adding labels to bar plot
+```{r}
+# create a ggplot data
+ggplot(n_subgroup, aes(x=Sub_group, y=N)) +
+  # draw the bar plot
+  geom_bar(stat="identity") +
+  # create the number text above the bar in white
+  geom_text(aes(label=N), vjust=1.5, colour="white")
+```
+ 
+## 2.5 Boxplot and violin plot
+We want to investigate how protein abundance varies across different groups. `geom_boxplot()` summarise the shape of the distribution with a handful of summary statistics.
+```{r}
+b <- ggplot(CRC, aes(Sub_group, SERPINA3)) 
+b + geom_boxplot()
+```
+
+We want to consider another factor *gender*
+```{r}
+b + geom_boxplot(aes(fill= factor(Gender)), position = "dodge")
+```
+
+A violin plot is a mirrored density plot displayed in the same way as a boxplot.
+```{r}
+b + geom_violin()
+```
+
+### 3.5 Line chart
+We want to know how the protein abundance changes across different samples.
+```{r}
+ggplot(CRC[1:100,],aes(Sample, SERPINA3, group = 1)) + 
+  geom_point(size = 0.5) +
+  geom_line() 
+```
+
+
+> **Challenge**
+> If you want to compare the abundance distribution of protein ??AFM?? among different groups, what plot will make?
+> And you also want to see the difference between  male and female in each group, what change will make?
+
+
+
+```{r}
+ggplot(CRC) + 
+  geom_boxplot(aes(Sub_group, AFM))
+ggplot(CRC) + 
+  geom_boxplot(aes(Sub_group, AFM, fill= factor(Gender)), position = "dodge")
+```
