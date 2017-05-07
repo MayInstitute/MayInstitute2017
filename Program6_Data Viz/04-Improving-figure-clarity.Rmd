@@ -60,7 +60,7 @@ But `geom_jitter()` doesn't work well for larger datasets
 ```{r}
 s <- ggplot(NCI60, aes(BR_BT549_a, BR_HS578T_a))
 s + geom_point()
-s + geom_jitter
+s + geom_jitter()
 ```
 
 We can change the shape from solid to hollow circles
@@ -120,16 +120,15 @@ CRC2$highlight <- ifelse(CRC2$Sample == highlight.sample, "highlight", "normal")
 textdf <- CRC2[CRC2$Sample == highlight.sample, ]
 mycolours <- c("highlight" = "red", "normal" = "grey50")
 
-textdf
-
 ggplot(data = CRC2, aes(x = SERPINA3, y = TIMP1)) +
   geom_point(size = 3, aes(colour = highlight)) +
   scale_color_manual("Sample", values = mycolours) +
   geom_text(data = textdf, aes(x = SERPINA3, y = TIMP1* 0.99, label = highlight.sample), colour = "red")
-
+```
 
 ## 2.4 Change labels, themes, and scales
 # 2.4.1 titles, subtitles and captions
+```{r}
 p1 <- ggplot(data = CRC) +
   geom_point(mapping = aes(x = SERPINA3, y = TIMP1, color = Sub_group))
 p1 + labs(title = "Compare between sub groups",
@@ -138,24 +137,29 @@ p1 + labs(title = "Compare between sub groups",
 
 # Axis labels and legend titles
 p1 + labs(x = "Protein SERPINA3", y = "Protein TIMP1", color = "Sub groups")
+```
 
 # 2.4.2 Theme: Change appearance of non-data elements
+We can change the plot background by `theme`. Reference: http://ggplot2.tidyverse.org/reference/theme.html
+```{r}
 p1 + theme_grey()
 p1 + theme_classic()
 p1 + theme_dark()
 p1 + theme_light()
 p1 + theme_void()
 p1 + theme(panel.background = element_rect(fill = "white", colour = "grey50"))
-           
+```       
+
+We can further change the appearance and the orientation angle of title and axis labels
+```{r}
 CRC.two.prot <- CRC[,c("SERPINA3","TIMP1","Sample")]
 plot.data <- CRC.two.prot[1:20,] %>% gather(Protein, Abundance, -Sample)
 
 p2 <- ggplot(plot.data) + 
   geom_line(aes(x=Sample, y = Abundance, group = Protein, colour=Protein))
-
-#  Change the appearance and the orientation angle of axis labels
-#  Reference: http://ggplot2.tidyverse.org/reference/theme.html
-p2 + theme(axis.text.x = element_text(face="bold", color="blue", size=10, angle=45),
+ 
+p2 + theme(plot.title = element_text(size=20, colour="darkblue"),
+          axis.text.x = element_text(face="bold", color="blue", size=10, angle=45),
           axis.title.x = element_text(face="bold", colour="#990000", size=20),
           axis.text.y = element_text(face="bold", color="blue", size=14),
           axis.title.y = element_text(face="bold", colour="#990000", size=20))
@@ -170,31 +174,42 @@ p2 + theme(
 # Remove axis ticks and tick mark labels
 p2 + theme(
   axis.ticks = element_blank())
+```
 
-# Adjust Legend
+Adjust Legend position
+```{r}
 p2 + theme(legend.position = "right") # the default
 p2 + theme(legend.position = "bottom")
 p2 + theme(legend.position = "none")
+```
 
-# Strips
-# Facetting creates tables of graphics by splitting the data into subsets and displaying the same graph for each subset
+Facetting creates tables of graphics by splitting the data into subsets and displaying the same graph for each subset
+```{r}
 p3 <- ggplot(CRC) + 
   geom_point(aes(x = SERPINA3, y = TIMP1)) +
   facet_grid(~ Group)
 p3
  
 p3 + theme(strip.background = element_rect(colour = "white", fill = "yellow"))
+```
 
 # 2.4.3 Scales: control the appearance of data elements.
-# A scale function for each aesthetic.
-# change color themes
+A scale function exists for each aesthetic.
+We can change color themes
+```{r}
 p1 + scale_color_grey()
 p1 + scale_color_brewer(palette = "Set1")
+```
 
-# change the axis scales
+We can also change the axis scales
+```{r}
 p1 + scale_x_log10() 
 p1 + scale_y_log10()
+p1 + scale_y_reverse()
+```
 
+Change the limit of x-axis
+```{r}
 p1 + scale_x_continuous(name="Protein SERPINA3", limits=c(12, 16)) +
   scale_y_continuous(name="Protein TIMP1")
 ```

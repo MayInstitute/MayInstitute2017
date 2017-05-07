@@ -278,3 +278,28 @@ ggplot(data = CRC) +
   geom_point(mapping = aes(x = AFM, y = AHSG,color = Gender))
 ggsave("my-plot.pdf", width = 6, height = 6)
 ```
+
+# 6. R markdown
+
+Markdown (extension `.md`) is a very simple markup language in plain
+text, that can be converted to many different outputs, such as pdf and
+html to name a few.
+
+It is also possible to interleave R code into markdown documents,
+producing so called R mardown documents (extension `.Rmd`). Before
+generating the final html or pdf output, the `Rmd` files are first
+*knit*, i.e. the R code chunks are extracted, exectuted
+and replaced by their output, be it text, tables or figures. 
+
+Rmarkdown is a fantastic tool to implement **reproducible research**,
+as we have the guarantee that code results and figures, displayed in
+the final document, accurately represent the analysis restults. They
+provide a relatively easly way to generate high quality and
+reproducible analysis reports for any arbitrary input data that is
+submitted to an established analysis routine. The R package that
+supports this is [`rmarkdown`](http://rmarkdown.rstudio.com/), and the
+whole process is made relatively easy with RStudio and available
+[documentation](http://rmarkdown.rstudio.com/lesson-1.html).
+
+We are going to walk through the creation of such a document.
+
