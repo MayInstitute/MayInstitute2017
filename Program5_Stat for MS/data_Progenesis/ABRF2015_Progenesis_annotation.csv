@@ -1,0 +1,13 @@
+Run,Condition,BioReplicate
+JD_06232014_sample1-A,Condition1,1
+JD_06232014_sample2_A,Condition2,2
+JD_06232014_sample4_B,Condition4,4
+JD_06232014_sample1_B,Condition1,1
+JD_06232014_sample1_C,Condition1,1
+JD_06232014_sample2_B,Condition2,2
+JD_06232014_sample2_C,Condition2,2
+JD_06232014_sample3_A,Condition3,3
+JD_06232014_sample3_B,Condition3,3
+JD_06232014_sample3_C,Condition3,3
+JD_06232014_sample4-A,Condition4,4
+JD_06232014_sample4_C,Condition4,4
