@@ -1,0 +1,192 @@
+---
+title: "May institute Data visualization module: Hands-on 2"
+author: "Ting Huang"
+date: "May 8, 2017"
+output: 
+  html_document:
+    self_contained: true
+    toc: true
+    toc_float: true
+    fig_caption: no	
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Summary
+* Creating a new RStudio project
+* Reading in data in R
+* Improve figure clarity
+    + Deal with overplotting
+    + Order bar chart
+    + Zooming
+    + Change labels, themes, and scales
+    
+http://sebastianraschka.com/Articles/heatmaps_in_r.html
+
+***
+
+# 1. Create a new Rstudio project
+
+From the menu, select **File > New Project...**, 
+then select **Existing Directory** and choose the directory where you downloaded this script and the example datasets for this tutorial. 
+All the output files we'll be creating in this tutorial will be saved in the 'working directory' that now has been set by Rstudio.
+
+***
+
+# 2. Reading in data
+In this section we’ll continue using mpg and CRC dataset. We also use another diamond dataset: ~54,000 round diamonds from http://www.diamondse.info/
+
+```{r, echo=T, warning=FALSE}
+library(ggplot2)
+library(RColorBrewer)
+library(Biobase)
+
+CRC <- read.csv("./data/CRC_train.csv")
+CRC.prot <- CRC[,1:72]
+CRC.anno <- CRC[,73:79]
+
+# Deal with missing value
+# First option: remove the samples with missing values
+dim(na.omit(CRC.prot))
+
+# Second option: impute the missing values
+median.imp <- function (a){
+  missing <- is.na(a)
+  n.missing <- sum(missing)
+  a.obs <- a[!missing]
+  imputed <- a
+  imputed[missing] <- sample(a.obs, n.missing, replace=TRUE)
+  return (imputed)
+}
+pMiss <- function(x){sum(is.na(x))/length(x)*100}
+samplemissing <- apply(CRC.prot,1,pMiss)
+# Only keep the samples with less than 5% missing values
+selectedSamples <- which(samplemissing <= 5) 
+imputed.CRC.prot <- t(apply(CRC.prot[selectedSamples,], 1, function(x) median.imp(x)))
+imputed.CRC.anno <- CRC.anno[selectedSamples,]
+
+#############################################
+## 2. PCA
+#############################################
+### 2.1 Principle components
+
+# prcomp - based on singular value decomposition - preferred
+?prcomp
+
+# Goal: visualize samples in a space of proteins
+# Therefore samples are observations; proteins are dimensions
+pc <- prcomp(imputed.CRC.prot, center=TRUE, scale.=TRUE)
+summary(pc)
+# parts of the output
+names(pc)
+
+# proportion of explained variance
+# look up the description of 'sdev' in the help of prcomp
+barplot( pc$sdev^2/sum(pc$sdev^2) , xlab="principle component", 
+         ylab="% of variance")
+barplot( cumsum( pc$sdev^2/sum(pc$sdev^2) ) , xlab="principle component", 
+         ylab="cumulative % of variance" )
+# Conclusion: the two first principle components are insufficient         
+
+# define a color for each sample 
+myColor <- rep("blue", nrow(imputed.CRC.prot))
+myColor[imputed.CRC.anno$Group == "CRC"] <- "red" 
+
+# score plot
+plot(pc$x[,1:2], col=myColor, pch=16, cex=2)
+legend("topleft", pch=16, col=c("red", "blue"), c("CRC", "Control"))
+# Conclusion: not enough separation in the first two dimensions       
+
+
+### 2.2 Loadings versus differential expression
+library(limma)
+
+# Specify the design matrix X - consists of fixed factors only
+design <- model.matrix(~0+imputed.CRC.anno$Group)
+colnames(design) <- c("CRC", "Healthy")
+
+# Step1: linear model. lmFit is a wrapper around lm in R
+fit1 <- lmFit(t(imputed.CRC.prot), design)
+
+# Step 2: fit contrasts: find proteins that respond to CRC cancer
+contrast.matrix <- makeContrasts(CRC-Healthy, levels = design)
+fit2 <- contrasts.fit(fit1, contrast.matrix)
+
+# Step3: add empirical Bayes moderation
+fit3 <- eBayes(fit2)
+
+# adjusted p-values
+p.bh <- p.adjust(fit3$p.value[,1], method = "BH")
+head(p.bh)
+
+# loadings vs adjusted p-values
+smoothScatter(pc$rotation[,1], p.bh, xlab="loading", 
+              ylab="adjusted p-value")
+# Conclusion: large loadings may or may not correspond to small p-values
+
+# 2.3 Principle components on a subset of significant genes
+# only select differentially expressed genes
+CRC_sign <- t(imputed.CRC.prot)[p.bh < 0.1,]
+dim(CRC_sign)
+
+# principle component
+pc_sign <- prcomp(x=t(CRC_sign), center=TRUE, scale.=TRUE)
+
+# score plot
+plot(pc_sign$x[,1:2], col=myColor, pch=16, cex=2)
+legend("topleft", pch=16, col=c("red", "blue"), c("BCR/ABL", "NEG"))
+# Conclusion: better separation when only use differentially expressed genes
+# (However cannot do this in practice!)
+
+# proportion of explained variance
+barplot( cumsum( pc_sign$sdev^2/sum(pc_sign$sdev^2) ) , xlab="principle component", 
+         ylab="cumulative % of variance" )
+# Conclusion: two PC are still not enough in this case         
+
+# loadings vs adjusted p-values
+# Conclusion: better correspondence, but the loading cutoff 
+# and control of FDR are unclear
+smoothScatter(pc_sign$rotation[,1], p.bh[p.bh < 0.1], xlab="loading", ylab="adjusted p-value")
+
+
+# OVERALL CONCLUSION:
+# Do not use loadings as evidence of differential expression
+
+#############################################
+## 3. Scatterplot matrices
+#############################################
+# Reference: https://gastonsanchez.wordpress.com/2012/08/27/scatterplot-matrices-with-ggplot/
+# install.packages("GGally")
+pairs(CRC[,c("CP", "PON1", "SERPINA3", "LRG1", "TIMP1")])
+
+library(GGally)
+ggpairs(CRC[,c("CP", "PON1", "SERPINA3", "LRG1", "TIMP1", "Sub_group")], aes(colour = Sub_group, alpha = 0.4), upper = list(continuous = wrap("cor", size = 3)))
+pairs(CRC[,c("CP", "PON1", "SERPINA3", "LRG1", "TIMP1")])
+#############################################
+## 4. Venn diagram
+#############################################
+# Reference: https://cran.r-project.org/web/packages/UpSetR/vignettes/basic.usage.html
+# install.packages("VennDiagram")
+library(VennDiagram)
+A <- sample(1:1000, 400, replace = FALSE); 
+B <- sample(1:1000, 600, replace = FALSE);
+C <- sample(1:1000, 350, replace = FALSE);
+D <- sample(1:1000, 550, replace = FALSE);
+E <- sample(1:1000, 375, replace = FALSE);
+venn.diagram(x = list(A = A, D = D, B = B, C = C), filename = "Venn.tiff",
+             col = "transparent", fill = c("cornflowerblue","green","yellow","darkorchid1"),
+             alpha = 0.50, label.col = c("orange", "white", "darkorchid4", "white", "white", 
+                                         "white",    "white", "white", "darkblue", "white", "white", "white", "white", 
+                                         "darkgreen", "white"), cex = 1.5, fontfamily = "serif", fontface = "bold",
+             cat.col = c("darkblue", "darkgreen", "orange", "darkorchid4"), cat.cex = 1.5,
+             cat.pos = 0, cat.dist = 0.07, cat.fontfamily = "serif", rotation.degree = 270,
+             margin = 0.2)
+
+# UpSetR Package
+# install.packages("UpSetR") 
+library(UpSetR)
+listInput <- list(A = A, D = D, B = B, C = C)
+upset(fromList(listInput), order.by = "freq")
+```

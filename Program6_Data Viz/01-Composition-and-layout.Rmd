@@ -240,7 +240,12 @@ ggplot(data = CRC, aes(x = SERPINA3, y = TIMP1, color = Sub_group)) +
 
 ggplot(data = na.omit(CRC_tumor), aes(x = SERPINA3, y = TIMP1, color = Gender)) +
   geom_point() +
-  facet_grid(Cancer_stage ~ Tumour_location, scales = "free_x")
+  facet_grid(Cancer_stage ~ Tumour_location, scales = "free")
+
+# Free axis limit
+ggplot(data = na.omit(CRC_tumor), aes(x = SERPINA3, y = TIMP1, color = Gender)) +
+  geom_point() +
+  facet_grid(Cancer_stage ~ Tumour_location, scales = "free")
 ```
 
 ---

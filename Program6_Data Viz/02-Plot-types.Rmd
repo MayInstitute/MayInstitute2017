@@ -167,25 +167,35 @@ ggplot(CRC, aes(x = AFM, y = AHSG))+
 ## 2.4 Text plot
 `geom_text` can add text to the plot
 ```{r}
-g + geom_text(aes(label = Sub_group))
+g1 <- ggplot(CRC, aes(x = Sample, y = TIMP1))
+g1 + geom_text(aes(label = Age))
 ```
 
 `check_overlap` can remove the overlapped texts
 ```{r}
-g + geom_text(aes(label = Sub_group), check_overlap = TRUE)
+g1 + geom_text(aes(label = Age), check_overlap = TRUE)
 ```
 
 We can aslo add points to the plot.
 ```{r}
-g + geom_text(aes(label = Sub_group), check_overlap = TRUE) +
+g1 + geom_text(aes(label = Age), check_overlap = TRUE) +
   geom_point()
 ```
 
 `nudge_x` and `nudge_y` can offset the text
 ```{r}
-g + geom_text(aes(label = Sub_group), nudge_y = 0.05, check_overlap = TRUE) +
-  geom_point()
+g1 + geom_text(aes(label = Age), nudge_y = 0.05, check_overlap = TRUE) +
+  geom_point(shape = 1, aes(color = Sub_group))
 ```
+
+ggrepel implements functions to repel overlapping text labels away from each other and away from the data points that they label. 
+```{r}
+library(ggrepel)
+g1 + geom_point(shape = 1, aes(color = Sub_group)) +
+  geom_text_repel( aes( label = Age),  check_overlap = F, 
+             position=position_jitter(width=.1, height=.2)  )
+```
+
 
 Adding labels to bar plot
 ```{r}
