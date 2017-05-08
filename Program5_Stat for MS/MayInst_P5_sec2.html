@@ -225,7 +225,7 @@ div.tocify {
 <div id="data" class="section level2">
 <h2>Data</h2>
 <ul>
-<li>The pre-processed data, <code>input.skyline.rda</code>, <code>input.maxquant.rda</code>, <code>input.progenesis.rda</code> from <a href>section 1</a></li>
+<li>The pre-processed data, <code>input.skyline.rda</code>, <code>input.maxquant.rda</code>, <code>input.progenesis.rda</code> from <a href="https://github.com/MayInstitute/MayInstitute2017/blob/master/Program5_Stat%20for%20MS/MayInst_P5_sec1.html">section 1</a></li>
 </ul>
 <hr />
 </div>
@@ -245,7 +245,7 @@ div.tocify {
 </div>
 <div id="load-the-pre-processed-data-of-skyline-output-1" class="section level2">
 <h2>1. Load the pre-processed data of Skyline output</h2>
-<pre class="r"><code>load(file='./data_Skyline/input.skyline.rda')</code></pre>
+<pre class="r"><code>load(file='./backup/data_Skyline/input.skyline.rda')</code></pre>
 </div>
 <div id="normalizing-and-summarizing-data-with-dataprocess" class="section level2">
 <h2>2. Normalizing and summarizing data with dataProcess</h2>
@@ -583,7 +583,7 @@ dataProcessPlots(srm.global.idhc, type='QCplot', address='srm_global_IDHC_')</co
 </div>
 <div id="process-with-processed-maxquant-data" class="section level1">
 <h1>Process with processed MaxQuant data</h1>
-<pre class="r"><code>load(file='./data_MaxQuant/input.maxquant.rda')</code></pre>
+<pre class="r"><code>load(file='./backup/data_MaxQuant/input.maxquant.rda')</code></pre>
 <pre class="r"><code>head(input.maxquant)</code></pre>
 <pre><code>##   ProteinName        PeptideSequence PrecursorCharge FragmentIon
 ## 1      D6VTK4 EGEVEPVDMYTPDTAADEEARK               3          NA
@@ -636,7 +636,7 @@ dataProcessPlots(srm.global.idhc, type='QCplot', address='srm_global_IDHC_')</co
 </div>
 <div id="process-with-processed-progenesis-data" class="section level1">
 <h1>Process with processed Progenesis data</h1>
-<pre class="r"><code>load(file='./data_Progenesis/input.progenesis.rda')</code></pre>
+<pre class="r"><code>load(file='./backup/data_Progenesis/input.progenesis.rda')</code></pre>
 <pre class="r"><code>head(input.progenesis)</code></pre>
 <pre><code>##             ProteinName       PeptideModifiedSequence PrecursorCharge
 ## 1 sp|A5Z2X5|YP010_YEAST              LTGNPELSSLDEVLAK               2
@@ -646,23 +646,23 @@ dataProcessPlots(srm.global.idhc, type='QCplot', address='srm_global_IDHC_')</co
 ## 5  sp|D6VTK4|STE2_YEAST                    IGPFADASYK               2
 ## 6  sp|O13297|CET1_YEAST                   IAGNAVGSVVK               2
 ##   FragmentIon ProductCharge IsotopeLabelType  Condition BioReplicate
-## 1          NA            NA                L Condition1            1
-## 2          NA            NA                L Condition1            1
-## 3          NA            NA                L Condition1            1
-## 4          NA            NA                L Condition1            1
-## 5          NA            NA                L Condition1            1
-## 6          NA            NA                L Condition1            1
+## 1          NA            NA                L Condition2            2
+## 2          NA            NA                L Condition2            2
+## 3          NA            NA                L Condition2            2
+## 4          NA            NA                L Condition2            2
+## 5          NA            NA                L Condition2            2
+## 6          NA            NA                L Condition2            2
 ##                     Run Intensity
-## 1 JD_06232014_sample1_B 2550357.3
-## 2 JD_06232014_sample1_B  865491.8
-## 3 JD_06232014_sample1_B 3767734.3
-## 4 JD_06232014_sample1_B 2591735.2
-## 5 JD_06232014_sample1_B 2301483.1
-## 6 JD_06232014_sample1_B  415181.8</code></pre>
+## 1 JD_06232014_sample2_A 1998215.1
+## 2 JD_06232014_sample2_A 1159561.8
+## 3 JD_06232014_sample2_A 2528339.0
+## 4 JD_06232014_sample2_A 1587351.5
+## 5 JD_06232014_sample2_A 2189894.6
+## 6 JD_06232014_sample2_A  466348.6</code></pre>
 <pre class="r"><code>sum(is.na(input.progenesis$Intensity)) </code></pre>
-<pre><code>## [1] 0</code></pre>
+<pre><code>## [1] 2</code></pre>
 <pre class="r"><code>sum(!is.na(input.progenesis$Intensity) &amp; input.progenesis$Intensity==0)</code></pre>
-<pre><code>## [1] 418</code></pre>
+<pre><code>## [1] 466</code></pre>
 <p>Progenesis output has only <code>0</code>. <code>censoredInt='0'</code> should be used for Progenesis output.</p>
 <blockquote>
 <p><strong>Challenges</strong></p>
