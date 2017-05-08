@@ -1153,6 +1153,41 @@ See also `?influence.measures`.
 >    visualise/check the model.
 
 
+```r
+x3 <- anscombe[, 3]
+y3 <- anscombe[, 7]
+lmod <- lm(y3 ~ x3)
+summary(lmod)
+```
+
+```
+## 
+## Call:
+## lm(formula = y3 ~ x3)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -1.1586 -0.6146 -0.2303  0.1540  3.2411 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)   
+## (Intercept)   3.0025     1.1245   2.670  0.02562 * 
+## x3            0.4997     0.1179   4.239  0.00218 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 1.236 on 9 degrees of freedom
+## Multiple R-squared:  0.6663,	Adjusted R-squared:  0.6292 
+## F-statistic: 17.97 on 1 and 9 DF,  p-value: 0.002176
+```
+
+```r
+par(mfrow = c(2, 2))
+plot(lmod)
+```
+
+![plot of chunk unnamed-chunk-43](figure/unnamed-chunk-43-1.png)
+
 Finally, let's conclude by illustrating how `ggplot2` can very
 elegantly be used to produce similar plots, with useful annotations:
 
@@ -1165,7 +1200,7 @@ p + geom_smooth(method = "lm") +
     geom_quantile(colour = "red")
 ```
 
-![plot of chunk unnamed-chunk-43](figure/unnamed-chunk-43-1.png)
+![plot of chunk unnamed-chunk-44](figure/unnamed-chunk-44-1.png)
 
 > **Challenge**
 >
@@ -1173,6 +1208,20 @@ p + geom_smooth(method = "lm") +
 > non-parametric lowess regression using `geom_smooth()`.
 
 
+```r
+p <- ggplot(aes(x = A, y = M), data = dfr) + geom_point()
+p + geom_smooth() + geom_quantile(colour = "red")
+```
+
+```
+## `geom_smooth()` using method = 'gam'
+```
+
+```
+## Smoothing formula not specified. Using: y ~ x
+```
+
+![plot of chunk unnamed-chunk-45](figure/unnamed-chunk-45-1.png)
 
 --- 
 Back to course [home page](https://github.com/MayInstitute/MayInstitute2017/blob/master/Program3_Intro%20stat%20in%20R/README.md)
