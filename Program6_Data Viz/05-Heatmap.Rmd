@@ -1,0 +1,212 @@
+---
+title: "May institute Data visualization module: Hands-on 2"
+author: "Ting Huang"
+date: "May 9, 2017"
+output: 
+  html_document:
+    self_contained: true
+    toc: true
+    toc_float: true
+    fig_caption: no	
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Summary
+* Creating a new RStudio project
+* Reading in data in R
+* Improve figure clarity
+    + Deal with overplotting
+    + Order bar chart
+    + Zooming
+    + Change labels, themes, and scales
+    
+http://sebastianraschka.com/Articles/heatmaps_in_r.html
+
+---
+
+
+# 1. Reading in data
+In this section we’ll continue using mpg and CRC dataset.
+
+```{r, echo=T, warning=FALSE, message=FALSE}
+library(Biobase)
+
+################################################################
+# Read data
+################################################################
+CRC <- read.csv("./data/CRC_train.csv")
+CRC.prot <- CRC[,1:72]
+CRC.anno <- CRC[,73:79]
+
+# Deal with missing value
+# First option: remove the samples with missing values
+dim(na.omit(CRC.prot))
+
+# Second option: impute the missing values
+random.imp <- function (a){
+  missing <- is.na(a)
+  n.missing <- sum(missing)
+  a.obs <- a[!missing]
+  imputed <- a
+  # imputed[missing] <- sample(a.obs, n.missing, replace=TRUE)
+  imputed[missing] <- median(a.obs)
+  # imputed[missing] <- 0
+  return (imputed)
+}
+pMiss <- function(x){sum(is.na(x))/length(x)*100}
+samplemissing <- apply(CRC.prot,1,pMiss)
+# Only keep the samples with less than 5% missing values
+selectedSamples <- which(samplemissing <= 5) 
+imputed.CRC.prot <- t(apply(CRC.prot[selectedSamples,], 1, function(x) random.imp(x)))
+imputed.CRC.anno <- CRC.anno[selectedSamples,]
+```
+
+# 2. Heatmaps
+```{r}
+################################################################
+################################################################
+####################   H E A T M A P S  ########################
+#           Iconic graphics for high-throughput data
+################## CAUTION: HIDDEN PITFALLS ####################
+################################################################
+################################################################
+
+################################################################
+# Heatmap of individual values of proteins
+################################################################
+heatmap(t(imputed.CRC.prot))
+?heatmap
+
+
+```
+
+## Note 2.1: choice of the distance metric matters
+
+```{r, message=FALSE}
+library(bioDist)
+
+# toy example: 3 genes, 5 samples
+gene1 <- c(1, 6, 2, 4, 7)
+gene2 <- gene1 + 4 
+gene3 <- gene2/3+ c(0, 2, 0, 4, 0)
+e <- rbind(gene1, gene2, gene3)
+dimnames(e) <- list(paste("gene", 1:3, sep=""), paste("sample", 1:5, sep=""))
+e
+
+# plot
+plot(e[1,], col="red", type="l", ylim=c(0,15), xlab="samples", ylab="abundance",
+     main="Original abundance values", lwd=3)
+lines(e[2,], col="blue", lwd=3)
+lines(e[3,], col="green", lwd=3)
+legend("topright", col=c("red", "blue", "green"), paste("gene", 1:3, sep=""), lty=1, lwd=3, cex=1.5)
+
+
+# default: distance fnction eucledian
+heatmap(e, distfun=euc, margins=c(10,10), main="Eucledian distance")
+# correlation
+heatmap(e, distfun=cor.dist, margins=c(10,10), main="Correlation distance")
+```
+
+
+## Note 2.2: Clustering genes
+
+genes are multivariate objects (=observations) in the space of samples (=variables)
+if we are not interested in similarity of abundance 
+but in similarity of the direction of change, 
+then it will help to standardize the observations across variables 
+
+now each gene has mean 0 and sample variance 1 across arrays 
+
+```{r, message=FALSE}
+library(genefilter)
+e_centerScale <- ( e - rowMeans(e) ) / rowSds(e)
+
+# plot
+plot(e_centerScale[1,], col="red", type="l", ylim=c(-2,2), xlab="samples", ylab="abundance",
+     main="Original abundance values")
+lines(e_centerScale[2,], col="blue")
+lines(e_centerScale[3,], col="green")
+legend("topright", col=c("red", "blue", "green"), paste("gene", 1:3, sep=""), lty=1)
+
+# Eucledian distance is sensitive to centering and scaling
+heatmap(e, distfun=euc, margins=c(10,10), main="Eucledian, raw")
+heatmap(e_centerScale, distfun=euc, margins=c(10,10), main="Eucledian, centered and scaled")
+
+# Correlation distance is not sensitive to centering and scaling
+heatmap(e, distfun=cor.dist, margins=c(10,10), main="Correlation, raw")
+heatmap(e_centerScale, distfun=cor.dist, margins=c(10,10), main="Correlation, centered and scaled")
+# (note that centering and scaling of genes across samples + correlation distance
+# affect the order of the samples)
+# my choice is to use correlation on the original values, 
+# or to compute dendrograms separately, save the order of genes or samples, and use "image" to visualize 
+```
+
+## Note 2.3: The heatmap has an option "scale" by default
+However it only affects the color, and not the calculation of dendrograms.
+It's usually better to make custom color definitions
+
+```{r, message=FALSE}
+library(RColorBrewer)
+
+# scaling of color matters for unscaled data
+heatmap(e, distfun=euc, margins=c(10,10), scale="none", main="Eucledian, raw")
+heatmap(e, distfun=euc, margins=c(10,10), main="Eucledian, scaled")
+# Conclusion: genes 1 and 2 are far from each other on the dendrogram
+# (because of Eucledian distance) but have same color patterns of
+# intensities (because of scaled colors)
+
+
+# scaling of color irrelevant if data themselves are scaled already
+heatmap(e_centerScale, distfun=euc, margins=c(10,10))
+heatmap(e_centerScale, distfun=euc, margins=c(10,10), scale="none")
+
+
+# Example with real dataset
+# Default: raw data, scaled by row (i.e. gene)
+heatmap(t(imputed.CRC.prot))
+
+# change color code: non-standardized expressions
+# equal-spaced breaks for values of abundance
+summary(as.vector(t(imputed.CRC.prot))) # min ~ 6, max ~ 25
+exprs_brk <- seq(from=6, to=25, length=12)
+heatmap(t(imputed.CRC.prot), col=brewer.pal(length(exprs_brk)-1, "RdBu"), breaks=exprs_brk)
+
+# change color code: gene-standardized expressions
+# quantile-spaced breaks in positive and negative directions
+imputed_CRC_prot_centerScale <- 
+ ( t(imputed.CRC.prot) - rowMeans(t(imputed.CRC.prot)) ) / rowSds(t(imputed.CRC.prot))
+exprs_brk <- c( quantile(imputed_CRC_prot_centerScale[imputed_CRC_prot_centerScale<0], seq(0, 1, length=5)),
+                0, quantile(imputed_CRC_prot_centerScale[imputed_CRC_prot_centerScale>0], seq(0, 1, length=5)))
+
+heatmap(imputed_CRC_prot_centerScale, col=brewer.pal(length(exprs_brk)-1, "RdBu"), breaks=exprs_brk)
+```
+
+## Note 2.4: Label sample types
+
+```{r, message=FALSE}
+myColor <- rep("blue", nrow(imputed.CRC.prot))
+myColor[imputed.CRC.anno$Sub_group == "CRC"] <- "red" 
+myColor[imputed.CRC.anno$Sub_group == "Healthy"] <- "yellow" 
+heatmap(imputed_CRC_prot_centerScale, col=brewer.pal(length(exprs_brk)-1, "RdBu"), breaks=exprs_brk, ColSideColors=myColor)
+```
+
+
+## Note 2.5: The choice of the linkage method in clustering matters
+```{r, message=FALSE}
+# clusters in the sample space: note the use of (t)
+# method "complete" by default
+hc <- hclust( dist( t(imputed_CRC_prot_centerScale)) )
+plot(hc)
+
+# sinle linkage
+hc <- hclust( dist( t(imputed_CRC_prot_centerScale)), metho="single" )
+plot(hc)
+
+# cut the tree at a specific group
+hc <- hclust( dist( t(imputed_CRC_prot_centerScale)) )
+cc <- cutree(hc, k=2)
+cc
+```

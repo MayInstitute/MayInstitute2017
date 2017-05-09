@@ -1,0 +1,534 @@
+---
+title: "Introduction to ggplot2"
+author: "Jan Vitek"
+date: "5/7/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Hmisc)
+library(ggplot2)
+library(ggthemes)
+```
+
+These notes are produced using RMarkdown. Open the document and try to execute them in RStudio. If you are new users of  `ggplot2` execute the following commands.
+
+```{r,eval=FALSE}
+install.packages("Hmisc")
+install.packages("ggplot2")
+install.packages("ggthemes") 
+```
+
+The examples follow the book on ``ggplot2` by Hadley Wickham, more topical datasets will be studied in the upcoming lectures.
+
+
+# Components of a Graphic 
+
+`ggplot2` is graphical library for the R programming language designed by Hadley Wickham around 2010 (the first version of `gplot` is from 2005).
+
+`ggplot2` allows user to compose visualization based on a set of principles.  A graphic is composed of:
+
+  * **Data** to visualise and **aesthetic mappings** (aes) describing data is mapped rendered
+  * **Layers** made up of **geometric elements** (geoms) and **statistical transformation** (stats). geoms represent what you actually see on the plot: points, lines, polygons, etc. stats summarise data e.g., binning and counting observations to create a histogram
+  * The **scales** map values in the data space to values in an aesthetic space, whether it be colour, or size, or shape. Scales draw a legend or axes, which provide an inverse mapping to make it possible to read the original data values from the plot.
+  * A **coordinate system** (coord) describes how data coordinates are mapped to the plane of the graphic (cartesian, polar, map projections). It also provides axes and gridlines.
+  * A **faceting specification** describes how to break up the data into subsets and how to display those subsets as small multiples. 
+  * A **theme** which controls the finer points of display, like the font size and background colour.
+
+## Working with ggplot
+
+`gplot` requires data to be stored in an R `data.frame` object.  Data frames can be built from CSV files (e.g. by using the `read.csv` function) or from scratch.
+
+For this lecture we will start with a data frame that is included in the R release, namely `mpg`. This dataset contains a subset of the fuel economy data that the EPA. It contains only models which had a new release every year between 1999 and 2008.
+
+Typing `?mpg` in the console will give more details.
+
+Before we start visualizing the data lets look at it from the consol. The function `str` give information about the structure of an object in a compact way that if often informative.
+
+```{r}
+str(mpg)
+```
+
+We can print the first ten rows of the dataset.
+
+```{r}
+mpg[1:10, ]
+```
+
+
+Typing `?ggplot` shows how to invoke ``ggplot`.
+
+The simplest use would be to specify only the data. 
+
+```{r}
+ggplot(data = mpg)
+```
+
+As we can see, this does not render anything as we have not specified what aspect of the data we wanted to display.
+
+The first thing we could specify is an aesthetic mapping that states our `x` axis will be the `class` attributes (wether a car is a `compact` or any other kind).
+
+```{r}
+ggplot(mpg, mapping = aes(x = class))
+```
+
+As we can see, this render each class, and adds an axis legend. Still, no data.
+
+Observe that we did not have to specify that the first argument is a data set, similarly we can omit `mapping` and `x` (and we will as long as they are clear from context).
+
+
+```{r}
+ggplot(mpg, aes(class))
+```
+
+
+Let's start with a simple bar plot that shows the number of individual vehicles in each class.
+
+## Bar plots
+
+### Basic bar plot
+```{r}
+ggplot(mpg, aes(class))  +
+   geom_bar()
+```
+
+
+Clearly any other variable can be graphed, such as `drv`.
+
+```{r}
+ggplot(mpg, aes(drv)) + geom_bar()
+```
+
+
+We can also present another variable on the `y` axis.  For example the highway miles per galon or `hwy`.
+
+```{r,eval=FALSE}
+ggplot(mpg, aes(x=class, y=hwy)) +
+  geom_bar()
+```
+
+Not all pairing of aes and geom make sense. Let's find a geom that works with two variables.
+
+```{r}
+ggplot(mpg, aes(class, hwy)) +
+  geom_point()
+```
+
+Consider the fact that `length(mpg$class) =` `r length(mpg$class)`, there are 234 observations but we can't see 234 points!  We will return to this later.
+
+
+
+### Box plot with stats
+
+We can use a statistics to summarize data. Here we will plot the mean highway mile per galon for each car class.
+
+```{r}
+ggplot(mpg, aes(class, hwy)) + 
+  geom_bar(stat  = "summary", 
+           fun.y =  mean)
+```
+
+Other summaries can be applied. The following graph show shte median, which is not too different from the mean in this case.
+
+
+```{r}
+ggplot(mpg, aes(class, hwy)) + 
+  geom_bar(stat  = "summary", 
+           fun.y =  median)
+```
+
+And, this last graph shows the max, which has a similar shape but the y-axis values differ.
+
+```{r}
+ggplot(mpg, aes(class, hwy)) + 
+  geom_bar(stat  = "summary", 
+           fun.y =  max)
+```
+
+### Box plot with three variables
+
+Imagine that we want to plot three variable, `class`, `hwy` and `cty`. How could we do this?  We can use an aes where the color differentiate between highway and city consumption. To build such a graphic we need to reshape our dataset so that `cty` and `hwy` entries are on different rows.
+
+We can use base R operations to do this in a few simple steps.  First we extract the columns we are interested in.  `hwy` is a new `data.frame`.
+
+```{r}
+hwy <- mpg[, c("class", "hwy")]    # extract two columns
+
+hwy[1:10, ]  #print
+```
+
+Next we add a column to the data frame, that column has a character string `hwy` for all observations.
+
+```{r}
+hwy <- cbind(hwy, "hwy")   # cbins adds one column to the data frame
+
+hwy[1:5, ]
+```
+
+Now we rename the columns (this is needed because merging data frame is done according to column names).
+
+```{r}
+names(hwy) <- c("class", "val", "type")
+
+hwy[ 1:5, ]
+```
+
+
+We do the same for the `cty` variable.
+
+```{r}
+cty <- mpg[, c("class", "cty")]
+cty <- cbind(cty, "cty")
+names(cty) <- c("class", "val", "type")
+```
+
+Finally we can merge the two data frames.
+
+```{r}
+ds <- rbind(hwy, cty)    ## rbind adds to data frame together row-wise
+
+ds[sample(1:nrow(ds), 10),]   ## print 10 random entries
+```
+
+Now the data is in the right shape, let's plot it.  We use the color to differentiate between types of consumption.
+
+
+```{r}
+ggplot(ds, aes(class, val, fill=type))  +
+    geom_bar(stat="summary", 
+             fun.y=mean)
+```
+
+This is not ideal as it is difficult to compare the relative heights of the top bars. 
+
+We can control the position of the bar.
+
+```{r}
+ggplot(ds, aes(class, val, fill=type)) +
+    geom_bar(stat="summary", 
+               fun.y=mean, 
+               position="dodge")
+```
+
+This allows to compare the relative heights of each kind of consumption.
+
+### All goems, stats and positions
+
+```{r}
+geoms <- help.search("^geom_", package = "ggplot2")
+
+unique(geoms$matches[, 1:2])
+```
+
+
+ 
+ 
+```{r}
+stats <- help.search("^stat_", package = "ggplot2", fields="name")
+
+stats$matches[, 1:2]
+```
+ 
+```{r}
+unique(help.search("^position_", package = "ggplot2")$matches[,1:2])
+```
+ 
+### Error bars 
+
+We start by showing how to compute error bars and add them manually, and demonstrate how to leverage a library that will do the same for us.
+
+What we need is to compute the confidence interval for each class of car and for both `cty` and `hwy` driving conditions. The data frame has all the information we need but they are jumbled up.  The `mean_cl_boot()` function computes the confidence intervals. We need to give it that data.
+
+Here is what we would do for `cty` and `suv`:
+
+```{r}
+  suvs <- ds[ ds$class=="suv", ]
+  vals <- suvs[ suvs$type == "cty",  "val"]
+  mean_cl_boot(vals)
+```  
+
+What we want to do is repeat this code for each class and driving condition. But that would be too much boilerplate code, and too likely to contain errors.  Instead we can use `lapply()` to do it in a generic manner.
+
+```{r}
+ds2 <- lapply(unique(ds$class), function(x) {
+  v <- ds[ ds$class==x, ]
+
+  vals <- v[ v$type == "cty", "val"]
+  cty <- mean_cl_boot(vals)
+  cty["type"] <- "cty"
+
+  vals <- v[ v$type == "hwy", "val"]
+  hwy <- mean_cl_boot(vals)
+  hwy["type"] <- "hwy"
+  
+  df <- rbind(cty, hwy)
+  df["class"]<-x
+  df
+})
+
+ds2 <- do.call(rbind, ds2)
+ds2
+```
+
+
+Now we can graph the resulting data. We use the *identity* stat since we are not asking `ggplot` to perform any computation.  We specify that the `fill` is the `type` variable, `ggplot` picks the color automatically.
+
+```{r}
+ggplot(ds2, aes(class, y, fill=type)) + 
+  geom_bar(stat="identity", 
+          position="dodge") +
+  geom_errorbar( aes(ymin = ymin, ymax = ymax),
+                 position = position_dodge(.9), 
+                  width = .2)
+```
+
+
+In this particular case, the reshaping of the data can be avoided as it is possible to pass the `mean_cl_boot()` function
+to `stat_summary` directly.
+
+```{r}
+ggplot(ds, aes(class, val, fill=type)) + 
+  geom_bar(stat="summary", fun.y=mean, position="dodge") +
+  stat_summary(fun.data=mean_cl_boot, color="black", geom="errorbar", position=position_dodge(.9), width=.2)
+```
+
+### Text
+
+The `mtcars` dataset has names for every row.  It is thus possible to use those names as lavels of points in a graph.
+
+```{r}
+m <- mtcars[1:10,]
+ggplot(m, aes(mpg, wt)) + 
+  geom_point() +
+  geom_text( aes( label = rownames(m)),  nudge_x = .1, nudge_y = -.1, check_overlap = F  )
+```
+
+```{r}
+m <- mtcars[1:20,]
+ggplot(m, aes(mpg, wt)) + 
+  geom_point() +
+  geom_text( aes( label = rownames(m)), 
+             position=position_jitter(width=.1, height=.2)  )
+```
+
+
+Clearly there are too many points for this to be legible.  We can reduce the size  a bit.
+
+```{r}
+ggplot(mtcars, aes(mpg, wt)) + 
+  geom_point() +
+  geom_text(aes(label=rownames(mtcars)), size=2)
+```
+
+
+
+
+```{r}
+library(ggrepel)
+m <- mtcars
+ggplot(m, aes(mpg, wt)) + 
+  geom_point() +
+  geom_text_repel( aes( label = rownames(m)),  check_overlap = F, 
+             position=position_jitter(width=.1, height=.2)  )
+```
+
+Another thing we can do is to use the weight of the car to determine the size of the text.
+
+```{r}
+ggplot(mtcars, aes(mpg, wt)) + 
+  geom_point() +
+  geom_text_repel(aes(label=rownames(mtcars), size=wt))
+```
+
+We can also put labels on the figure.
+
+```{r}
+ggplot(mtcars, aes(mpg, wt)) + 
+  geom_point() +
+  annotate("text", label = "plot mpg vs. wt", x = 18, y = 5, size = 8, colour = "red")
+```
+
+#### Adding text to bars
+
+```{r}
+ggplot(mpg, aes(class, cty)) + 
+  geom_bar(stat="identity") +
+  geom_text(aes(label=cty), color="white")
+```
+
+This is not quite what we want.
+
+- What are the values of cty for 2seater
+```{r}
+mpg[mpg$class=="2seater", "cty"]
+```
+
+```{r}
+ds2 <- lapply(unique(mpg$class), function(x) {
+  v <- ds[mpg$class==x, ]
+  cty <- mean(v[v$type == "cty", "val"])
+  data.frame(class=x, cty)
+})
+
+ds2 <- do.call(rbind, ds2)
+ds2
+```
+
+```{r}
+ggplot(ds2, aes(class, cty)) + 
+  geom_bar(stat="identity") +
+  geom_text(aes(label=round(cty, digits=2)), color="white", vjust=2)
+```
+
+
+
+## Plots properties
+
+### Titles
+
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy))
+p + geom_point(aes(color=class, size=cyl)) +
+  labs(title="Fuel economy in relation to engine dislacement",
+       subtitle="Less is more",
+       caption="A caption",
+       x="engine displacement", 
+       y="highway miles per gallon") 
+```
+
+- Update the labels of legends
+
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy))
+p + geom_point(aes(color=class, size=cyl)) +
+  labs(title="Fuel economy in relation to engine dislacement",
+       subtitle="Less is more",
+       caption="A caption",
+       x="engine displacement", 
+       y="highway miles per gallon") +
+  guides(color=guide_legend(title="Car class"), 
+         size=guide_legend(title="Number of cylinders"))
+```
+
+### Axes
+
+```{r}
+p <- ggplot(mpg, aes(x=model, y=hwy))
+p + geom_bar(stat="identity")
+```
+
+```{r}
+p <- ggplot(mpg, aes(x=model, y=hwy))
+p + geom_bar(stat="identity") + 
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+- better justification
+```{r}
+p <- ggplot(mpg, aes(x=model, y=hwy))
+p + geom_bar(stat="identity") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+## Themes
+
+- Most of the visual aspects of ggplot can be configured using themes
+- There is also a number of existing ggplot themes (e.g. [ggthemes](https://cran.r-project.org/web/packages/ggthemes/vignettes/ggthemes.html))
+
+```{r}
+library(ggthemes)
+```
+
+- Default
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy))
+p + geom_point(aes(color=class, size=cyl))
+```
+
+- The economist
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy))
+p + geom_point(aes(color=class, size=cyl)) +
+  theme_economist() + 
+  scale_colour_economist() 
+```
+
+- Minimal
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy))
+p + geom_point(aes(color=class, size=cyl)) +
+theme_minimal()
+```
+
+- Excel 2003
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy))
+p + geom_point(aes(color=class, size=cyl)) +
+theme_excel() + scale_colour_excel()
+```
+
+## Displaying statistics
+
+- Add fit using a liner model
+```{r}
+p <- ggplot(mpg, aes(displ, hwy))
+p + geom_point() + 
+  geom_smooth(method="lm")
+```
+
+- Add fit using a liner model with groups
+```{r}
+p <- ggplot(mpg, aes(displ, hwy, color=factor(cyl)))
+p + geom_point() + geom_smooth(method="lm")
+```
+
+- Using a better fit: local polynomial regression
+```{r}
+p <- ggplot(mpg, aes(displ, hwy))
+p + geom_point() + geom_smooth(method="loess")
+```
+
+
+## Facets
+
+A formula with the rows (of the tabular display) on the LHS and the columns (of the tabular display) on the RHS; the dot in the formula is used to indicate there should be no faceting on this dimension (either row or column).
+
+### Formulae
+
+```
+y ~ x 
+```
+
+- `x` is the explanatory variable
+- `y` is the response variable
+
+```
+y ~ x + z 
+```
+
+### Examples
+
+- Vertical
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + geom_point()
+p + facet_grid(. ~ cyl)
+```
+
+- Horizontal
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + geom_point() 
+p + facet_grid(cyl ~ .)
+```
+
+- Both
+```{r}
+p <- ggplot(mpg, aes(x=displ, y=hwy)) + geom_point() 
+p + facet_grid(drv ~ cyl)
+```
+
+- Free axis
+```{r}
+p <- ggplot(mtcars, aes(mpg, wt, colour = factor(cyl))) + geom_point()
+p + facet_grid(. ~ cyl, scales = "free")
+```

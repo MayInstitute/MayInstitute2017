@@ -115,10 +115,16 @@ unique(CRC[, 'Sub_group'])
 unique(CRC[, 79])
 ```
 
-We may be interested in working from here on only with data for proteins CP and SERPINA3.
+We may be interested in working from here on only with data for proteins TIMP1 and SERPINA3.
 ```{r}
-CRC.twopro <- CRC[,c('CP', 'SERPINA3')]
+CRC.twopro <- CRC[,c('TIMP1', 'SERPINA3')]
 ```
+
+We may be also interested in only CRC data.
+```{r}
+CRC_tumor <- CRC[CRC$Sub_group=="CRC",]
+```
+
 ---
 
 # 4. Visualizing data
@@ -174,7 +180,7 @@ g + geom_point()
 
 > **Challenge**
 > 
-> If you want to explore the relationship between the abundance of protein AFM and AHSG,  what plot will you make?
+> If you want to explore the relationship between the abundance of protein *AFM* and *AHSG*,  what plot will you make?
 
 $~$
 
@@ -225,12 +231,21 @@ Facetting creates tables of graphics by splitting the data into subsets and disp
 ```{r}
 ggplot(data = CRC, aes(x = SERPINA3, y = TIMP1)) +
   geom_point() + 
-  facet_grid(~ Group)
+  facet_grid(~ Sub_group)
 
 # Combine Facetting and color
 ggplot(data = CRC, aes(x = SERPINA3, y = TIMP1, color = Sub_group)) +
   geom_point() +
-  facet_grid(~ Group)
+  facet_grid(~ Sub_group)
+
+ggplot(data = na.omit(CRC_tumor), aes(x = SERPINA3, y = TIMP1, color = Gender)) +
+  geom_point() +
+  facet_grid(Cancer_stage ~ Tumour_location, scales = "free")
+
+# Free axis limit
+ggplot(data = na.omit(CRC_tumor), aes(x = SERPINA3, y = TIMP1, color = Gender)) +
+  geom_point() +
+  facet_grid(Cancer_stage ~ Tumour_location, scales = "free")
 ```
 
 ---
@@ -258,7 +273,7 @@ save.image(file='Handson1.RData')
 ```
 
 > **Challenge**
-> If you want to explore the relationship between the abundance of protein AFM and AHSG and see the difference between male and female, what plot will you make?
+> If you want to explore the relationship between the abundance of protein AFM and AHSG in cancer tissue and see the difference across different cancer stage, what plot will you make?
 Save your plot!
 
 $~$
@@ -274,8 +289,8 @@ $~$
 $~$
 
 ```{r}
-ggplot(data = CRC) +
-  geom_point(mapping = aes(x = AFM, y = AHSG,color = Gender))
+ggplot(data = CRC_tumor) +
+  geom_point(mapping = aes(x = AFM, y = AHSG,color = as.factor(Cancer_stage)))
 ggsave("my-plot.pdf", width = 6, height = 6)
 ```
 
