@@ -66,6 +66,23 @@ imputed.CRC.anno <- CRC.anno[selectedSamples,]
 ```
 
 # 2. Heatmaps
+
+## 2.1 Correlation heatmap
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(RColorBrewer)
+
+CRC.biomarkers <- CRC[,c("CP", "PON1", "SERPINA3", "LRG1", "TIMP1")]
+cor.biomarker <- cor(CRC.biomarkers, use = "pairwise.complete.obs")
+cor.biomarker <- as.data.frame(cor.biomarker)
+cor.biomarker$Protein1 <- rownames(cor.biomarker)
+cor.biomarker <- cor.biomarker %>% gather(Protein2, Correlation, -Protein1)
+g <- ggplot(cor.biomarker, aes(Protein1, Protein2))
+g + geom_tile(aes(fill=Correlation)) + scale_fill_gradientn(colours = brewer.pal(5,"Spectral"))
+```
+
 ```{r}
 ################################################################
 ################################################################
@@ -88,7 +105,7 @@ heatmap(t(imputed.CRC.prot), cexRow = 0.3, cexCol = 0.2, margins = c(2, 2), Rowv
 heatmap(t(imputed.CRC.prot), cexRow = 0.3, cexCol = 0.2, margins = c(2, 2), Colv = NA)
 ```
 
-## Note 2.1: Choice of the distance metric matters
+## Note 2.2: Choice of the distance metric matters
 
 ```{r, message=FALSE}
 library(bioDist)
@@ -102,8 +119,6 @@ dimnames(e) <- list(paste("gene", 1:3, sep=""), paste("sample", 1:5, sep=""))
 e
 
 # plot
-library(ggplot2)
-library(tidyr)
 e1 <- as.data.frame(e)
 e1$gene <- rownames(e1)
 e1 <- e1 %>% gather(Sample, Abundance, -gene)
@@ -117,7 +132,7 @@ heatmap(e, distfun=cor.dist, margins=c(10,10), main="Correlation distance")
 ```
 
 
-## Note 2.2: Clustering genes
+## Note 2.3: Clustering genes
 
 genes are multivariate objects (=observations) in the space of samples (=variables)
 if we are not interested in similarity of abundance  but in similarity of the direction of change, then it will help to standardize the observations across variables 
@@ -145,12 +160,12 @@ heatmap(e_centerScale, distfun=cor.dist, margins=c(10,10), main="Correlation, ce
 
 Note that centering and scaling of genes across samples + correlation distance affect the order of the samples). My choice is to use correlation on the original values, or to compute dendrograms separately, save the order of genes or samples, and use "image" to visualize 
 
-## Note 2.3: The heatmap has an option "scale" by default
+## Note 2.4: The heatmap has an option "scale" by default
 However it only affects the color, and not the calculation of dendrograms.
 It's usually better to make custom color definitions
 
 ```{r, message=FALSE}
-library(RColorBrewer)
+
 
 # scaling of color matters for unscaled data
 heatmap(e, distfun=euc, margins=c(10,10), scale="none", main="Eucledian, raw")
@@ -192,7 +207,7 @@ colors <- colorRampPalette(brewer.pal(11,"Spectral"))(length(exprs_brk)-1)
 heatmap(t(imputed.CRC.prot), col = colors, breaks = exprs_brk)
 ```
 
-## Note 2.4: Label sample types
+## Note 2.5: Label sample types
 
 ```{r, message=FALSE}
 myColor <- rep("blue", nrow(imputed.CRC.prot))
@@ -204,6 +219,7 @@ heatmap(t(imputed.CRC.prot), col = colors, breaks = exprs_brk, ColSideColors=myC
 
 ## Note 2.5: The choice of the linkage method in clustering matters
 Distance options: euclidean (default), maximum, canberra, binary, minkowski, manhattan
+
 Cluster options: complete (default), single, average, mcquitty, median, centroid, ward
 ```{r, message=FALSE}
 # Correlation distance
@@ -263,7 +279,7 @@ heatmap(t(imputed.CRC.prot),
         Colv = as.dendrogram(hc)) # apply default clustering method
 ```
 
-## Note 2.6: heatmap.2()
+## Note 2.7: heatmap.2()
 ```{r}
 library(gplots)
 heatmap.2(t(imputed.CRC.prot), srtCol=45)
