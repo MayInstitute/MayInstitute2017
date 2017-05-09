@@ -32,6 +32,7 @@ In this section we’ll continue using mpg and CRC dataset. We also use another 
 ```{r, echo=T, warning=FALSE}
 library(ggplot2)
 library(RColorBrewer)
+# biocLite("Biobase")
 library(Biobase)
 
 CRC <- read.csv("./data/CRC_train.csv")
@@ -66,6 +67,9 @@ imputed.CRC.anno <- CRC.anno[selectedSamples,]
 #############################################
 ## 2.1 Principle components
 ```{r}
+# The function princomp() uses the spectral decomposition approach.
+# The functions prcomp() use the singular value decomposition (SVD).
+# According to R help, SVD has slightly better numerical accuracy. Therefore, prcomp() is the preferred function
 # prcomp - based on singular value decomposition - preferred
 ?prcomp
 
@@ -75,7 +79,10 @@ pc <- prcomp(imputed.CRC.prot, center=TRUE, scale.=TRUE)
 summary(pc)
 # parts of the output
 names(pc)
+```
 
+
+```{r}
 # proportion of explained variance
 # look up the description of 'sdev' in the help of prcomp
 pc.var <- data.frame(index = c(1:length(pc$sdev)), var.prop = pc$sdev^2/sum(pc$sdev^2), var.prop.cum = cumsum( pc$sdev^2/sum(pc$sdev^2)))
@@ -84,15 +91,18 @@ ggplot(pc.var) +
   labs(title = "PCA",
         x = "principle component",
         y = "% of variance")
+```
 
+```{r}
 ggplot(pc.var) +
   geom_bar(aes(index, var.prop.cum), stat = "identity") + 
   labs(title = "PCA",
         x = "principle component",
         y = "cumulative % of variance")
+```
+Conclusion: the two first principle components are insufficient 
 
-# Conclusion: the two first principle components are insufficient         
-
+```{r}
 # define a color for each sample 
 myColor <- rep("blue", nrow(imputed.CRC.prot))
 myColor[imputed.CRC.anno$Group == "CRC"] <- "red" 
@@ -102,16 +112,16 @@ PCs <- as.data.frame(pc$x)
 PCs$Group <- imputed.CRC.anno$Group
 g <- ggplot(PCs, aes(x = PC1, y = PC2, color = Group))
 g + geom_point()
-
-# Conclusion: not enough separation in the first two dimensions       
 ```
+
+Conclusion: not enough separation in the first two dimensions
 
 ## 2.2 Loadings versus differential expression
 ```{r}
 library(limma)
 library(ggrepel)
 # Specify the design matrix X - consists of fixed factors only
-design <- model.matrix(~0+imputed.CRC.anno$Group)
+design <- model.matrix(~ 0 + imputed.CRC.anno$Group)
 colnames(design) <- c("CRC", "Healthy")
 
 # Step1: linear model. lmFit is a wrapper around lm in R
@@ -129,8 +139,8 @@ fit3 <- eBayes(fit2)
 p.bh <- topTable(fit3, adjust = "BH", sort = "none", n = Inf)
 p.bh$Protein <- rownames(p.bh)
 
-p.bh$Significant <- ifelse(p.bh$adj.P.Val < 0.05, "FDR < 0.05", "Not Sig")
-ggplot(p.bh, aes(x = logFC, y = -log10(P.Value))) +
+p.bh$Significant <- ifelse(p.bh$adj.P.Val < 0.05, "Adjusted p value < 0.05", "Not Sig")
+ggplot(p.bh, aes(x = logFC, y = -log10(adj.P.Val))) +
   geom_point(aes(color = Significant)) +
   scale_color_manual(values = c("red", "grey")) +
   theme_bw() +
@@ -165,8 +175,13 @@ g + geom_point()
 # (However cannot do this in practice!)
 
 # proportion of explained variance
-barplot( cumsum( pc_sign$sdev^2/sum(pc_sign$sdev^2) ) , xlab="principle component", 
-         ylab="cumulative % of variance" )
+pc.sign.var <- data.frame(index = c(1:length(pc_sign$sdev)), var.prop = pc_sign$sdev^2/sum(pc_sign$sdev^2), var.prop.cum = cumsum( pc_sign$sdev^2/sum(pc_sign$sdev^2)))
+
+ggplot(pc.sign.var) +
+  geom_bar(aes(index, var.prop.cum), stat = "identity") + 
+  labs(title = "PCA",
+        x = "principle component",
+        y = "cumulative % of variance")
 # Conclusion: two PC are still not enough in this case         
 
 # loadings vs adjusted p-values
