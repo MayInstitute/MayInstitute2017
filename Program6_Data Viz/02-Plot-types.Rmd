@@ -132,6 +132,9 @@ If you have a scatterplot with a lot of noise, it can be hard to see the dominan
 ```{r}
 g + geom_point() + 
   geom_smooth()
+
+g + geom_point() + 
+  geom_smooth(method="lm")
 ```
 
 `smoothScatter()` produces a smoothed color density representation of a scatterplot
@@ -192,8 +195,8 @@ ggrepel implements functions to repel overlapping text labels away from each oth
 ```{r}
 library(ggrepel)
 g1 + geom_point(shape = 1, aes(color = Sub_group)) +
-  geom_text_repel( aes( label = Age),  check_overlap = F, 
-             position=position_jitter(width=.1, height=.2)  )
+  geom_text_repel( aes( label = Age),arrow = arrow(length = unit(0.02, "npc")),
+    box.padding = unit(1, "lines"))
 ```
 
 

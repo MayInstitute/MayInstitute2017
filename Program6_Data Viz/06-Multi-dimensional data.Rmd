@@ -15,27 +15,18 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Summary
-* Creating a new RStudio project
+
 * Reading in data in R
-* Improve figure clarity
-    + Deal with overplotting
-    + Order bar chart
-    + Zooming
-    + Change labels, themes, and scales
-    
-http://sebastianraschka.com/Articles/heatmaps_in_r.html
+* PCA
+    + Principle components
+    + Loadings versus differential expression
+    + Principle components on a subset of significant genes
+* Scatterplot matrices
+* Venn diagram
 
-***
+---
 
-# 1. Create a new Rstudio project
-
-From the menu, select **File > New Project...**, 
-then select **Existing Directory** and choose the directory where you downloaded this script and the example datasets for this tutorial. 
-All the output files we'll be creating in this tutorial will be saved in the 'working directory' that now has been set by Rstudio.
-
-***
-
-# 2. Reading in data
+# 1. Reading in data
 In this section we’ll continue using mpg and CRC dataset. We also use another diamond dataset: ~54,000 round diamonds from http://www.diamondse.info/
 
 ```{r, echo=T, warning=FALSE}
@@ -66,12 +57,15 @@ samplemissing <- apply(CRC.prot,1,pMiss)
 selectedSamples <- which(samplemissing <= 5) 
 imputed.CRC.prot <- t(apply(CRC.prot[selectedSamples,], 1, function(x) median.imp(x)))
 imputed.CRC.anno <- CRC.anno[selectedSamples,]
+```
+
+---
 
 #############################################
-## 2. PCA
+# 2. PCA
 #############################################
-### 2.1 Principle components
-
+## 2.1 Principle components
+```{r}
 # prcomp - based on singular value decomposition - preferred
 ?prcomp
 
@@ -84,25 +78,38 @@ names(pc)
 
 # proportion of explained variance
 # look up the description of 'sdev' in the help of prcomp
-barplot( pc$sdev^2/sum(pc$sdev^2) , xlab="principle component", 
-         ylab="% of variance")
-barplot( cumsum( pc$sdev^2/sum(pc$sdev^2) ) , xlab="principle component", 
-         ylab="cumulative % of variance" )
+pc.var <- data.frame(index = c(1:length(pc$sdev)), var.prop = pc$sdev^2/sum(pc$sdev^2), var.prop.cum = cumsum( pc$sdev^2/sum(pc$sdev^2)))
+ggplot(pc.var) +
+  geom_bar(aes(index, var.prop), stat = "identity") + 
+  labs(title = "PCA",
+        x = "principle component",
+        y = "% of variance")
+
+ggplot(pc.var) +
+  geom_bar(aes(index, var.prop.cum), stat = "identity") + 
+  labs(title = "PCA",
+        x = "principle component",
+        y = "cumulative % of variance")
+
 # Conclusion: the two first principle components are insufficient         
 
 # define a color for each sample 
 myColor <- rep("blue", nrow(imputed.CRC.prot))
 myColor[imputed.CRC.anno$Group == "CRC"] <- "red" 
 
-# score plot
-plot(pc$x[,1:2], col=myColor, pch=16, cex=2)
-legend("topleft", pch=16, col=c("red", "blue"), c("CRC", "Control"))
+# scatter plot
+PCs <- as.data.frame(pc$x)
+PCs$Group <- imputed.CRC.anno$Group
+g <- ggplot(PCs, aes(x = PC1, y = PC2, color = Group))
+g + geom_point()
+
 # Conclusion: not enough separation in the first two dimensions       
+```
 
-
-### 2.2 Loadings versus differential expression
+## 2.2 Loadings versus differential expression
+```{r}
 library(limma)
-
+library(ggrepel)
 # Specify the design matrix X - consists of fixed factors only
 design <- model.matrix(~0+imputed.CRC.anno$Group)
 colnames(design) <- c("CRC", "Healthy")
@@ -118,25 +125,42 @@ fit2 <- contrasts.fit(fit1, contrast.matrix)
 fit3 <- eBayes(fit2)
 
 # adjusted p-values
-p.bh <- p.adjust(fit3$p.value[,1], method = "BH")
-head(p.bh)
+# Benjamini-Hochberg (FDR) test for multiple correction
+p.bh <- topTable(fit3, adjust = "BH", sort = "none", n = Inf)
+p.bh$Protein <- rownames(p.bh)
+
+p.bh$Significant <- ifelse(p.bh$adj.P.Val < 0.05, "FDR < 0.05", "Not Sig")
+ggplot(p.bh, aes(x = logFC, y = -log10(P.Value))) +
+  geom_point(aes(color = Significant)) +
+  scale_color_manual(values = c("red", "grey")) +
+  theme_bw() +
+  geom_text_repel(
+    data = subset(p.bh, adj.P.Val < 0.05),
+    aes(label = Protein)
+  )
 
 # loadings vs adjusted p-values
-smoothScatter(pc$rotation[,1], p.bh, xlab="loading", 
+smoothScatter(pc$rotation[,1], p.bh$adj.P.Val, xlab="loading", 
               ylab="adjusted p-value")
-# Conclusion: large loadings may or may not correspond to small p-values
+```
+Conclusion: large loadings may or may not correspond to small p-values
 
-# 2.3 Principle components on a subset of significant genes
-# only select differentially expressed genes
-CRC_sign <- t(imputed.CRC.prot)[p.bh < 0.1,]
+## 2.3 Principle components on a subset of significant genes
+We only select differentially expressed genes
+
+```{r}
+CRC_sign <- t(imputed.CRC.prot)[p.bh$adj.P.Val < 0.1,]
 dim(CRC_sign)
 
 # principle component
 pc_sign <- prcomp(x=t(CRC_sign), center=TRUE, scale.=TRUE)
 
-# score plot
-plot(pc_sign$x[,1:2], col=myColor, pch=16, cex=2)
-legend("topleft", pch=16, col=c("red", "blue"), c("BCR/ABL", "NEG"))
+# scatter plot
+PCs_sign <- as.data.frame(pc_sign$x)
+PCs_sign$Group <- imputed.CRC.anno$Group
+g <- ggplot(PCs_sign, aes(x = PC1, y = PC2, color = Group))
+g + geom_point()
+
 # Conclusion: better separation when only use differentially expressed genes
 # (However cannot do this in practice!)
 
@@ -148,26 +172,33 @@ barplot( cumsum( pc_sign$sdev^2/sum(pc_sign$sdev^2) ) , xlab="principle componen
 # loadings vs adjusted p-values
 # Conclusion: better correspondence, but the loading cutoff 
 # and control of FDR are unclear
-smoothScatter(pc_sign$rotation[,1], p.bh[p.bh < 0.1], xlab="loading", ylab="adjusted p-value")
+smoothScatter(pc_sign$rotation[,1], p.bh$adj.P.Val[p.bh$adj.P.Val < 0.1], xlab="loading", ylab="adjusted p-value")
+```
 
+OVERALL CONCLUSION:
+Do not use loadings as evidence of differential expression
 
-# OVERALL CONCLUSION:
-# Do not use loadings as evidence of differential expression
+---
 
 #############################################
-## 3. Scatterplot matrices
+# 3. Scatterplot matrices
 #############################################
-# Reference: https://gastonsanchez.wordpress.com/2012/08/27/scatterplot-matrices-with-ggplot/
-# install.packages("GGally")
+Reference: https://gastonsanchez.wordpress.com/2012/08/27/scatterplot-matrices-with-ggplot/
+```{r}
 pairs(CRC[,c("CP", "PON1", "SERPINA3", "LRG1", "TIMP1")])
-
+# install.packages("GGally")
 library(GGally)
+
 ggpairs(CRC[,c("CP", "PON1", "SERPINA3", "LRG1", "TIMP1", "Sub_group")], aes(colour = Sub_group, alpha = 0.4), upper = list(continuous = wrap("cor", size = 3)))
 pairs(CRC[,c("CP", "PON1", "SERPINA3", "LRG1", "TIMP1")])
+```
+
 #############################################
-## 4. Venn diagram
+# 4. Venn diagram
 #############################################
-# Reference: https://cran.r-project.org/web/packages/UpSetR/vignettes/basic.usage.html
+Reference: https://cran.r-project.org/web/packages/UpSetR/vignettes/basic.usage.html
+
+```{r}
 # install.packages("VennDiagram")
 library(VennDiagram)
 A <- sample(1:1000, 400, replace = FALSE); 
@@ -190,3 +221,5 @@ library(UpSetR)
 listInput <- list(A = A, D = D, B = B, C = C)
 upset(fromList(listInput), order.by = "freq")
 ```
+
+---

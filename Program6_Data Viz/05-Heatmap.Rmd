@@ -15,13 +15,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Summary
-* Creating a new RStudio project
 * Reading in data in R
-* Improve figure clarity
-    + Deal with overplotting
-    + Order bar chart
-    + Zooming
-    + Change labels, themes, and scales
+* Heatmaps
+    + Choice of the distance metric matters
+    + Clustering genes
+    + The heatmap has an option "scale" by default
+    + Label sample types
+    + The choice of the linkage method in clustering matters
+    + heatmap.2()
     
 http://sebastianraschka.com/Articles/heatmaps_in_r.html
 
@@ -79,11 +80,15 @@ imputed.CRC.anno <- CRC.anno[selectedSamples,]
 ################################################################
 heatmap(t(imputed.CRC.prot))
 ?heatmap
-
-
+# Change the font of row and column label
+heatmap(t(imputed.CRC.prot), cexRow = 0.3, cexCol = 0.2, margins = c(2, 2))
+# Don't do cluster on rows
+heatmap(t(imputed.CRC.prot), cexRow = 0.3, cexCol = 0.2, margins = c(2, 2), Rowv = NA)
+# Don't do cluster on columns
+heatmap(t(imputed.CRC.prot), cexRow = 0.3, cexCol = 0.2, margins = c(2, 2), Colv = NA)
 ```
 
-## Note 2.1: choice of the distance metric matters
+## Note 2.1: Choice of the distance metric matters
 
 ```{r, message=FALSE}
 library(bioDist)
@@ -91,18 +96,19 @@ library(bioDist)
 # toy example: 3 genes, 5 samples
 gene1 <- c(1, 6, 2, 4, 7)
 gene2 <- gene1 + 4 
-gene3 <- gene2/3+ c(0, 2, 0, 4, 0)
+gene3 <- gene2/3 + c(0, 2, 0, 4, 0)
 e <- rbind(gene1, gene2, gene3)
 dimnames(e) <- list(paste("gene", 1:3, sep=""), paste("sample", 1:5, sep=""))
 e
 
 # plot
-plot(e[1,], col="red", type="l", ylim=c(0,15), xlab="samples", ylab="abundance",
-     main="Original abundance values", lwd=3)
-lines(e[2,], col="blue", lwd=3)
-lines(e[3,], col="green", lwd=3)
-legend("topright", col=c("red", "blue", "green"), paste("gene", 1:3, sep=""), lty=1, lwd=3, cex=1.5)
-
+library(ggplot2)
+library(tidyr)
+e1 <- as.data.frame(e)
+e1$gene <- rownames(e1)
+e1 <- e1 %>% gather(Sample, Abundance, -gene)
+ggplot(e1) + 
+  geom_line(aes(x=Sample, y = Abundance, group = gene, colour=gene))
 
 # default: distance fnction eucledian
 heatmap(e, distfun=euc, margins=c(10,10), main="Eucledian distance")
@@ -114,9 +120,7 @@ heatmap(e, distfun=cor.dist, margins=c(10,10), main="Correlation distance")
 ## Note 2.2: Clustering genes
 
 genes are multivariate objects (=observations) in the space of samples (=variables)
-if we are not interested in similarity of abundance 
-but in similarity of the direction of change, 
-then it will help to standardize the observations across variables 
+if we are not interested in similarity of abundance  but in similarity of the direction of change, then it will help to standardize the observations across variables 
 
 now each gene has mean 0 and sample variance 1 across arrays 
 
@@ -124,12 +128,11 @@ now each gene has mean 0 and sample variance 1 across arrays
 library(genefilter)
 e_centerScale <- ( e - rowMeans(e) ) / rowSds(e)
 
-# plot
-plot(e_centerScale[1,], col="red", type="l", ylim=c(-2,2), xlab="samples", ylab="abundance",
-     main="Original abundance values")
-lines(e_centerScale[2,], col="blue")
-lines(e_centerScale[3,], col="green")
-legend("topright", col=c("red", "blue", "green"), paste("gene", 1:3, sep=""), lty=1)
+e1 <- as.data.frame(e_centerScale)
+e1$gene <- rownames(e1)
+e1 <- e1 %>% gather(Sample, Abundance, -gene)
+ggplot(e1) + 
+  geom_line(aes(x=Sample, y = Abundance, group = gene, colour=gene))
 
 # Eucledian distance is sensitive to centering and scaling
 heatmap(e, distfun=euc, margins=c(10,10), main="Eucledian, raw")
@@ -138,11 +141,9 @@ heatmap(e_centerScale, distfun=euc, margins=c(10,10), main="Eucledian, centered 
 # Correlation distance is not sensitive to centering and scaling
 heatmap(e, distfun=cor.dist, margins=c(10,10), main="Correlation, raw")
 heatmap(e_centerScale, distfun=cor.dist, margins=c(10,10), main="Correlation, centered and scaled")
-# (note that centering and scaling of genes across samples + correlation distance
-# affect the order of the samples)
-# my choice is to use correlation on the original values, 
-# or to compute dendrograms separately, save the order of genes or samples, and use "image" to visualize 
 ```
+
+Note that centering and scaling of genes across samples + correlation distance affect the order of the samples). My choice is to use correlation on the original values, or to compute dendrograms separately, save the order of genes or samples, and use "image" to visualize 
 
 ## Note 2.3: The heatmap has an option "scale" by default
 However it only affects the color, and not the calculation of dendrograms.
@@ -154,34 +155,41 @@ library(RColorBrewer)
 # scaling of color matters for unscaled data
 heatmap(e, distfun=euc, margins=c(10,10), scale="none", main="Eucledian, raw")
 heatmap(e, distfun=euc, margins=c(10,10), main="Eucledian, scaled")
-# Conclusion: genes 1 and 2 are far from each other on the dendrogram
-# (because of Eucledian distance) but have same color patterns of
-# intensities (because of scaled colors)
+# Conclusion: genes 1 and 2 are far from each other on the dendrogram (because of Eucledian distance) but have same color patterns of intensities (because of scaled colors)
 
 
 # scaling of color irrelevant if data themselves are scaled already
-heatmap(e_centerScale, distfun=euc, margins=c(10,10))
 heatmap(e_centerScale, distfun=euc, margins=c(10,10), scale="none")
+```
+
+```{r}
+heatmap(e_centerScale, distfun=euc, margins=c(10,10))
+```
 
 
-# Example with real dataset
+
+Example with real dataset
+```{r}
 # Default: raw data, scaled by row (i.e. gene)
 heatmap(t(imputed.CRC.prot))
+col<- colorRampPalette(c("red", "white", "blue"))(256)
+heatmap(t(imputed.CRC.prot), col =  col)
 
 # change color code: non-standardized expressions
 # equal-spaced breaks for values of abundance
 summary(as.vector(t(imputed.CRC.prot))) # min ~ 6, max ~ 25
-exprs_brk <- seq(from=6, to=25, length=12)
-heatmap(t(imputed.CRC.prot), col=brewer.pal(length(exprs_brk)-1, "RdBu"), breaks=exprs_brk)
+quantile.range <- quantile(imputed.CRC.prot, probs = seq(0, 1, 0.01))
+palette.breaks <- seq(quantile.range["5%"], quantile.range["95%"], by = 0.5)
+color.palette  <- colorRampPalette(brewer.pal(11,"Spectral"))(length(palette.breaks) - 1)
+heatmap(t(imputed.CRC.prot), col = color.palette, scale = "none", breaks= palette.breaks)
 
-# change color code: gene-standardized expressions
+# change color code: protein-standardized expressions
 # quantile-spaced breaks in positive and negative directions
-imputed_CRC_prot_centerScale <- 
- ( t(imputed.CRC.prot) - rowMeans(t(imputed.CRC.prot)) ) / rowSds(t(imputed.CRC.prot))
-exprs_brk <- c( quantile(imputed_CRC_prot_centerScale[imputed_CRC_prot_centerScale<0], seq(0, 1, length=5)),
-                0, quantile(imputed_CRC_prot_centerScale[imputed_CRC_prot_centerScale>0], seq(0, 1, length=5)))
+imputed_CRC_prot_centerScale <-  ( t(imputed.CRC.prot) - rowMeans(t(imputed.CRC.prot)) ) / rowSds(t(imputed.CRC.prot))
 
-heatmap(imputed_CRC_prot_centerScale, col=brewer.pal(length(exprs_brk)-1, "RdBu"), breaks=exprs_brk)
+exprs_brk <- c( quantile(imputed_CRC_prot_centerScale[imputed_CRC_prot_centerScale < 0], probs=seq(0, 1, length=10)), 0, quantile(imputed_CRC_prot_centerScale[imputed_CRC_prot_centerScale > 0], seq(0, 1, length=10)))
+colors <- colorRampPalette(brewer.pal(11,"Spectral"))(length(exprs_brk)-1)
+heatmap(t(imputed.CRC.prot), col = colors, breaks = exprs_brk)
 ```
 
 ## Note 2.4: Label sample types
@@ -190,23 +198,73 @@ heatmap(imputed_CRC_prot_centerScale, col=brewer.pal(length(exprs_brk)-1, "RdBu"
 myColor <- rep("blue", nrow(imputed.CRC.prot))
 myColor[imputed.CRC.anno$Sub_group == "CRC"] <- "red" 
 myColor[imputed.CRC.anno$Sub_group == "Healthy"] <- "yellow" 
-heatmap(imputed_CRC_prot_centerScale, col=brewer.pal(length(exprs_brk)-1, "RdBu"), breaks=exprs_brk, ColSideColors=myColor)
+heatmap(t(imputed.CRC.prot), col = colors, breaks = exprs_brk, ColSideColors=myColor)
 ```
 
 
 ## Note 2.5: The choice of the linkage method in clustering matters
+Distance options: euclidean (default), maximum, canberra, binary, minkowski, manhattan
+Cluster options: complete (default), single, average, mcquitty, median, centroid, ward
 ```{r, message=FALSE}
-# clusters in the sample space: note the use of (t)
+# Correlation distance
+heatmap(t(imputed.CRC.prot),
+        distfun = cor.dist,
+        col = colors, 
+        breaks = exprs_brk, 
+        ColSideColors=myColor,
+        Rowv = NA) 
+
+# Euclidean distance
 # method "complete" by default
-hc <- hclust( dist( t(imputed_CRC_prot_centerScale)) )
-plot(hc)
+heatmap(t(imputed.CRC.prot),
+        distfun = euc,
+        col = colors, 
+        breaks = exprs_brk, 
+        ColSideColors= myColor,
+        Rowv = NA) 
 
-# sinle linkage
-hc <- hclust( dist( t(imputed_CRC_prot_centerScale)), metho="single" )
-plot(hc)
+# clusters in the sample space: note the use of (t)
+# single linkage
+hc <- hclust(dist(imputed.CRC.prot), method="single" )
+heatmap(t(imputed.CRC.prot),
+        col= colors, 
+        breaks=exprs_brk, 
+        ColSideColors=myColor,
+        Rowv = NA, 
+        Colv = as.dendrogram(hc)) # apply default clustering method
 
-# cut the tree at a specific group
-hc <- hclust( dist( t(imputed_CRC_prot_centerScale)) )
-cc <- cutree(hc, k=2)
-cc
+# Average 
+hc <- hclust(dist(imputed.CRC.prot), method="average" )
+heatmap(t(imputed.CRC.prot),
+        col = colors, 
+        breaks = exprs_brk, 
+        ColSideColors = myColor,
+        Rowv = NA, 
+        Colv = as.dendrogram(hc)) # apply default clustering method
+
+# Try manhattan distance
+manhattan_dis <- dist(imputed.CRC.prot, method = "manhattan")
+hc <- hclust(manhattan_dis)
+heatmap(t(imputed.CRC.prot),
+        col = colors, 
+        breaks = exprs_brk, 
+        ColSideColors = myColor,
+        Rowv = NA, 
+        Colv = as.dendrogram(hc)) # apply default clustering method
+
+# Try maximum distance
+maximum_dis <- dist(imputed.CRC.prot, method = "maximum")
+hc <- hclust(maximum_dis)
+heatmap(t(imputed.CRC.prot),
+        col = colors, 
+        breaks = exprs_brk, 
+        ColSideColors = myColor,
+        Rowv = NA, 
+        Colv = as.dendrogram(hc)) # apply default clustering method
+```
+
+## Note 2.6: heatmap.2()
+```{r}
+library(gplots)
+heatmap.2(t(imputed.CRC.prot), srtCol=45)
 ```
