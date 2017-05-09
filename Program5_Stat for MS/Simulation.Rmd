@@ -1,0 +1,237 @@
+---
+title: "Simulating FDR"
+author: "Naomi Altman"
+date: "May 6, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In quantitative fields, computer simulation is used to assess the performance of algorithms.  We start by creating synthetic data with known properties.  We then apply the algorithm to the synthetic data and record a set of outcomes, such as the estimate of a parameter, the number of correct discoveries, etc.  
+
+We usually know how the algorithm behaves as some aspect of our study varies, such as sample size, or as the systematic components of the system.  These are the conditions of the simulation study.  For example, we could consider the false discovery and nondiscovery rates of the Bonferroni procedure when the number of features, number of subjects and effect sizes vary.
+
+Since we expect our data to have systematic components (called effects) and random components (called noise or variation) we often use a random number generator as part of the data synthesis.  In this case, we would like to know how the algorithm behaves as the random part of the data varies, so for each condition we may synthesize several hundreds or thousands of data sets and run the algorithm on each.
+
+The advantages of assessing our algorithms on synthetic, rather than real, data are firstly that we can obtain an honest assessment since we know exactly how the data were generated and secondly that additional data can be readily obtained.  The disadvantage is that it is difficult to simulate data with the properties of real data which may include (for example) outliers, dependencies and other anomalies.  As a result, our simulation studies present an idealized situation.
+
+Here we will generate a datasets for a study of differential intensity with control and treatment groups.We will suppose that there are nF=10,000 features and nSamp subjects for each of two treatments (treated and control).  We will assume that nSamp=5 and  \(m_0\) is 9000 to start, but if there is time we will vary these.  For the \(m_0\) features with no differential expression, we will assume that the mean is 8 and SD=1.  For the other features, we will assume that the mean is 10.024438, which would give 
+80\% power (for a single test) when we reject at p<0.05 and n=5.  We will use a two-sample t-test to compute the p-value for each test.  We then adjust the p-value using a multiple testing method and determine which features significantly differentially express.  To assess our algorithm we will compute:
+
+1) Storey's estimate of $\pi_0$ the percentage of features that differentially express.
+2) Pound and Chen's estimate of $\pi_0$ (m*average(p-value))
+2) The number of discoveries, false discoveries and false non-discoveries using unadjusted p-values, the Bonferroni method, BH method and q-values
+3) The number of false discoveries using unadjusted p-values and the Bonferroni method.
+4) The number of false nondiscoveries using unadjusted p-values and the Bonferroni method.
+
+# Preliminaries
+
+The only library we need for this homework that is not automatically loaded with R is *qvalue*.  You  need to load it into R using the *library* command.
+
+```{r load}
+library(qvalue)
+```
+
+We will start by writing a function *tp* that computes the p-value from a 2-sided 2-sample t-test.  Actually, we let the R *t.test* function compute the p-values.  *tp* is just an accessor function that pulls the p-value out of the output.  For a 2-sample t-test, the *t.test* function can either use the format *t.test(x,y)* where *x* and *y* are the two samples, or *t.test(x~trt)* where both samples are in *x* and *trt* is a factor which identifies which values are in which sample (e.g. male/female or normal/tumor etc).  We will use the second format, because that is the usual format for high throughput data.
+
+The data will be in a single vector *x*.  The two groups are defined by a categorical variable *trt* which has only the grouping (treatment) indicators. 
+
+```{r getP}
+tp=function(x,trt) t.test(x~trt)$p.value
+```
+Recall that when writing a function, the inputs (in this case *x* and *trt*) exist only within the function.  However, the *apply* command which we will use instead of a loop replaces *x* by either the rows or columns of its own input, and therefore it is important to call the first input "x".
+
+
+Notice that we can now call *tp* using any two vectors that are already defined by previous commands.  For example *tp(weight, gender)* could be used to perform a two-sample t-test with the data stored in *weight* and *gender* coded as *M* and *F* or *0* and *1*.  
+
+# Generating the data
+
+We will mimic proteomics or gene expression data data that is approximately Normally distributed after taking log2.  For our simulation study, we will assume that the mean expression for the control samples is 8 for all the features, and that the SD is 1.  Of course this is unrealistic, but it will be sufficient for our purpose of understanding multiple testing because the two-sample t-test is independent of the means.  
+
+The power will depend on the SD, and for real data this will vary by feature.  However, one purpose of a simulation study is to understand our procedures under simple scenarios.  If we want to look at more complicated scenarios later, we can assume that the SDs come from some positive distribution such as a Gamma distribution. 
+
+We assume that $m_0$ of the treatment features also have mean 8 and the remainder have mean 10.024438.  There is no need to randomize which features come from the null distribution, so we might as well let it be the first $m_0$.  Again, with real data it is highly unlikely that all the non-nulls have the same mean and we can always change this after we understand the simple situation.
+
+## Simulating the data
+
+There are many ways to simulate the data which are more efficient than the commands below.  However, I have found that people unused to computing do best with methods that avoid confusing computing tricks.  So, we are going to synthesize the data in 5 steps.
+
+1. Create a matrix with 10,000 rows (features) and nSamp columns (samples) to hold the intensities for the controls.  Each number in the matrix is Normal with mean 8 and SD=1.
+
+2. Create a matrix with $m_0$ rows (features) and nSamp columns (samples) to hold the intensities for the $m_0$ features which come from the null and are Normal with mean 8 and SD=1 for the treatment.
+
+3. Create a matrix with $10000-m_0$ rows and nSamp columns to hold the intensities for the features which come from the non-null and are Normal with mean 10.024438 and SD=1 for the treatment.
+
+4. Use *rbind* to paste the two treatment matrices together to form a matrix with 10,000 rows and nSamp columns.  The first $m_0$ rows are the null features.
+
+5. Use *cbind* to paste the control and treatment matrices together to form an intensity matrix with 10,000 rows and 2*nSamp columns.  The first $m_0$ rows are the null features.  The first nSamp columns are the controls.
+
+Once we do this, we can do a 2-sample t-test for each row of the intensity matrix.  The first $m_0$ entries are the p-values corresponding to the null features and the remaining entries are the p-values corresponding to the non-null features.  So, we can readily determine the histograms of p-values for the null and non-null features as well as of all the features.  We can also readily count how many of the null and non-null features have (e.g.)  p<0.05.
+
+
+```{r setUP}
+nSamp=5
+nF=10000
+m0=9000
+mu0=8
+muA=10.024438
+sig=1
+```
+
+1. First we generate the matrix of controls which are Normal with mean=mu0 and sd=sig.
+
+```{r genControl}
+control=matrix(rnorm(nSamp*nF,mean=mu0,sd=sig),nrow=nF)
+```
+
+2. Second we generate the matrix of null treatments which are Normal with mean=mu0 and sd=sig.
+
+```{r genNull}
+null=matrix(rnorm(nSamp*m0,mean=mu0,sd=sig),nrow=m0)
+```
+
+3. Third we generate the matrix of non-null treatments which are Normal with mean=muA and sd=sig.
+
+```{r genNonNull}
+NonNull=matrix(rnorm(nSamp*(nF-m0),mean=muA,sd=sig),nrow=(nF-m0))
+```
+
+4. Next we combine the two treatment matrices row-wise into the treatment matrix.
+
+```{r mkTreatment}
+Treat=rbind(null,NonNull)
+```
+
+5. Finally we combine the control and treatment matrices into the intensity matrix.
+
+```{r makeData}
+sim1Data=cbind(control,Treat)
+dim(sim1Data)
+```
+
+If this was done correctly, the number of rows in *sim1Data* is the number of features and the number of columns is the total number of samples.
+
+We need to create a vector which will let R know which columns are the controls and which are the treated.  I use the table command to count the number of samples of each type just to check that I have it right.
+
+```{r treatments}
+treatments=rep(c("C","T"),each=nSamp)
+treatments
+table(treatments)
+```
+
+## Generating the p-values
+
+Now lets do the 2-sample t-test on the first feature (row 1).  We will do it in 3 ways, just to check.  First we will use the *t.test* function with the first row of *control* and the first row of *treated*.  Next we will use the first row of *sim1Data* with the *treatments* vector.  Finally, we will use our function *tp* to check that we obtain the same p-value.
+
+```{r testMethods}
+t.test(control[1,],Treat[1,])
+t.test(sim1Data[1,]~treatments)
+tp(sim1Data[1,],treatments)
+```
+
+Having checked that *tp* is computing the correct p-value, we are now ready to use *apply* to obtain a p-value for every feature.  The format for *apply* is *apply(data,k,function,arguments)* where *data* is replaced by the data, *k* is replaced by 1 for rows and 2 for columns, *function* is the name of our function and *arguments* are all the arguments after the first one.  
+
+```{r computeP}
+p1Sim=apply(sim1Data,1,tp,treatments)
+```
+
+Lets have a quick look at the values in p1Sim and see if they look reasonable.  We'll print the first few values to the screen using the "head" command, and get a histogram of all the values.  Since there are 10000 rows, there are 10000 p-values, so we might ask for about 100 bins.
+
+```{r checkP}
+head(p1Sim)
+hist(p1Sim,nclass=100)
+```
+
+This histogram *should* look like the one in the lecture.  Now lets break it into two histograms - one for the $m_0$ nulls and one for the $nF-m0$ non-nulls.
+
+```{r pHistograms}
+hist(p1Sim[1:m0],nclass=100)
+hist(p1Sim[(m0+1):nF],nclass=100)
+```
+
+Now lets use Storey's method to compute $\pi_0$.  To do this we use the $qvalue$ function to convert the p-values to q-values.  One component of the output is the estimate of $\pi_0$.  As well, we compute 2*average(p-value).  Our estimate of $m_0$ is just nF*pi0
+
+```{r pi0}
+qvals=qvalue(p1Sim)
+names(qvals)
+qvals$pi0
+pbar=mean(p1Sim)
+2*pbar
+```
+
+Since 9000 the features have the same mean in both the control and treated groups, the true value of $\pi_0$ is 0.9.  
+
+Now lets look at how many features are "discovered" as significantly differentially expressed at p<0.05.  Any discovered in the first $m_0$ are false discoveries, and the remainder are true discoveries
+
+```{r sigfeatures}
+sum(p1Sim<0.05)
+sum(p1Sim[1:m0]<0.05)
+sum(p1Sim[(m0+1):nF]<0.05)
+```
+
+The observed false discovery rate is the proportion of all discoveries that are false 
+`r sum(p1Sim[1:m0]<0.05)/sum(p1Sim<0.05)`.
+
+
+How many false non-discoveries are there?  Any of the last nF-m0 p-values that are greater than 0.05 are false non-discoveries.  We expect the proportion of true discoveries to be close to the power of the test.  `r sum(p1Sim[(m0+1):nF]<0.05)/(nF-m0)`.
+
+## Multiple testing adjustments
+
+Now lets see how using multiple testing adjustments changes the picture.
+
+The Bonferroni method requires p-values less than $\alpha/m$ for statistical significance.  In our case, this will be p<.000005.
+
+```{r Bonferroni}
+sum(p1Sim<.05/nF)
+```
+If there are any discoveries, we can determine if they are true or false discoveries:
+
+```{r BonferroniFALSE}
+sum(p1Sim[1:m0]<.05/nF)
+```
+As you can readily see, there is almost no power to detect differential intensities.  
+
+The Benjamini and Hochberg method (BH) is implemented using the *p.adjust* function in R. It sequentially rejects; the most significant test must be significant using the Bonferroni method, so if you had no rejections for Bonferroni you will also have none for BH.  However, if you had at least one rejection, you might have additional rejections using the BH method.  You could also check to see if they are true or false discoveries.
+
+```{r BH}
+p1BH=p.adjust(p1Sim,method="BH")
+sum(p1BH<0.05)
+sum(p1BH[(m0+1):nF]<0.05)
+```
+
+Again, power is generally low.
+
+Now lets try q-values.  q-values are adaptive - first $\pi_0$ is estimated and this is used in the q-value computation, which somewhat improves the power.
+
+```{r qvalues}
+q1Sim=qvalue(p1Sim)
+sum(q1Sim$q<0.05)
+sum(q1Sim$q[1:m0]<0.05)
+```
+Q-values are usually the least conservative (most powerful) of the methods.  The *qvalue* package also has some useful plots.
+
+```{r qvalPlot}
+plot(q1Sim)
+```
+
+These show the estimate of $\pi_0$ based on $\lambda$ (the location on the p-value plot at which the p-values are assumed to be flat), the number of tests declared significant at each q-value, the q-values plotted against the p-values and the expected number of false discoveries.
+
+## Small $\pi_0$
+
+In many studies (e.g. response to a chemical) we expect $\pi_0$ to be large (i.e. greater than 70%).  In this case, the q-values are larger than the p-values giving fewer "discoveries" than the unadjusted p-values.  However, if $\pi_0$ is sufficiently small, we have an odd phenomenon, the q-values are smaller than p-values.  This is because the q-values are estimates of the FDR - when $\pi_0$ is small, most of the features are non-null, so most discoveries are true!  So we can "afford" to be very liberal in declaring statistical significance.  In this case, I use p-values to declare statistical significance, and use the q-value versus p-value plot to determine the q-value corresponding to p=0.05, which I then report.  This type of thing happens in e.g. studies of very different tissues, such as leaves and roots.
+
+To understand this better, lets redo our study letting m0=3000.
+
+## Other things to try
+
+Try changing any of the parameters of the study such as the sample size, the size of the alternative mean, the SD, etc and see how things change.
+
+
+
+
+```{r sessionInfo}
+sessionInfo()
+```
+

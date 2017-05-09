@@ -1,0 +1,228 @@
+---
+title: "Homework 4 Multiple Testing and FDR (40 points)"
+author: "Naomi Altman"
+date: "Feb. 11, 2016"
+---
+
+This homework investigates the issues of multiple testing when the number of tests (features, genes, SNPs...) is much larger than the number of samples.  In this homework, we use only continuous data such as microarray intensity values.  However, similar problems occur with count data (such as RNA-seq and ChIP-seq) and tabular data (such as SNPs).
+
+The homework is a simulation of a microarray experiment with 2 independent conditions which we will call the treatment and control.
+We will look at 2 sample sizes N=5 per group and N=10 per group, with M=1000 genes.
+The value of doing a simulation is that you know the true values so you can
+compare the effectiveness of various procedures.
+
+The responses you turn in should not include any of this explanatory text.  However, since you want to be able to reproduce this analysis, you should include all the code (with some brief comments about what it does).
+
+# Preliminaries - writing some small functions
+
+We will start by writing a function *tp* that computes the p-value from a 2-sided 2-sample t-test.  Actually, we let the R *t.test* function compute the p-values.  *tp* is just an accessor function that pulls the p-value out of the output.  Notice that we use a formula in the *t.test* function.  The data is in a single vector *x*.  The two groups are defined by a categorical variable *trt* which has only the grouping (treatment) indicators. We have also given our code chunk a name *getP*.
+
+```{r getP}
+tp=function(x,trt) t.test(x~trt)$p.value
+```
+Recall that when writing a function, the inputs (in this case *x* and *trt*) exist only within the function.  However, the *apply* command which we will use instead of a loop replaces *x* by either the rows or columns of its own input, and therefore it is important to call the first input "x".
+
+I suggest that you leave the above code chunk in your Rmd file, so that the function is defined exactly as above.
+
+
+Notice that we can now call *tp* using any two vectors that are already defined by previous commands.  For example *tp(weight, gender)* could be used to perform a two-sample t-test with the data stored in *weight* and *gender* coded as *M* and *F* or *0* and *1*.  
+
+**Homework Question 1**  (5 points)
+
+a) Suppose we have a vector "p" with 200 values.  What do the following commands compute?
+
++ i) mean(p)
++ ii) mean(p>0.5)
++ iii) mean(p[p>0.5])
+
+b) Write two functions to estimate \(\pi_0 \)
+
++ i) pi0PC estimates \(\pi_0 \) using the Pounds and Cheng method.
++ ii) pi0S estimates \(\pi_0 \) using Storey's method using a cut-off at p-value 0.5
+
+# Storey's Q-values
+
+Bioconductor has a function to estimate q-values.   I will give the basic instructions for installing the *qvalue* function. If you get an error message, please let me know so I can find the cause and add the current update.  (There was a bug in the install script for the Mac which appears to have been fixed.)
+
+```{r}
+library(BiocInstaller)
+biocLite("qvalue")
+library(qvalue)
+```
+
+You may get an invitation to update your other Bioconductor packages - I usually update all the first time I am asked, and none subsequently.  This is because anything that did not update on the first round is going to fail again anyways.
+
+If all went well, at some point in this process you should get the message *package 'qvalue' successfully unpacked and MD5 sums checked*.
+
+# Simulation Part 1: Simulating from the Null with n=5 for each treatment
+
+We start by setting up 2 data matrices (treatment and control) with 5 columns (samples) and 1000 rows (genes) to hold our log2(expression) "data".  The log2(intensity) of expression   is approximately Normal (within gene and treatment).   
+
+***************
+## Homework Question 2 (2 points)
+
+a) Suppose that there is no difference in the mean between the treatment and control and that the common value of the mean is \(\mu_C=\mu_T=\mu\).  Does the value of \(\mu\) matter to the statistical significance of the t-test?  Briefly explain your answer.
+
+b) Suppose that there is no difference in the mean between the treatment and control and that the variance of the observations is \(\sigma^2_C=\sigma^2_T=\sigma^2\) in both groups.  Does the value of \(\sigma^2\) matter to the statistical significance of the test?  Briefly explain your answer.
+
+***************
+
+To keep things simple, all the genes start with the same mean, 8.0, which is about the mean of microarray expression data on the log2 scale.  Later we will change some of the means in the treatment group.
+
+We start with no treatment effects: \(\mu_C=\mu_T=8\).  So all the genes in both the control and treatment group have mean 8.  We generate random data to be random Normal with mean 8 and SD=1. Recall that the *rnorm* command which can be used to generate random normals with a given mean and SD.
+
+We will set up \(M\times N\) matrices, where \(M\) is the number of genes and \(N\) is the number of samples in the group. As in the Simulation R lab, we create a vector of random numbers and then use the *matrix* command to create the synthetic data.  However, unlike the Simulation R lab, this is a single experiment with \(M\) genes (in the rows) and \(N\) samples (in the columns).  If we were to do a simulation study to help us understand a sampling distribution, we would need to repeat this data generation step many times.  In this homework, we just generate a few data sets to get a feel for how the procedures work.
+
+In real microarray and sequencing studies we usually get the data in one of two formats - i.e. individual samples (columns) which need to be assembled into the data matrix or as a spreadsheet with all the genes and samples.  So our final step in creating the synthetic data matrix will be to create one big matrix that has both the treatment and control samples using the *cbind* command.
+
+```{r means}
+M <- 1000 # number of "genes"
+N <- 5  # number of samples in each of two groups
+treat=matrix(rnorm(M*N,mean=8,sd=1),nr=M,nc=N)
+control=matrix(rnorm(M*N,mean=8,sd=1),nr=M,nc=N)
+simdata1=cbind(treat,control)
+```
+
+I strongly suggest printing out a small portion of the data to check that it looks OK.  (You can include this in your RMD and html files. )
+ 
+
+***************
+
+## Homework Question 3 (8 points)
+
+a) Create a vector called myTrt of N "T"s and N "C"s to designate which columns are the treatments and which are the controls.  Include your R commands in the Rmd file.
+
+b) Use the *apply*  command and your *tp* function to compute the p-value for for a two-sample t-test to determine if the means are the same for the treatment and control for each row of the data matrix. Include your R commands in the Rmd file.
+
+c) Draw a histogram of the p-values.  Does the histogram have the expected shape?  Briefly explain your answer.
+
+d) How many "genes" do you expect to have p<0.05?  How many "genes" actually have p<0.05?  Include your R commands in the Rmd file.
+
+e) If you reject the null hypothesis for each gene with p<0.05, what is your estimated FDR (based on the truly null and non-null genes) in this simulation?  Note: Estimated FDR=(false discoveries)/(total discoveries)
+
+e) Use the Pounds and Cheng function you wrote to estimate \(\pi_0\) the percentage of null tests.  What do you get?
+
+f) Using the Storey function you wrote, estimate \(\pi_0\).  What do you get?
+
+g) If you use the Bonferroni method, how many of the null hypotheses would you reject at p<0.05?  What is your estimated FDR?  
+
+h) If you use the Benjamini and Hochberg method, how many of the null hypotheses would you reject at p<0.05?  What is your estimated FDR?  ((Note that there is an R function *p.adjust* which can compute the "BH-adjusted p-values"for you or you can write your own function.)
+
+i) Generate another sample of the same size.  Do you get the same answers for d - h?  Include your results in the html file.
+
+***************
+
+Now let's examine a situation in which there are some real differences. We ``up-regulate'' 100 genes in the treatment group by changing their means to 10, leaving the remaining 900 genes non-differential. We can determine the power of the test if we reject when p<0.05, recalling that we have sample size 5 in both the treatment and control group.  *delta* is the difference in means.  In this case delta=10-8= 2 for the up-regulated genes.
+
+```{r power}
+power.t.test(n=5,delta=2,sd=1,sig.level=0.05)
+```
+
+So we expect to reject about 79% of the truly non-null genes.
+
+************
+
+## Homework Question 4 (5 points)
+
+Recall that we will generate 1000 genes of which 100 actually have differences in mean expression.  If we reject for p<0.05, we will have power 79%.  
+
+a) How many of the 1000 tests do we expect to reject?
+
+b) What should our false discovery rate be if we reject at p<0.05?
+
+c) What should our false non-discovery rate be if we reject at p<0.05?
+
+d) How many total errors will we make if we reject at p<0.05?
+
+e) Suppose that each false discovery costs us \$1 (in wasted follow-up effort) and each false non-discovery costs us \$5 (in lost opportunity). Which will reduce our total cost more - increasing or decreasing the p-value at which we reject?
+
+**************
+
+## Homework Question 5 (8 points)
+
+a) Regenerate the data, but make the means for the first 100 genes in the treatment group all 10. Call the matrix of simulated gene expression values *sim.data2*  (Include your R code.)  
+
+Note: Please check that the means in each of the first 100 rows of the treatment matrix are approximately 10 and the means in the remaining 900 rows are approximately 8.  You could use the *apply* command to check.
+
+One way to create the new treatment matrix is to create two matrices, one that is 5 rows and 100 columns with mean 10 and another that is 5 rows and 900 columns with mean 8.  Then use the *rbind* command to paste the two matrices together column-wise.
+
+Note: Do NOT change the means in the control group.  In the control group, each gene should have mean 8.
+
+b) Redo the t-tests and compute the p-values. 
+
+c) What should the histogram of p-values look like for the first 100 genes?  What should it look like for the other 900 genes?  Draw the histograms and check.
+
+d) Draw the histogram of p-values.  Does it have the appropriate shape for using FDR adjustments?
+
+e) How many rejections do you have a p<0.05?  What are your estimated FDR and FNR?  To obtain these, you need to determine how many of the rejections and non-rejections are correct (i.e. the null is false) and how many are true.  Do NOT true to estimate this using the Storey or BH methods - I am looking for an answer based on the accepts and rejects in your simulation.
+
+
+f) What are your estimated FDR and FNR if you use the Bonferroni, BH and Storey methods and reject at "adjusted p"<0.05?
+
+g) What is your estimate of \(\pi_0\)?
+
+
+
+***********
+
+This is a recurrent theme in multiple testing ... no matter where we set the threshold 
+we can't get all the changed genes without getting a flood of false positives.  Our simulated data is pretty simple - all the differential genes have the same fairly strong effect.
+When the effect size is smaller, there is less power and for a fixed value of FDR, fewer significant genes will be detected on average while the FNR will be higher.
+
+***********
+
+## Homework Question 6 (8 points)
+
+Redo problems 3 and 5 with N=10 (i.e. 10 samples per group) (but do not redo 3.i).  
+
+***********
+
+Simulation studies allow us to try out statistical methods for problems when we know the true answer (which we seldom know in the lab).  This homework could get tedious if we try out all the variations.  Here are some suggestions of things you might try (but you don't need to turn them in.)
+
+Some things to try:
+
+1. Generate another set of random errors and see how your results change.
+2. Have more or fewer truly differentially expressed genes.
+3. Increase the sample size.
+4. Increase or decrease the SD of the noise.
+5. Have the mean expression in the treatment group vary from 4 to 16 (the usual range in a microarray experiment.)
+
+
+We've been considering an idealized situation - the random variations of one gene are unrelated to all the others.
+In reality groups of genes are somewhat co-regulated (and technical artifacts are correlated.)
+So let's now try a few random data sets with correlated errors.  With independent errors, the results do not vary dramatically if you simulate a new dataset with the same means but different noise.  With correlated data, the results can differ quite a lot, so either try this several times, or share your results with someone else in the class.
+
+We create strongly correlated data by creating a correlated cluster.  Typically, in real genomics data there would be several clusters.  The simplest type of cluster, which we use here, has a "random effect" which is the same for every gene in the cluster, but which varies among samples. The data is a sum of the random cluster effect and independent noise.  Since we have only one cluster in our simulation, we generate one random effect per sample which will be the same for every gene.  We need to rescale so that the new noise has the same size as the noise we used previously.  I do this by setting the SD to sqrt(0.5) for both the common component and the noise component.
+
+
+
+
+```{r correlated}
+N=10
+noiseT=matrix(rnorm(N*M,mean=8,sd=sqrt(0.5)),nr=M, nc=N,byrow=T)
+noiseC=matrix(rnorm(N*M,mean=8,sd=sqrt(0.5)),nr=M, nc=N,byrow=T)
+clustT= matrix(rnorm(N,sd=sqrt(0.5)),nr=M, nc=N,byrow=T) 
+clustC=matrix(rnorm(N,sd=sqrt(0.5)),nr=M, nc=N,byrow=T)
+sim.data3=cbind((noiseT+clustT),(noiseC+clustC))
+```
+
+**********
+## Homework Question 7 (4 points)
+
+a) *sim.data1* has independent noise and no differences in mean, while *sim.data3* has dependent noise and no differences in mean.  To check the levels of noise and the means, draw histograms of the means and variances for each gene for the 1000 genes in *sim.data1* and separately for the 1000 genes in *sim.data3*.  Do these histograms look similar?
+
+b) Do the t-tests using *sim.data3* and obtain a histogram of the p-values.  Recall that none of the simulated genes differentially express.  Does the histogram have the expected shape?  Using the BH adjusted p-values and reject for p<0.05.  How many rejections are there?
+
+c) Generate random noise 2 more times and repeat part b.  What do you notice?
+
+d) What do you think could happen when there are some truly differentially expressing genes?
+
+***********
+
+There are some very worrisome results when the data are correlated.  We expect genes in the same networks to yield correlated data, but there may be other correlations we are not aware of.  So far, there are no good general tools for handling data with unknown correlation structure that are not extremely conservative (i.e. they control the false discovery rate by boosting the false nondiscovery rate.)  
+
+Always plot the raw p-values before interpreting your FWER or FDR.  If the histogram does not have the classic peak on the left tapering down to a flat histogram, you need to be extremely cautious in interpreting the FDR.  I have also seen some very odd p-value histograms when correlation is not the source of the problem.
+
+```{r}
+sessionInfo()
+```
