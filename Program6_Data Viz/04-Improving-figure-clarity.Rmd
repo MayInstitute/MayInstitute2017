@@ -34,7 +34,6 @@ library(tidyr)
 
 CRC <- read.csv("./data/CRC_train.csv")
 NCI60 <- read.csv("./data/NCI60.csv")
-names(NCI60)
 ```
 
 ***
