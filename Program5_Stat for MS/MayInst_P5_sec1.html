@@ -591,12 +591,6 @@ annot.wrong</code></pre>
 </tr>
 </tbody>
 </table>
-<blockquote>
-<h3 id="challenge">Challenge</h3>
-<ul>
-<li>Let’s make the annotation file for the experiments as described.</li>
-</ul>
-</blockquote>
 </div>
 </div>
 </div>
@@ -767,7 +761,6 @@ input.maxquant &lt;- MaxQtoMSstatsFormat(evidence=evi,
                                       proteinGroups=proteinGroups,
                                       removeProtein_with1Peptide=TRUE)</code></pre>
 <pre><code>## ** + Contaminant, + Reverse, + Only.identified.by.site, proteins are removed.</code></pre>
-<pre><code>## ** Peptides, that are used in more than one proteins, are removed.</code></pre>
 <pre><code>## ** Peptide and charge, that have 1 or 2 measurements across runs, are removed.</code></pre>
 <pre><code>## ** 282 proteins, which have only peptide and charge in a protein, are removed among 3157 proteins.</code></pre>
 <pre class="r"><code>head(input.maxquant)</code></pre>
@@ -802,11 +795,25 @@ input.maxquant &lt;- MaxQtoMSstatsFormat(evidence=evi,
 <pre class="r"><code>sum(!is.na(input.maxquant$Intensity) &amp; input.maxquant$Intensity==0)</code></pre>
 <pre><code>## [1] 0</code></pre>
 <blockquote>
-<h3 id="challenge-1">Challenge</h3>
+<h3 id="challenge">Challenge</h3>
 <ul>
 <li>Let’s check unique information for <code>Run</code>,<code>BioReplicate</code> and <code>Condition</code> in <code>input.maxquant</code>.</li>
 </ul>
 </blockquote>
+<pre class="r"><code>unique(input.maxquant[, c('Run', 'BioReplicate', 'Condition')])</code></pre>
+<pre><code>##                          Run BioReplicate  Condition
+## 1      JD_06232014_sample1_B            1 Condition1
+## 30600  JD_06232014_sample1_C            1 Condition1
+## 61199  JD_06232014_sample1-A            1 Condition1
+## 91798  JD_06232014_sample2_A            2 Condition2
+## 122397 JD_06232014_sample2_B            2 Condition2
+## 152996 JD_06232014_sample2_C            2 Condition2
+## 183595 JD_06232014_sample3_A            3 Condition3
+## 214194 JD_06232014_sample3_B            3 Condition3
+## 244793 JD_06232014_sample3_C            3 Condition3
+## 275392 JD_06232014_sample4_B            4 Condition4
+## 305991 JD_06232014_sample4_C            4 Condition4
+## 336590 JD_06232014_sample4-A            4 Condition4</code></pre>
 <hr />
 </div>
 </div>
@@ -1024,11 +1031,25 @@ head(input.progenesis)</code></pre>
 ## JD_06232014_sample2_C JD_06232014_sample3_C JD_06232014_sample4_C 
 ##                  9646                  9646                  9646</code></pre>
 <blockquote>
-<h3 id="challenge-2">Challenge</h3>
+<h3 id="challenge-1">Challenge</h3>
 <ul>
 <li>Let’s check unique information for <code>Run</code>,<code>BioReplicate</code> and <code>Condition</code>.</li>
 </ul>
 </blockquote>
+<pre class="r"><code>unique(input.progenesis[, c('Run', 'BioReplicate', 'Condition')]) </code></pre>
+<pre><code>##                          Run BioReplicate  Condition
+## 1      JD_06232014_sample1_B            1 Condition1
+## 10547  JD_06232014_sample1_C            1 Condition1
+## 21093  JD_06232014_sample1-A            1 Condition1
+## 31639  JD_06232014_sample2_A            2 Condition2
+## 42185  JD_06232014_sample2_B            2 Condition2
+## 52731  JD_06232014_sample2_C            2 Condition2
+## 63277  JD_06232014_sample3_A            3 Condition3
+## 73823  JD_06232014_sample3_B            3 Condition3
+## 84369  JD_06232014_sample3_C            3 Condition3
+## 94915  JD_06232014_sample4_B            4 Condition4
+## 105461 JD_06232014_sample4_C            4 Condition4
+## 116007 JD_06232014_sample4-A            4 Condition4</code></pre>
 <hr />
 </div>
 </div>
@@ -1155,15 +1176,6 @@ input.SN &lt;- SpectronauttoMSstatsFormat(raw.SN)</code></pre>
 save(input.maxquant, file='./data_MaxQuant/input.maxquant.rda')
 save(input.progenesis, file='./data_Progenesis/input.progenesis.rda')
 save(input.SN, file='./data_SN/input.SN.rda')</code></pre>
-<hr />
-</div>
-<div id="exercise" class="section level1">
-<h1>8. Exercise</h1>
-<ul>
-<li>some example with error message. what is wrong?</li>
-<li>NA value in some extra rows.</li>
-<li>Skyline : annotation can be put before reporting, but if there is the mistake for that? what happen?</li>
-</ul>
 </div>
 
 

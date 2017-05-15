@@ -436,6 +436,7 @@ head(test.skyline$fittedmodel)</code></pre>
 <p>Let’s save the testing result as .csv file.</p>
 <pre class="r"><code>Skyline.result &lt;- test.skyline$ComparisonResult
 
+save(Skyline.result, file='./data_Skyline/Skyline.result.rda')
 write.csv(Skyline.result, file='./data_Skyline/testResult_ABRF_skyline.csv')</code></pre>
 </div>
 <div id="subset-of-significant-comparisons" class="section level2">
@@ -659,32 +660,50 @@ head(groupQuant)</code></pre>
 </ol>
 </blockquote>
 <pre class="r"><code>load(file='./backup/data_MaxQuant/quant.maxquant.rda')</code></pre>
+<pre class="r"><code>test.maxquant &lt;- groupComparison(contrast.matrix=comparison, data=quant.maxquant)
+MaxQuant.result &lt;- test.maxquant$ComparisonResult
+write.csv(MaxQuant.result, file='./backup/data_MaxQuant/testResult_ABRF_maxquant.csv')</code></pre>
 <blockquote>
 <ol start="2" style="list-style-type: decimal">
 <li>Draw volcano plot with output of <code>groupComparison</code> with MaxQuant output.</li>
 </ol>
 </blockquote>
+<pre class="r"><code>groupComparisonPlots(data = MaxQuant.result, 
+                     type = 'VolcanoPlot',
+                     address = './backup/data_MaxQuant/testResult_ABRF_maxquant_')</code></pre>
 <blockquote>
 <ol start="3" style="list-style-type: decimal">
 <li>Draw comparison plot with output of <code>groupComparison</code> with MaxQuant output. and Check the comparison plot for the protein, <code>P55249</code>.</li>
 </ol>
 </blockquote>
+<pre class="r"><code>groupComparisonPlots(data = MaxQuant.result, 
+                     type = 'ComparisonPlot',
+                     address = './backup/data_MaxQuant/testResult_ABRF_maxquant_')</code></pre>
 <blockquote>
 <ol start="4" style="list-style-type: decimal">
 <li>Load the processed data (output of dataProcess from section 2) of Progenesis output and find the differentially abundant comparisons using <code>groupComparison</code> with the same <code>comparison</code> matrix.</li>
 </ol>
 </blockquote>
 <pre class="r"><code>load(file='./backup/data_Progenesis/quant.progenesis.rda')</code></pre>
+<pre class="r"><code>test.progenesis &lt;- groupComparison(contrast.matrix=comparison, data=quant.progenesis)
+Progenesis.result &lt;- test.progenesis$ComparisonResult
+write.csv(Progenesis.result, file='./backup/data_Progenesis/testResult_ABRF_progenesis.csv')</code></pre>
 <blockquote>
 <ol start="5" style="list-style-type: decimal">
 <li>Draw volcano plot with output of <code>groupComparison</code> with Progenesis output.</li>
 </ol>
 </blockquote>
+<pre class="r"><code>groupComparisonPlots(data = Progenesis.result, 
+                     type = 'VolcanoPlot',
+                     address = './backup/data_Progenesis/testResult_ABRF_progenesis_')</code></pre>
 <blockquote>
 <ol start="6" style="list-style-type: decimal">
 <li>Draw comparison plot with output of <code>groupComparison</code> with Progenesis output. and Check the comparison plot for the protein, <code>sp|P55249|ZRT4_YEAST</code></li>
 </ol>
 </blockquote>
+<pre class="r"><code>groupComparisonPlots(data = Progenesis.result, 
+                     type = 'ComparisonPlot',
+                     address = './backup/data_Progenesis/testResult_ABRF_progenesis_')</code></pre>
 <blockquote>
 <ol start="7" style="list-style-type: decimal">
 <li>Compare the volcano plots for MaxQuant output and for Progenesis output.</li>

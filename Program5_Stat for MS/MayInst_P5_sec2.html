@@ -617,21 +617,61 @@ dataProcessPlots(srm.global.idhc, type='QCplot', address='srm_global_IDHC_')</co
 <li>Try <code>dataProcess</code> with equalize median normalization for MaxQuant output. (<code>input.maxquant.rda</code> from section 1)</li>
 </ol>
 </blockquote>
+<pre class="r"><code>quant.maxquant &lt;- dataProcess(raw = input.maxquant, 
+                                      logTrans=2, 
+                                      #normalization = 'quantile',
+                                      summaryMethod = 'TMP', 
+                                      MBimpute=TRUE,
+                                      censoredInt='NA',
+                                      cutoffCensored='minFeature',
+                                      maxQuantileforCensored = 0.999)</code></pre>
 <blockquote>
 <ol start="2" style="list-style-type: decimal">
 <li>Try <code>dataProcess</code> with quantile normalization for MaxQuant output. (<code>input.maxquant.rda</code> from section 1)</li>
 </ol>
 </blockquote>
+<pre class="r"><code>quant.maxquant.quantile &lt;- dataProcess(raw = input.maxquant, 
+                              logTrans=2, 
+                              normalization = 'quantile',
+                              summaryMethod = 'TMP', 
+                              MBimpute=TRUE,
+                              censoredInt='NA',
+                              cutoffCensored='minFeature',
+                              maxQuantileforCensored = 0.999)</code></pre>
 <blockquote>
 <ol start="3" style="list-style-type: decimal">
 <li>Draw QC plots for both cases above and compare.</li>
 </ol>
 </blockquote>
+<pre class="r"><code>dataProcessPlots(data = quant.maxquant, 
+                 type=&quot;QCplot&quot;, 
+                 width=7, height=7,
+                 which.Protein = 1,
+                 address='./data_MaxQuant/ABRF_maxquant_equalMed_')
+
+dataProcessPlots(data = quant.maxquant.quantile, 
+                 type=&quot;QCplot&quot;, 
+                 width=7, height=7,
+                 which.Protein = 1,
+                 address='./data_MaxQuant/ABRF_maxquant_quantile_')</code></pre>
 <blockquote>
 <ol start="4" style="list-style-type: decimal">
 <li>Draw Profile plots of protein <code>P55249</code>, for both cases above and compare.</li>
 </ol>
 </blockquote>
+<pre class="r"><code>dataProcessPlots(data = quant.maxquant, 
+                 type=&quot;Profileplot&quot;, 
+                 featureName=&quot;NA&quot;,
+                 width=7, height=7,
+                 which.Protein = 'P55249',
+                 address=&quot;./data_MaxQuant/ABRF_maxquant_equalMed_P55249_&quot;)
+
+dataProcessPlots(data = quant.maxquant.quantile, 
+                 type=&quot;Profileplot&quot;, 
+                 featureName=&quot;NA&quot;,
+                 width=7, height=7,
+                 which.Protein = 'P55249',
+                 address=&quot;./data_MaxQuant/ABRF_maxquant_quantile_P55249_&quot;)</code></pre>
 <hr />
 </div>
 <div id="process-with-processed-progenesis-data" class="section level1">
@@ -670,16 +710,45 @@ dataProcessPlots(srm.global.idhc, type='QCplot', address='srm_global_IDHC_')</co
 <li>Try <code>dataProcess</code> with equalize normalization for Progenesis output. (<code>input.progenesis.rda</code> from section 1)</li>
 </ol>
 </blockquote>
+<pre class="r"><code>quant.progenesis &lt;- dataProcess(raw = input.progenesis, 
+                              logTrans=2, 
+                              #normalization = 'quantile',
+                              summaryMethod = 'TMP', 
+                              MBimpute=TRUE,
+                              censoredInt='0',
+                              cutoffCensored='minFeature',
+                              maxQuantileforCensored = 0.999)</code></pre>
 <blockquote>
 <ol start="2" style="list-style-type: decimal">
 <li>Try <code>dataProcess</code> with quantile normalization for Progenesis output. (<code>input.progenesis.rda</code> from section 1)</li>
 </ol>
 </blockquote>
+<pre class="r"><code>quant.progenesis.quantile &lt;- dataProcess(raw = input.progenesis, 
+                                       logTrans=2, 
+                                       normalization = 'quantile',
+                                       summaryMethod = 'TMP', 
+                                       MBimpute=TRUE,
+                                       censoredInt='0',
+                                       cutoffCensored='minFeature',
+                                       maxQuantileforCensored = 0.999)</code></pre>
 <blockquote>
 <ol start="3" style="list-style-type: decimal">
 <li>Draw Profile plots of protein <code>sp|P55249|ZRT4_YEAST</code>, for both cases above and compare.</li>
 </ol>
 </blockquote>
+<pre class="r"><code>dataProcessPlots(data = quant.progenesis, 
+                 type=&quot;Profileplot&quot;, 
+                 featureName=&quot;NA&quot;,
+                 width=7, height=7,
+                 which.Protein = 'sp|P55249|ZRT4_YEAST',
+                 address=&quot;./data_Progenesis/ABRF_progenesis_equalMed_P55249_&quot;)
+
+dataProcessPlots(data = quant.progenesis.quantile, 
+                 type=&quot;Profileplot&quot;, 
+                 featureName=&quot;NA&quot;,
+                 width=7, height=7,
+                 which.Protein = 'sp|P55249|ZRT4_YEAST',
+                 address=&quot;./data_Progenesis/ABRF_progenesis_quantile_P55249_&quot;)</code></pre>
 <blockquote>
 <ol start="4" style="list-style-type: decimal">
 <li>Compare profile plots from MaxQuant data.</li>
